@@ -1,0 +1,13 @@
+# Terraform / Terraspace local state and caches
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+
+# OS cruft
+.DS_Store
+
+# Ruby
+*.gem
+.bundle/
