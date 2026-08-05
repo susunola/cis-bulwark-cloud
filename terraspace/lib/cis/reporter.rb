@@ -396,7 +396,7 @@ module Cis
                 "<th>Evidence</th></tr></thead><tbody>\n"
         sorted(rows).each do |f|
           s = h(f["status"])
-          search = h("#{f['id']} #{f['title']}".downcase)
+          search = h("#{f['id']} #{f['title']}").downcase
           html << "<tr data-status=\"#{s}\" data-search=\"#{search}\">" \
                   "<td>#{badge(f['status'])}</td><td><span class=\"mono\">#{h(f['id'])}</span></td>" \
                   "<td>#{h(f['title'])}</td><td>#{h(f['evidence'])}</td></tr>\n"

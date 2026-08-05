@@ -1,48 +1,33 @@
-<p align="center">
-  <img src="https://img.shields.io/github/actions/workflow/status/susunola/cis-tencentcloud/ci.yml?branch=main&label=ci" alt="CI">
-  <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License">
-  <img src="https://img.shields.io/badge/benchmark-CIS%20Foundation%20v1.0.0-7B68EE" alt="CIS v1.0.0">
-  <img src="https://img.shields.io/badge/ruby-%E2%89%A53.1-CC342D" alt="Ruby ≥3.1">
-  <img src="https://img.shields.io/badge/terraform-%E2%89%A51.5.0-7B42BC" alt="Terraform ≥1.5.0">
-</p>
-
 # cis-tencentcloud
 
-Scan and enforce the **CIS Tencent Cloud Foundation Benchmark v1.0.0** (91 controls
-across 9 sections). Read-only assessment, automated hardening, and HTML compliance
-reports — no external services, no daemon required. Two delivery formats in one repo.
+Terraform and Terraspace implementations of the **CIS Tencent Cloud Foundation Benchmark v1.0.0**.
 
-Two delivery formats so you can pick the shape that fits your workflow:
+Two variants are provided in the same repository:
 
 | | `terraspace/` | `terraform/` |
 |---|---|---|
-| **Orchestrator** | Terraspace | Terraform CLI |
-| **How stacks work** | One Terraspace project, stacks share a provider | Each stack is a self-contained root module |
-| **State** | Injected via `config/terraform/backend.tf` | Per-stack `stacks/<name>/backend.tf` |
-| **Best for** | Teams already on Terraspace; stacked environments | Generic Terraform pipelines; scriptable CI |
-| **Entry point** | `terraspace/bin/cis` | `terraform/bin/cis` |
-| **Tests** | 141 runs / 1569 assertions | 139 runs / 1526 assertions |
+| Orchestrator | Terraspace | Terraform CLI |
+| Stack layout | One project, shared provider | Self-contained root modules |
+| State backend | `config/terraform/backend.tf` | `stacks/<name>/backend.tf` |
+| Entry point | `terraspace/bin/cis` | `terraform/bin/cis` |
 
-Both versions share the same registry (`config/controls.yml`), the same Terraform
-modules, the same CLI flag vocabulary, and the same HTML report format.
+Both share `config/controls.yml`, the modules under `modules/` / `app/modules/`, the CLI flags, and the HTML report format.
 
----
+## Quick start
 
-## Quick Start
-
-Pick your version:
+Run the offline test suite:
 
 ```bash
 # Terraform (plain)
 cd terraform
-ruby test/run.rb                    # verify with zero credentials
+ruby test/run.rb
 
 # Terraspace
 cd terraspace
 ruby test/run.rb
 ```
 
-Real account (Terraform version):
+Real account (Terraform variant):
 
 ```bash
 cd terraform
@@ -50,50 +35,41 @@ export TENCENTCLOUD_SECRET_ID=...
 export TENCENTCLOUD_SECRET_KEY=...
 export TENCENTCLOUD_REGION=ap-guangzhou
 
-# See what's selected
 bin/cis list
-
-# Scan (read-only)
 bin/cis scan --format html --output scan-report.html
-
-# Enforce
 bin/cis apply --report hardening.html
 ```
 
----
-
-## What's Inside
+## Repository layout
 
 ```
 cis-tencentcloud/
-├── terraspace/          ← Terraspace version (original)
-│   ├── app/stacks/      ← 6 hardening stacks + 1 audit
-│   ├── app/modules/     ← Reusable Terraform modules
-│   ├── lib/cis/         ← Ruby CLI + reporter
-│   ├── bin/cis          ← Entry point
-│   └── test/            ← 141 runs, offline
+├── terraspace/          # Terraspace variant
+│   ├── app/stacks/      # 6 hardening stacks + audit
+│   ├── app/modules/     # Reusable Terraform modules
+│   ├── lib/cis/         # Ruby CLI + reporter
+│   ├── bin/cis          # Entry point
+│   └── test/            # Offline tests
 │
-├── terraform/           ← Plain Terraform version
-│   ├── stacks/          ← Self-contained root modules
-│   ├── modules/         ← Same reusable modules
-│   ├── lib/cis/         ← Ruby CLI + reporter
-│   ├── bin/cis          ← Entry point
-│   └── test/            ← 139 runs, offline
+├── terraform/           # Plain Terraform variant
+│   ├── stacks/          # Self-contained root modules
+│   ├── modules/         # Reusable Terraform modules
+│   ├── lib/cis/         # Ruby CLI + reporter
+│   ├── bin/cis          # Entry point
+│   └── test/            # Offline tests
 │
-└── LICENSE              ← MIT
+└── LICENSE              # MIT
 ```
 
----
-
-## Commands (both versions)
+## Commands
 
 | Command | Purpose |
 |---|---|
-| `cis list` | List controls — table / JSON / markdown / HTML |
+| `cis list` | List controls |
 | `cis scan` | Read-only assessment via the `audit` stack |
 | `cis plan` | Preview what `apply` would change |
-| `cis apply` | Enforce controls (apply hardening stacks) |
-| `cis destroy STACK` | Tear down a single stack |
+| `cis apply` | Enforce controls |
+| `cis destroy STACK` | Tear down a single hardening stack |
 
 ### Filters
 
@@ -109,28 +85,9 @@ cis-tencentcloud/
 | `--output PATH` | Write report to file |
 | `--report [PATH]` | HTML hardening report (apply only) |
 
----
-
 ## Reports
 
-Both `cis scan` and `cis apply` produce self-contained HTML reports:
-
-- Account header (UIN, account name, APP ID, region)
-- Summary statistics
-- Per-section tables with status badges
-- Client-side filter bar: Enforced / Not enforced / FAIL / MANUAL / SKIPPED
-- Zero external assets — print-friendly, PDF-compatible
-
----
-
-## Roadmap
-
-- [ ] CIS Enterprise Foundation Benchmark v1.0.0 (68 additional controls)
-- [ ] `cis verify` — post-apply scan diff
-- [ ] COS remote state backend templates
-- [ ] `--continue-on-error` for apply
-
----
+`cis scan` and `cis apply` produce self-contained HTML reports with an account header, summary statistics, per-section tables, and a client-side filter bar. No external assets are loaded.
 
 ## License
 

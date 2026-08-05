@@ -36,6 +36,17 @@ variable "ingress" {
     condition     = alltrue([for r in var.ingress : length(split("#", r)) >= 4])
     error_message = "every ingress rule needs at least 4 '#'-separated fields: action#source#port#protocol."
   }
+
+  validation {
+    condition = alltrue([
+      for r in var.ingress :
+      length(compact(split("#", r))) == 4 &&
+      contains(["ACCEPT", "DROP"], upper(element(split("#", r), 0))) &&
+      can(regex("^(ALL|ANY|-1|\\d+(-\\d+)?(\\,\\d+(-\\d+)?)*)$", upper(element(split("#", r), 2)))) &&
+      contains(["TCP", "UDP", "ICMP", "ALL", "ANY", "-1"], upper(element(split("#", r), 3)))
+    ])
+    error_message = "ingress rule must be action#source#port#protocol, e.g. ACCEPT#10.0.0.0/8#22#TCP."
+  }
 }
 
 variable "egress" {
@@ -51,6 +62,17 @@ variable "egress" {
   validation {
     condition     = alltrue([for r in var.egress : length(split("#", r)) >= 4])
     error_message = "every egress rule needs at least 4 '#'-separated fields: action#source#port#protocol."
+  }
+
+  validation {
+    condition = alltrue([
+      for r in var.egress :
+      length(compact(split("#", r))) == 4 &&
+      contains(["ACCEPT", "DROP"], upper(element(split("#", r), 0))) &&
+      can(regex("^(ALL|ANY|-1|\\d+(-\\d+)?(\\,\\d+(-\\d+)?)*)$", upper(element(split("#", r), 2)))) &&
+      contains(["TCP", "UDP", "ICMP", "ALL", "ANY", "-1"], upper(element(split("#", r), 3)))
+    ])
+    error_message = "egress rule must be action#source#port#protocol, e.g. ACCEPT#10.0.0.0/8#22#TCP."
   }
 }
 

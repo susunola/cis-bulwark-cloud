@@ -84,8 +84,6 @@ module Cis
       run_hardening("apply") { |stack| %W[up #{stack} -y] }
     end
 
-    # `cis destroy` is deliberately not exposed as a first-class verb - rolling
-    # back a hardening baseline should be a conscious, per-stack decision.
     def destroy(stack)
       unless Cis::HARDENING_STACKS.include?(stack)
         return abort_with("#{stack.inspect} is not a hardening stack " \

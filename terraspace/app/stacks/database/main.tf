@@ -71,7 +71,7 @@ locals {
   }
 
   audit_retention_too_short = [
-    for id, days in local.audit_retention_of : id if days <= var.audit_min_retention_days
+    for id, days in local.audit_retention_of : id if days < var.audit_min_retention_days
   ]
 
   # ---- 5.5 / 5.6 TDE -------------------------------------------------------

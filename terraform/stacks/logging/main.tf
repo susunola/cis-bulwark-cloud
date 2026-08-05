@@ -27,7 +27,7 @@ locals {
   # ---- CLS plumbing -------------------------------------------------------
   # A logset/topic is needed by 2.3 itself, by 2.20 (retention lives on the
   # topic) and by every alarm in 2.9-2.19 because they query that topic.
-  cls_wanted = local.on["2.3"] || local.on["2.20"] || local.alarms_wanted
+  cls_wanted = local.on["2.3"] || local.on["2.5"] || local.on["2.20"] || local.alarms_wanted
 
   create_logset = local.cls_wanted && var.cls_logset_id == null && var.cls_topic_id == null
   create_topic  = local.cls_wanted && var.cls_topic_id == null

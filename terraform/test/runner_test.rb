@@ -23,6 +23,7 @@ class RunnerTest < CisTestCase
 
     def terraform_init(stack)
       # no-op: tests don't need real init
+      0
     end
 
     def read_findings

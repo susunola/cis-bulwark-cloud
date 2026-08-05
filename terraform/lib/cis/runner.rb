@@ -48,7 +48,9 @@ module Cis
         return EXIT_OK
       end
 
-      terraform_init(Cis::AUDIT_STACK)
+      init_code = terraform_init(Cis::AUDIT_STACK)
+      return EXIT_ERROR unless init_code.zero?
+
       code = terraform_apply(Cis::AUDIT_STACK, Cis.controls_for_audit, action: "scan")
       return EXIT_ERROR unless code.zero?
 
@@ -110,7 +112,13 @@ module Cis
         say "#{label} #{r[:name]}  (#{r[:ids].size} control(s): #{r[:ids].join(', ')})"
         say "#{'=' * 70}"
 
-        terraform_init(r[:name])
+        init_code = terraform_init(r[:name])
+        unless init_code.zero?
+          r[:status] = "fail"
+          say "  stack #{r[:name]} init failed (exit #{init_code}); stopping."
+          return EXIT_ERROR
+        end
+
         code = terraform(build.call(r[:name], r[:ids]), r[:name], action: "apply")
         if code.zero?
           r[:status] = "ok"
@@ -251,10 +259,10 @@ module Cis
       say "=> #{cmd.join(' ')}" if options[:verbose]
       return EXIT_OK if options[:dry_run]
 
-      ok = system(*cmd)
+      system(*cmd)
       status = Process.last_status
       return status.exitstatus if status
-      ok ? EXIT_OK : EXIT_ERROR
+      EXIT_ERROR
     end
 
     # ---- reading findings back -------------------------------------------

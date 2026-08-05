@@ -72,13 +72,13 @@ module Cis
       if detectable? && stack.nil?
         raise Error, "#{id}: detect=terraform requires a stack"
       end
-      if stack && !manual_stack_ok?
+      if stack && !known_stack?
         raise Error, "#{id}: unknown stack #{stack.inspect}"
       end
     end
 
-    def manual_stack_ok?
-      Cis::HARDENING_STACKS.include?(stack)
+    def known_stack?
+      Cis::HARDENING_STACKS.include?(stack) || stack == Cis::AUDIT_STACK
     end
   end
 end
