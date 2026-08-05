@@ -1,0 +1,27 @@
+name: CI
+
+# Gate every push and pull request on the offline test suite. The suite needs no
+# cloud, no credentials and no `terraspace` (every CLI path it exercises runs
+# with --dry-run); Terraform is not required because wiring_test self-skips the
+# `terraform fmt -check` assertion when the binary is absent.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.1"
+
+      - name: Install minitest
+        run: gem install minitest -v 5.26.1
+
+      - name: Run suite
+        run: ruby test/run.rb

@@ -340,6 +340,14 @@ Copies `app/` to a temp tree, injects the provider block Terraspace would have
 injected, strips the ERB `tfvars/`, then runs `terraform init -backend=false &&
 terraform validate`. No account required.
 
+### Continuous integration
+
+`.github/workflows/ci.yml` runs `ruby test/run.rb` on every push and pull
+request. It needs only Ruby and `minitest` — Terraform is not installed because
+the `wiring_test` `fmt` check self-skips when the binary is absent, and every CLI
+path the suite exercises runs with `--dry-run`. This keeps the registry↔HCL
+alignment gate in force on every change without requiring a cloud account in CI.
+
 ---
 
 ## Notes
@@ -355,3 +363,30 @@ terraform validate`. No account required.
 - **`SKIPPED` is not `PASS`.** Controls that `cis apply` enforces but the
   provider cannot read back are reported as `SKIPPED` with the reason attached,
   never as a pass.
+
+---
+
+## Known limitations & roadmap
+
+What is deliberately out of scope today, and where the leverage is if you pick
+this up again:
+
+- **Coverage is the ceiling.** 39/91 remediable and 20/91 detectable. Several
+  `MANUAL` controls are manual only because we have not wired up the
+  corresponding provider data source, not because the provider lacks one — the
+  `audit/data.tf` gating pattern is the template. Moving a control from manual to
+  detectable is the single highest-value contribution.
+- **No drift / baseline tracking.** `cis scan` is point-in-time. A `cis scan
+  --baseline save` + `compare` for change-over-time is the natural next feature
+  for real compliance cadence.
+- **No post-apply verification.** `apply` does not re-run `scan` to assert the
+  control flipped to PASS. A `cis verify` subcommand would close that loop.
+- **A failing stack stops the run.** There is no `--continue-on-error`; the
+  current behaviour is intentional (attribution over throughput) but a flag would
+  help in large runs.
+- **Local state by default.** `config/terraform/backend.tf` notes the COS remote
+  backend switch for anything beyond a single operator.
+- **`region` defaults to `ap-guangzhou`.** It is only ever a default, never
+  hardcoded into logic, but for a compliance tool a wrong-region run is dangerous
+  — consider failing loudly when `TENCENTCLOUD_REGION` is unset.
+

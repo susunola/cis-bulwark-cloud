@@ -111,6 +111,7 @@ module Cis
         code = terraspace(yield(stack), action: "apply")
         unless code.zero?
           @io.puts "\n  stack #{stack} failed (exit #{code}); stopping."
+          report_gaps
           return EXIT_ERROR
         end
       end
