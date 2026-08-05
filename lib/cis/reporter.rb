@@ -16,31 +16,75 @@ module Cis
     # A single self-contained stylesheet shared by every HTML report. No
     # external assets, so the file opens offline and prints cleanly to PDF.
     STYLE = <<~CSS.freeze
-      :root { --pass:#1a7f37; --fail:#cf222e; --manual:#9a6700; --skip:#6e7781; --plan:#0969da; }
+      :root {
+        --primary:#1f4fd1; --primary-2:#4263eb;
+        --pass:#2f9e44; --fail:#e03131; --manual:#f08c00; --skip:#868e96; --plan:#1971c2;
+        --ink:#1d2939; --muted:#667085; --line:#eef0f3; --card:#fff; --page:#f7f8fa;
+      }
       * { box-sizing: border-box; }
-      body { font:14px/1.5 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-             color:#1f2328; margin:0; padding:2rem; background:#fff; }
-      header { border-bottom:2px solid #d0d7de; padding-bottom:1rem; margin-bottom:1.5rem; }
-      h1 { margin:0 0 .25rem; font-size:1.5rem; }
-      h2 { font-size:1.1rem; margin:1.75rem 0 .5rem; }
-      .meta { color:#57606a; margin:.15rem 0; font-size:.85rem; }
-      .summary { display:flex; gap:1rem; flex-wrap:wrap; margin:1rem 0; }
-      table { border-collapse:collapse; width:100%; margin:.5rem 0 1rem; }
-      th, td { text-align:left; padding:.4rem .6rem; border-bottom:1px solid #d0d7de;
-               vertical-align:top; }
-      thead th { background:#f6f8fa; font-size:.78rem; text-transform:uppercase;
-                 letter-spacing:.03em; }
-      tr.grp td { background:#f6f8fa; font-weight:600; }
-      .badge { display:inline-block; padding:.1rem .5rem; border-radius:1rem;
-               font-size:.75rem; font-weight:600; color:#fff; }
+      body {
+        font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",
+             Arial,"PingFang SC","Microsoft YaHei",sans-serif;
+        color:var(--ink); background:var(--page);
+        margin:0 auto; max-width:960px; padding:0 1.25rem 3rem;
+        -webkit-font-smoothing:antialiased;
+      }
+      /* ---- hero header ---- */
+      header.hero {
+        background:linear-gradient(135deg,var(--primary),var(--primary-2));
+        color:#fff; border-radius:0 0 18px 18px; padding:1.9rem 2rem;
+        margin:0 0 1.75rem; box-shadow:0 6px 20px rgba(31,79,209,.18);
+      }
+      header.hero h1 { color:#fff; margin:0 0 .35rem; font-size:1.6rem; letter-spacing:.01em; }
+      header.hero .meta { color:rgba(255,255,255,.82); font-size:.85rem; margin:.15rem 0; }
+      /* ---- statistic cards ---- */
+      .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin:1.25rem 0 1.5rem; }
+      .stat { background:var(--card); border:1px solid var(--line); border-radius:12px;
+              padding:1rem 1.1rem; text-align:center; box-shadow:0 1px 2px rgba(16,24,40,.04); }
+      .stat .num { display:block; font-size:1.9rem; font-weight:700; line-height:1; }
+      .stat .lbl { display:block; margin-top:.45rem; font-size:.7rem; letter-spacing:.06em;
+                   text-transform:uppercase; color:var(--muted); }
+      .stat-fail   .num { color:var(--fail); }
+      .stat-pass   .num { color:var(--pass); }
+      .stat-manual .num { color:var(--manual); }
+      .stat-skip   .num { color:var(--skip); }
+      /* ---- cards ---- */
+      .card { background:var(--card); border:1px solid var(--line); border-radius:16px;
+              padding:1.25rem 1.4rem; margin:1.1rem 0;
+              box-shadow:0 1px 2px rgba(16,24,40,.04),0 6px 16px rgba(16,24,40,.03); }
+      .card h2 { font-size:1.05rem; margin:.1rem 0 .85rem; display:flex; align-items:center; gap:.55rem; }
+      .card h2::before { content:""; width:4px; height:1.05rem; background:var(--primary);
+                         border-radius:2px; display:inline-block; }
+      /* ---- tables ---- */
+      table { border-collapse:separate; border-spacing:0; width:100%; background:var(--card);
+              border:1px solid var(--line); border-radius:12px; overflow:hidden;
+              box-shadow:0 1px 2px rgba(16,24,40,.04); margin:.6rem 0 1rem; }
+      thead th { background:#f2f4f7; color:var(--muted); font-size:.72rem; text-transform:uppercase;
+                 letter-spacing:.05em; padding:.7rem .9rem; text-align:left; font-weight:600; }
+      tbody td { padding:.65rem .9rem; border-bottom:1px solid #f0f2f5; vertical-align:top;
+                 color:var(--ink); font-size:.9rem; }
+      tbody tr:last-child td { border-bottom:none; }
+      tbody tr:hover { background:#fafbfc; }
+      tr.grp td { background:#f2f4f7; font-weight:600; color:var(--ink); }
+      .mono { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+              font-weight:600; color:var(--primary); }
+      /* ---- badges ---- */
+      .badge { display:inline-flex; align-items:center; padding:.18rem .6rem; border-radius:999px;
+               font-size:.72rem; font-weight:600; color:#fff; letter-spacing:.02em; }
       .badge.pass    { background:var(--pass); }
       .badge.fail    { background:var(--fail); }
       .badge.manual  { background:var(--manual); }
       .badge.skipped { background:var(--skip); }
       .badge.planned { background:var(--plan); }
-      footer { margin-top:2rem; color:#8b949e; font-size:.8rem;
-               border-top:1px solid #d0d7de; padding-top:1rem; }
-      @media print { body { padding:0; } }
+      /* ---- footer ---- */
+      footer { margin-top:2.5rem; padding-top:1rem; border-top:1px solid var(--line);
+               color:#98a2b3; font-size:.78rem; text-align:center; }
+      @media print {
+        body { padding:0; }
+        header.hero { box-shadow:none; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+        .card, .stat, table { box-shadow:none; }
+        * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      }
     CSS
 
     def initialize(io: $stdout, color: nil)
@@ -107,10 +151,11 @@ module Cis
     end
 
     def summary_bar(t)
-      parts = STATUS_ORDER.map do |s|
-        "<span class=\"badge #{s.downcase}\">#{s}</span> <b>#{t[s]}</b>"
+      cells = STATUS_ORDER.map do |s|
+        "<div class=\"stat stat-#{s.downcase}\"><span class=\"num\">#{t[s]}</span>" \
+        "<span class=\"lbl\">#{s}</span></div>"
       end
-      "<div class=\"summary\">#{parts.join(' ')}</div>\n"
+      "<div class=\"stats\">#{cells.join}</div>\n"
     end
 
     def badge(status)
@@ -181,10 +226,10 @@ module Cis
 
     def list_html(catalog, selector)
       html = +"" << doctype << head("CIS Tencent Cloud — Control List")
-      html << "<header><h1>Control List</h1>\n"
+      html << "<header class=\"hero\"><h1>Control List</h1>\n"
       html << "<p class=\"meta\">#{h(catalog.benchmark)} #{h(catalog.version)} · " \
               "generated #{h(Time.now.utc.strftime('%Y-%m-%d %H:%M UTC'))}</p></header>\n"
-      html << "<main>\n<table>\n<thead><tr><th>ID</th><th>Profile</th>" \
+      html << "<main>\n<div class=\"card\"><table>\n<thead><tr><th>ID</th><th>Profile</th>" \
               "<th>Assessment</th><th>Title</th><th>Capability</th><th>Stack</th></tr></thead>\n"
       current = nil
       selector.selected.each do |c|
@@ -193,10 +238,10 @@ module Cis
           html << "<tr class=\"grp\"><td colspan=\"6\">#{h(c.section)} " \
                   "#{h(catalog.section_title(c.section))}</td></tr>\n"
         end
-        html << "<tr><td>#{h(c.id)}</td><td>L#{c.level}</td><td>#{h(c.assessment)}</td>" \
-                "<td>#{h(c.title)}</td><td>#{h(capability(c))}</td><td>#{h(c.stack || '-')}</td></tr>\n"
+        html << "<tr><td><span class=\"mono\">#{h(c.id)}</span></td><td>L#{c.level}</td><td>#{h(c.assessment)}</td>" \
+                "<td>#{h(c.title)}</td><td>#{h(capability(c))}</td><td><span class=\"mono\">#{h(c.stack || '-')}</span></td></tr>\n"
       end
-      html << "</table>\n</main>\n"
+      html << "</table>\n</div>\n</main>\n"
       html << "<footer>Generated by cis — CIS Tencent Cloud Foundation Benchmark toolkit.</footer>\n"
       html << "</body>\n</html>\n"
       html
@@ -251,17 +296,17 @@ module Cis
       sections = findings.group_by { |f| f["id"].to_s.split(".").first }
       catalog = Cis.catalog
       html = +"" << doctype << head("CIS Tencent Cloud — Scan Report")
-      html << "<header><h1>Scan Report</h1>\n"
+      html << "<header class=\"hero\"><h1>Scan Report</h1>\n"
       html << "<p class=\"meta\">#{h(catalog.benchmark)} #{h(catalog.version)} · " \
               "generated #{h(Time.now.utc.strftime('%Y-%m-%d %H:%M UTC'))}</p></header>\n"
       html << summary_bar(t)
       html << "<main>\n"
       sections.sort_by { |s, _| s.to_i }.each do |sec, rows|
-        html << "<section><h2>#{h(sec)} #{h(catalog.section_title(sec))}</h2>\n"
+        html << "<section class=\"card\"><h2>#{h(sec)} #{h(catalog.section_title(sec))}</h2>\n"
         html << "<table><thead><tr><th>Status</th><th>ID</th><th>Title</th>" \
                 "<th>Evidence</th></tr></thead><tbody>\n"
         sorted(rows).each do |f|
-          html << "<tr><td>#{badge(f['status'])}</td><td>#{h(f['id'])}</td>" \
+          html << "<tr><td>#{badge(f['status'])}</td><td><span class=\"mono\">#{h(f['id'])}</span></td>" \
                   "<td>#{h(f['title'])}</td><td>#{h(f['evidence'])}</td></tr>\n"
         end
         html << "</tbody></table></section>\n"
@@ -277,7 +322,7 @@ module Cis
     def hardening_html(payload)
       s = payload[:summary] || {}
       html = +"" << doctype << head("CIS Tencent Cloud — Hardening Report")
-      html << "<header><h1>Hardening Report</h1>\n"
+      html << "<header class=\"hero\"><h1>Hardening Report</h1>\n"
       html << "<p class=\"meta\">action: #{h(payload[:label])} · " \
               "generated #{h(payload[:generated_at])}</p>\n"
       if s.any?
@@ -286,18 +331,18 @@ module Cis
                 "manual #{s['manual']})</p>\n"
       end
       html << "</header>\n<main>\n"
-      html << "<section><h2>Stacks</h2>\n<table><thead><tr><th>Stack</th>" \
+      html << "<section class=\"card\"><h2>Stacks</h2>\n<table><thead><tr><th>Stack</th>" \
               "<th>Controls</th><th>Result</th></tr></thead><tbody>\n"
       payload[:stacks].each do |st|
-        html << "<tr><td>#{h(st[:name])}</td><td>#{h(st[:ids].join(', '))}</td>" \
+        html << "<tr><td><span class=\"mono\">#{h(st[:name])}</span></td><td><span class=\"mono\">#{h(st[:ids].join(', '))}</span></td>" \
                 "<td>#{badge(st[:status])}</td></tr>\n"
       end
       html << "</tbody></table></section>\n"
       gaps = payload[:gaps] || []
       if gaps.any?
-        html << "<section><h2>Not enforced by Terraform (#{gaps.size})</h2>\n" \
+        html << "<section class=\"card\"><h2>Not enforced by Terraform (#{gaps.size})</h2>\n" \
                 "<table><thead><tr><th>ID</th><th>Title</th></tr></thead><tbody>\n"
-        gaps.each { |g| html << "<tr><td>#{h(g['id'])}</td><td>#{h(g['title'])}</td></tr>\n" }
+        gaps.each { |g| html << "<tr><td><span class=\"mono\">#{h(g['id'])}</span></td><td>#{h(g['title'])}</td></tr>\n" }
         html << "</tbody></table></section>\n"
       end
       html << "</main>\n"
