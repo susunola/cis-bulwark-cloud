@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://cdn.jsdelivr.net/gh/susunola/cis-tencentcloud@main/docs/logo-full.png" alt="cis-tencentcloud — SecX Series" width="640">
+  <img src="https://cdn.jsdelivr.net/gh/susunola/cis-tencentcloud@7734daf/docs/logo-full.png" alt="cis-tencentcloud — SecX Series" width="640">
 </p>
 
 <p align="center">
