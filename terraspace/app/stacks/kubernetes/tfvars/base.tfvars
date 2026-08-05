@@ -42,6 +42,6 @@ network_policy_version    = null
 manage_cluster_endpoint = true
 
 tags = {
-  "managed-by" = "cis-terraspace"
+  "managed-by" = "cis"
   "cis"        = "section-6"
 }

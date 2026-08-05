@@ -50,6 +50,6 @@ buckets = {}
 
 # Tags applied to buckets this stack manages (managed = true only).
 tags = {
-  "managed-by" = "cis-terraspace"
+  "managed-by" = "cis"
   "cis"        = "section-4"
 }

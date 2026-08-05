@@ -57,6 +57,6 @@ kms_key_id     = null
 kms_key_region = null
 
 tags = {
-  "managed-by" = "cis-terraspace"
+  "managed-by" = "cis"
   "cis"        = "section-5"
 }

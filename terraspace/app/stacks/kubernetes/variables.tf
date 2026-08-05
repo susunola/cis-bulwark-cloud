@@ -130,5 +130,5 @@ variable "cluster_internet_security_policies" {
 variable "tags" {
   description = "Tags applied to resources created by this stack."
   type        = map(string)
-  default     = { "managed-by" = "cis-terraspace" }
+  default     = { "managed-by" = "cis" }
 }
