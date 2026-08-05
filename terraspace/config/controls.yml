@@ -106,7 +106,7 @@ controls:
     stack: null
     tags: [password-policy]
   - id: "1.9"
-    title: "Ensure CAM password policy require at least one special character"
+    title: "Ensure CAM password policy requires at least one special character"
     assessment: Manual
     profile: "Level 1"
     enabled: true

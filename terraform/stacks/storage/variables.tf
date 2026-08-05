@@ -55,5 +55,5 @@ variable "buckets" {
 variable "tags" {
   description = "Tags applied to buckets this stack manages."
   type        = map(string)
-  default     = { "managed-by" = "cis-terraspace" }
+  default     = { "managed-by" = "cis" }
 }

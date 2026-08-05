@@ -141,5 +141,5 @@ variable "clb_egress" {
 variable "tags" {
   description = "Tags applied to resources created by this stack."
   type        = map(string)
-  default     = { "managed-by" = "cis-terraspace" }
+  default     = { "managed-by" = "cis" }
 }
