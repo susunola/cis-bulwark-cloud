@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# CIS Tencent Cloud Foundation Benchmark v1.0.0 hardening toolkit.
+# CIS Tencent Cloud Foundation Benchmark v1.0.0.
 #
 # This file is required from config/app.rb, which means everything here is
 # available both to Terraspace configuration (config.all.include_stacks) and to

@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# cis - CIS Tencent Cloud Foundation Benchmark v1.0.0 toolkit
+# cis - CIS Tencent Cloud Foundation Benchmark v1.0.0
 #
 #   cis list                        show the control registry and what is selected
 #   cis scan                        read-only assessment of the selected controls

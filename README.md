@@ -159,7 +159,7 @@ With `--format json`, all narration goes to **stderr**, so
 
 ### HTML reports
 
-The toolkit can emit self-contained HTML (inline CSS, no external assets) that
+`cis` can emit self-contained HTML (inline CSS, no external assets) that
 opens offline and prints cleanly to PDF — useful as an audit artifact.
 
 - **Compliance report** — `cis scan --format html` renders the same findings

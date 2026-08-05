@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Loading the toolkit here does two jobs at once:
+# Loading the project here does two jobs at once:
 #   1. it lets this file compute config.all.include_stacks, and
 #   2. it puts the Cis constant into the binding Terraspace uses to render the
 #      ERB inside app/stacks/*/tfvars/*.tfvars, which is how control-level

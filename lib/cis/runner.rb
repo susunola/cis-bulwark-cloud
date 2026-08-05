@@ -182,9 +182,9 @@ module Cis
       abort_with("could not write report to #{options[:output]}: #{e.message}")
     end
 
-    # `cis apply --report [PATH]` writes an HTML hardening report after the run.
-    # It is the artifact this toolkit was missing: a durable record of what was
-    # actually enforced, per stack, plus the controls Terraform could not touch.
+    # `cis apply --report [PATH]` writes an HTML hardening report after the run
+    # — a durable record of what was enforced, per stack, plus the controls
+    # Terraform could not touch.
     def emit_hardening_report(label, results)
       path = options[:report] == true ? default_report_path : options[:report].to_s
       payload = {

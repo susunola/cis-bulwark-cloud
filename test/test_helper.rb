@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Test harness for the CIS Tencent Cloud toolkit.
+# Test harness for the CIS Tencent Cloud Foundation Benchmark project.
 #
 #   ruby test/run.rb                # everything
 #   ruby test/selector_test.rb      # one file

@@ -15,7 +15,7 @@ class CatalogTest < CisTestCase
   AUTOMATED       = 25
   MANUAL_ASSESS   = 66
 
-  # What this toolkit claims it can do about them.
+  # What cis can do about them.
   REMEDIABLE      = 39
   DETECTABLE      = 20
   NOT_ACTIONABLE  = 43

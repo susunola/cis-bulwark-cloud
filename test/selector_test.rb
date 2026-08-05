@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 
-# Filtering is the first requirement of the toolkit: an operator must be able
+# Filtering is the first design requirement: an operator must be able
 # to say exactly which CIS items get hardened. These tests pin the semantics of
 # every flag and, more importantly, of their interaction.
 class SelectorTest < CisTestCase

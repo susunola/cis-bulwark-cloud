@@ -3,7 +3,7 @@
 require_relative "test_helper"
 
 # The registry and the Terraform code are two halves of one claim: "this
-# toolkit enforces control X". If they drift apart, `cis apply` reports success
+# cis enforces control X". If they drift apart, `cis apply` reports success
 # for a control nothing implements, which is the worst failure mode a
 # compliance tool has. These tests hold the two halves against each other.
 class WiringTest < CisTestCase
@@ -29,7 +29,7 @@ class WiringTest < CisTestCase
   def test_there_are_no_stray_stacks
     on_disk = Dir.children(File.join(Cis::ROOT, "app", "stacks")).sort
     assert_equal ALL_STACKS.sort, on_disk,
-                 "a stack on disk that the toolkit does not know about will never run"
+                 "a stack on disk that cis does not know about will never run"
   end
 
   def test_every_module_is_self_describing
