@@ -1,0 +1,43 @@
+name: CI
+
+# Dual-version gate: tests both Terraspace and plain Terraform variants.
+# Offline suite — no cloud, no credentials, every CLI path runs with --dry-run.
+# Terraform is not required because wiring_test self-skips the fmt assertion.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test-terraspace:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.1"
+
+      - name: Install minitest
+        run: gem install minitest -v 5.26.1
+
+      - name: Run suite
+        working-directory: terraspace
+        run: ruby test/run.rb
+
+  test-terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.1"
+
+      - name: Install minitest
+        run: gem install minitest -v 5.26.1
+
+      - name: Run suite
+        working-directory: terraform
+        run: ruby test/run.rb

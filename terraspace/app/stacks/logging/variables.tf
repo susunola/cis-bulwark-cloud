@@ -29,7 +29,7 @@ variable "cls_topic_id" {
     Reuse an existing CLS topic for the audit stream. Leave null to create one.
 
     Reusing a topic makes CIS 2.20 unreachable from here - the retention period
-    lives on the topic resource, and this toolkit will not import a topic it
+    lives on the topic resource, and the stack will not import a topic it
     does not own. The stack reports that in `unreachable_controls`.
   EOT
   type        = string

@@ -6,7 +6,7 @@
 # Scope note for 5.2. The provider has no standalone resource for the public
 # network endpoint; `internet_service` is an attribute of
 # tencentcloud_mysql_instance, and importing a whole production database into
-# this state file to flip one field is not a trade this toolkit makes. What is
+# this state file to flip one field is not a trade these stacks make. What is
 # enforced instead is the control that actually gates the traffic: a security
 # group that permits only private sources. Closing the WAN endpoint itself is
 # reported by `cis scan` and left to you:

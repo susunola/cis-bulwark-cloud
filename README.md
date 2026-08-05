@@ -10,7 +10,7 @@
 
 Scan and enforce the **CIS Tencent Cloud Foundation Benchmark v1.0.0** (91 controls
 across 9 sections). Read-only assessment, automated hardening, and HTML compliance
-reports — no external services, no agent install.
+reports — no external services, no daemon required. Two delivery formats in one repo.
 
 Two delivery formats so you can pick the shape that fits your workflow:
 

@@ -17,7 +17,7 @@ variable "cam_console_user_uins" {
       tccli cam ListUsers --filter-console 1
     or read cis scan output for 1.15 / 1.16, which already enumerates users.
 
-    Left empty the control is a no-op: this toolkit does not discover users and
+    Left empty the control is a no-op: these stacks do not discover users and
     silently mutate their login flow.
   EOT
   type        = list(number)

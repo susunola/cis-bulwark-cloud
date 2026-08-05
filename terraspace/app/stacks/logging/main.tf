@@ -159,7 +159,7 @@ module "cloudaudit_bucket" {
   region = var.region
   app_id = var.app_id
 
-  # The audit bucket usually predates this toolkit, so policy-only.
+  # The audit bucket usually predates this project, so policy-only.
   manage_bucket = false
   manage_policy = true
 

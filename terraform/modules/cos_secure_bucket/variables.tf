@@ -36,7 +36,7 @@ variable "manage_bucket" {
     false - the bucket already exists and is not in Terraform state; only the
             bucket policy is managed (4.1 partially, 4.4, 4.5). Enforcing
             encryption or logging on an unmanaged bucket would require
-            importing it, which this toolkit refuses to do implicitly.
+            importing it, which this module refuses to do implicitly.
   EOT
   type        = bool
   default     = false
