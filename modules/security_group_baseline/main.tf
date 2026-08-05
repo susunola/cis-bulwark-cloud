@@ -11,6 +11,7 @@
 locals {
   # --- stage 1: split the lite-rule strings ---------------------------------
   ingress_parts = [for raw in var.ingress : split("#", raw)]
+  egress_parts  = [for raw in var.egress : split("#", raw)]
 
   ingress_parsed = [
     for i, raw in var.ingress : {
@@ -19,6 +20,15 @@ locals {
       source    = trimspace(local.ingress_parts[i][1])
       port_spec = upper(trimspace(local.ingress_parts[i][2]))
       protocol  = upper(trimspace(local.ingress_parts[i][3]))
+    }
+  ]
+
+  egress_parsed = [
+    for i, raw in var.egress : {
+      action    = upper(trimspace(local.egress_parts[i][0]))
+      source    = trimspace(local.egress_parts[i][1])
+      port_spec = upper(trimspace(local.egress_parts[i][2]))
+      protocol  = upper(trimspace(local.egress_parts[i][3]))
     }
   ]
 
@@ -82,14 +92,61 @@ locals {
     }
     if length(local.ingress_violations[i]) > 0
   }
+
+  # --- stage 5: convert kept rules to tencentcloud_security_group_rule_set format
+  # Source may be an IPv4 CIDR, an IPv6 CIDR, or another security group id.
+  rule_set_ingress = [
+    for r in local.ingress_parsed : {
+      action             = r.action
+      protocol           = contains(["ALL", "ANY", "-1", ""], r.protocol) ? null : r.protocol
+      port               = contains(["ALL", "ANY", "-1", "", "0"], r.port_spec) ? null : r.port_spec
+      cidr_block         = can(regex("^sg-[0-9a-z]+$", r.source)) || can(regex(":", r.source)) ? null : r.source
+      ipv6_cidr_block    = can(regex(":", r.source)) && !can(regex("^sg-[0-9a-z]+$", r.source)) ? r.source : null
+      source_security_id = can(regex("^sg-[0-9a-z]+$", r.source)) ? r.source : null
+    }
+    if contains(local.ingress_kept, r.raw)
+  ]
+
+  rule_set_egress = [
+    for r in local.egress_parsed : {
+      action             = r.action
+      protocol           = contains(["ALL", "ANY", "-1", ""], r.protocol) ? null : r.protocol
+      port               = contains(["ALL", "ANY", "-1", "", "0"], r.port_spec) ? null : r.port_spec
+      cidr_block         = can(regex("^sg-[0-9a-z]+$", r.source)) || can(regex(":", r.source)) ? null : r.source
+      ipv6_cidr_block    = can(regex(":", r.source)) && !can(regex("^sg-[0-9a-z]+$", r.source)) ? r.source : null
+      source_security_id = can(regex("^sg-[0-9a-z]+$", r.source)) ? r.source : null
+    }
+  ]
 }
 
-resource "tencentcloud_security_group_lite_rule" "this" {
+resource "tencentcloud_security_group_rule_set" "this" {
   count = var.enforce ? 1 : 0
 
   security_group_id = var.security_group_id
-  ingress           = local.ingress_kept
-  egress            = var.egress
+
+  dynamic "ingress" {
+    for_each = local.rule_set_ingress
+    content {
+      action             = ingress.value.action
+      protocol           = ingress.value.protocol
+      port               = ingress.value.port
+      cidr_block         = ingress.value.cidr_block
+      ipv6_cidr_block    = ingress.value.ipv6_cidr_block
+      source_security_id = ingress.value.source_security_id
+    }
+  }
+
+  dynamic "egress" {
+    for_each = local.rule_set_egress
+    content {
+      action             = egress.value.action
+      protocol           = egress.value.protocol
+      port               = egress.value.port
+      cidr_block         = egress.value.cidr_block
+      ipv6_cidr_block    = egress.value.ipv6_cidr_block
+      source_security_id = egress.value.source_security_id
+    }
+  }
 
   lifecycle {
     precondition {

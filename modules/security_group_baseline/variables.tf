@@ -55,9 +55,12 @@ variable "egress" {
     has no egress recommendation that Terraform can enforce, so this list is
     passed through untouched - it exists so the authoritative write does not
     silently erase egress rules.
+
+    WARNING: this variable has no default. Callers must explicitly pass the
+    egress rules they want to keep, otherwise a missing value will error rather
+    than silently removing every egress rule from the security group.
   EOT
   type        = list(string)
-  default     = []
 
   validation {
     condition     = alltrue([for r in var.egress : length(split("#", r)) >= 4])
