@@ -15,4 +15,4 @@ max_port_range_span     = 100
 
 peering_next_types = ["PEERCONNECTION", "CCN", "DIRECTCONNECT", "VPN"]
 public_acls        = ["public-read", "public-read-write"]
-world_cidrs        = ["0.0.0.0/0", "0.0.0.0", "::/0", "0::0/0", "::0/0"]
+world_cidrs        = ["0.0.0.0/0", "::/0"]

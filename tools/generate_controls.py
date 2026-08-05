@@ -7,7 +7,7 @@ Two inputs are combined:
    profile). Produced by tools/extract_catalog.py. Never hand-edited.
 2. MAPPING below       - how each control maps onto the tencentcloud Terraform
    provider. Derived from `terraform providers schema -json` of
-   tencentcloudstack/tencentcloud v1.83.19 and hand-verified.
+   tencentcloudstack/tencentcloud ~> 1.81 and hand-verified.
 
 `remediate` / `detect` values:
     terraform  - a provider resource / data source really exists for this

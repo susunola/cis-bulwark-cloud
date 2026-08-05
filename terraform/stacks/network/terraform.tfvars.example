@@ -10,11 +10,11 @@ flow_log_targets       = {}
 
 security_groups        = {}
 max_port_range_span    = 100
-world_cidrs            = ["0.0.0.0/0", "0.0.0.0", "::/0", "0::0/0", "::0/0"]
+world_cidrs            = ["0.0.0.0/0", "::/0"]
 remote_access_ports    = [22, 23, 135, 139, 445, 1433, 3306, 3389, 5432, 5900, 6379, 27017]
 
 clb_instance_ids       = []
 clb_ingress            = ["ACCEPT#0.0.0.0/0#443#TCP", "ACCEPT#0.0.0.0/0#80#TCP"]
-clb_egress             = ["ACCEPT#0.0.0.0/0#ALL#ALL"]
+clb_egress             = []
 
 tags = { "managed-by" = "cis" }

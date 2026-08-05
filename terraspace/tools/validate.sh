@@ -28,6 +28,7 @@ cleanup() { [[ -n "${KEEP_WORKDIR:-}" ]] || rm -rf "$WORK"; }
 trap cleanup EXIT
 
 cp -R "$ROOT/app" "$WORK/app"
+cp -R "$ROOT/../modules" "$WORK/modules"
 
 # ERB templates are not HCL; terraform must never see them.
 find "$WORK/app" -type d -name tfvars -exec rm -rf {} + 2>/dev/null

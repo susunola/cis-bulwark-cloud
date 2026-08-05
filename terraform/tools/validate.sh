@@ -1,16 +1,9 @@
 #!/usr/bin/env bash
-# Static validation of every module and stack, without Terraspace and without
-# touching a cloud account.
+# Static validation of every module and stack, without touching a cloud account.
 #
-# Terraspace normally injects config/terraform/provider.tf into each built
-# stack, so a stack directory on its own has no required_providers block and
-# `terraform validate` would refuse to run. This script reproduces that build
-# step in a scratch copy:
-#
-#   1. copy app/ to a temp tree so the ../../modules/ paths keep resolving
-#   2. drop provider.tf into every stack and module
-#   3. remove the ERB tfvars, which are not valid HCL until rendered
-#   4. terraform init -backend=false && terraform validate
+# Each stack references shared modules with `source = "../../../modules/..."`.
+# We build a scratch tree that mirrors the project root so those relative paths
+# keep resolving, then run `terraform init -backend=false && terraform validate`.
 #
 # Usage:  tools/validate.sh [stack-or-module-name ...]
 
@@ -27,31 +20,26 @@ export TF_IN_AUTOMATION=1
 cleanup() { [[ -n "${KEEP_WORKDIR:-}" ]] || rm -rf "$WORK"; }
 trap cleanup EXIT
 
-cp -R "$ROOT/app" "$WORK/app"
+# Re-create the project-root-relative layout that module source paths expect.
+mkdir -p "$WORK/project/terraform"
+cp -R "$ROOT/stacks" "$WORK/project/terraform/stacks"
+cp -R "$ROOT/../modules" "$WORK/project/modules"
 
-# ERB templates are not HCL; terraform must never see them.
-find "$WORK/app" -type d -name tfvars -exec rm -rf {} + 2>/dev/null
+STACK_ROOT="$WORK/project/terraform/stacks"
+MODULE_ROOT="$WORK/project/modules"
 
 targets=()
 if [[ $# -gt 0 ]]; then
   for name in "$@"; do
-    for d in "$WORK/app/stacks/$name" "$WORK/app/modules/$name"; do
+    for d in "$STACK_ROOT/$name" "$MODULE_ROOT/$name"; do
       [[ -d "$d" ]] && targets+=("$d")
     done
   done
 else
-  for d in "$WORK"/app/modules/* "$WORK"/app/stacks/*; do
+  for d in "$MODULE_ROOT"/* "$STACK_ROOT"/*; do
     [[ -d "$d" ]] && targets+=("$d")
   done
 fi
-
-# Modules carry their own versions.tf; stacks get the shared provider block
-# that Terraspace would have copied in.
-for d in "${targets[@]}"; do
-  if [[ ! -f "$d/versions.tf" ]]; then
-    cp "$ROOT/config/terraform/provider.tf" "$d/provider.tf"
-  fi
-done
 
 failed=0
 for d in "${targets[@]}"; do

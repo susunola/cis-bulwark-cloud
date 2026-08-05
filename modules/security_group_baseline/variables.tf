@@ -86,9 +86,14 @@ variable "enforce" {
 }
 
 variable "world_cidrs" {
-  description = "Source values treated as 'the internet' by 3.1 / 3.5 / 3.6."
+  description = "Valid CIDRs treated as 'the internet' by 3.1 / 3.5 / 3.6."
   type        = list(string)
-  default     = ["0.0.0.0/0", "0.0.0.0", "::/0", "0::0/0", "::0/0"]
+  default     = ["0.0.0.0/0", "::/0"]
+
+  validation {
+    condition     = alltrue([for cidr in var.world_cidrs : can(cidrhost(cidr, 0))])
+    error_message = "Every world_cidrs entry must be a valid CIDR."
+  }
 }
 
 variable "remote_access_ports" {

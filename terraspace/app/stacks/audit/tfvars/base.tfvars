@@ -51,8 +51,5 @@ public_acls = [
 # --- shared: CIDRs treated as "the internet" -------------------------------
 world_cidrs = [
   "0.0.0.0/0",
-  "0.0.0.0",
   "::/0",
-  "0::0/0",
-  "::0/0",
 ]

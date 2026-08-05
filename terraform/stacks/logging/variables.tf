@@ -131,6 +131,11 @@ variable "audit_track_for_all_members" {
   description = "1 to record every member of the organisation, 0 for this account only."
   type        = number
   default     = 0
+
+  validation {
+    condition     = contains([0, 1], var.audit_track_for_all_members)
+    error_message = "audit_track_for_all_members must be 0 or 1."
+  }
 }
 
 # --- 2.2  the COS bucket behind CloudAudit --------------------------------
@@ -175,6 +180,15 @@ variable "edgeone_log_delivery" {
     cls_logset_region = optional(string)
   })
   default = null
+
+  validation {
+    condition = var.edgeone_log_delivery == null || (
+      contains(["domain", "application", "web-rateLimiting", "web-attack", "web-rule", "web-bot"], var.edgeone_log_delivery.log_type) &&
+      contains(["cls"], var.edgeone_log_delivery.task_type) &&
+      contains(["mainland", "overseas", "global"], var.edgeone_log_delivery.area)
+    )
+    error_message = "edgeone_log_delivery.log_type/task_type/area contains an unsupported value."
+  }
 }
 
 # --- 2.9 - 2.19  log monitoring and alerts --------------------------------
@@ -195,6 +209,18 @@ variable "alarm_notice_receivers" {
     end_time          = optional(string, "23:59:59")
   }))
   default = []
+
+  validation {
+    condition = alltrue([
+      for r in var.alarm_notice_receivers :
+      contains(["Uin", "Group"], r.receiver_type) &&
+      length(r.receiver_ids) > 0 &&
+      alltrue([for c in r.receiver_channels : contains(["Email", "Sms", "WeChat", "Phone"], c)]) &&
+      can(regex("^([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$", r.start_time)) &&
+      can(regex("^([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$", r.end_time))
+    ])
+    error_message = "alarm_notice_receivers entries must use receiver_type 'Uin' or 'Group', non-empty receiver_ids, receiver_channels from Email/Sms/WeChat/Phone, and start/end times in HH:MM:SS."
+  }
 }
 
 variable "alarm_overrides" {
@@ -221,24 +247,44 @@ variable "alarm_period_minutes" {
   description = "Minutes between repeat notifications while an alarm is firing."
   type        = number
   default     = 15
+
+  validation {
+    condition     = var.alarm_period_minutes > 0
+    error_message = "alarm_period_minutes must be greater than 0."
+  }
 }
 
 variable "alarm_monitor_period_minutes" {
   description = "How often CLS evaluates the alarm queries."
   type        = number
   default     = 15
+
+  validation {
+    condition     = var.alarm_monitor_period_minutes > 0
+    error_message = "alarm_monitor_period_minutes must be greater than 0."
+  }
 }
 
 variable "alarm_lookback_minutes" {
   description = "Size of the alarm search window in minutes. Should be >= monitor_period_minutes."
   type        = number
   default     = 15
+
+  validation {
+    condition     = var.alarm_lookback_minutes > 0
+    error_message = "alarm_lookback_minutes must be greater than 0."
+  }
 }
 
 variable "alarm_level" {
   description = "0 warning, 1 reminder, 2 urgent."
   type        = number
   default     = 1
+
+  validation {
+    condition     = contains([0, 1, 2], var.alarm_level)
+    error_message = "alarm_level must be 0, 1, or 2."
+  }
 }
 
 variable "tags" {

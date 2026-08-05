@@ -59,6 +59,18 @@ variable "notice_receivers" {
     end_time          = optional(string, "23:59:59")
   }))
   default = []
+
+  validation {
+    condition = alltrue([
+      for r in var.notice_receivers :
+      contains(["Uin", "Group"], r.receiver_type) &&
+      length(r.receiver_ids) > 0 &&
+      alltrue([for c in r.receiver_channels : contains(["Email", "Sms", "WeChat", "Phone"], c)]) &&
+      can(regex("^([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$", r.start_time)) &&
+      can(regex("^([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$", r.end_time))
+    ])
+    error_message = "notice_receivers entries must use receiver_type 'Uin' or 'Group', non-empty receiver_ids, receiver_channels from Email/Sms/WeChat/Phone, and start/end times in HH:MM:SS."
+  }
 }
 
 variable "notice_name" {

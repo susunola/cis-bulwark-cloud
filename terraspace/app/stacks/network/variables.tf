@@ -91,9 +91,14 @@ variable "security_groups" {
 }
 
 variable "world_cidrs" {
-  description = "Source values treated as 'the internet'."
+  description = "Valid CIDRs treated as 'the internet'."
   type        = list(string)
-  default     = ["0.0.0.0/0", "0.0.0.0", "::/0", "0::0/0", "::0/0"]
+  default     = ["0.0.0.0/0", "::/0"]
+
+  validation {
+    condition     = alltrue([for cidr in var.world_cidrs : can(cidrhost(cidr, 0))])
+    error_message = "Every world_cidrs entry must be a valid CIDR."
+  }
 }
 
 variable "remote_access_ports" {
@@ -133,9 +138,9 @@ variable "clb_ingress" {
 }
 
 variable "clb_egress" {
-  description = "Egress for the CLB edge security group."
+  description = "Egress for the CLB edge security group. Default is no outbound rules; declare least-privilege destinations explicitly."
   type        = list(string)
-  default     = ["ACCEPT#0.0.0.0/0#ALL#ALL"]
+  default     = []
 }
 
 variable "tags" {

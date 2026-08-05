@@ -189,6 +189,8 @@ resource "tencentcloud_teo_realtime_log_delivery" "edgeone" {
     topic_id       = coalesce(var.edgeone_log_delivery.cls_topic_id, local.topic_id)
     log_set_region = coalesce(var.edgeone_log_delivery.cls_logset_region, var.region)
   }
+
+  depends_on = [tencentcloud_cls_topic.audit]
 }
 
 # --- 2.9 - 2.19 log monitoring and alerts ----------------------------------

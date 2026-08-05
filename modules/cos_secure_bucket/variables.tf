@@ -49,13 +49,13 @@ variable "manage_policy" {
 }
 
 variable "acl" {
-  description = "ACL used when manage_bucket is true. CIS 4.1 requires a non-public value."
+  description = "ACL used when manage_bucket is true. CIS 4.1 requires private."
   type        = string
   default     = "private"
 
   validation {
-    condition     = contains(["private", "public-read", "public-read-write"], var.acl)
-    error_message = "acl must be private, public-read or public-read-write."
+    condition     = var.acl == "private"
+    error_message = "acl must be private."
   }
 }
 
@@ -94,9 +94,14 @@ variable "extra_policy_statements" {
 }
 
 variable "policy_override" {
-  description = "Raw JSON policy. When set, the generated policy is ignored entirely."
+  description = "Raw JSON policy. When set, the generated CIS policy is ignored entirely. Use with care: a malformed or overly permissive policy can reopen public access."
   type        = string
   default     = null
+
+  validation {
+    condition     = var.policy_override == null || can(jsondecode(var.policy_override))
+    error_message = "policy_override must be valid JSON."
+  }
 }
 
 variable "tags" {

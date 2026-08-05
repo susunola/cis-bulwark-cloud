@@ -43,6 +43,14 @@ variable "mysql_instances" {
     condition     = alltrue([for id, _ in var.mysql_instances : can(regex("^cdb-[0-9a-z]+$", id))])
     error_message = "keys of mysql_instances must be TencentDB instance ids like 'cdb-abcd1234'."
   }
+
+  validation {
+    condition = alltrue([
+      for _, v in var.mysql_instances :
+      v.audit_log_expire_day == null || contains([7, 30, 90, 180, 365, 1095, 1825], v.audit_log_expire_day)
+    ])
+    error_message = "mysql_instances[*].audit_log_expire_day must be one of 7, 30, 90, 180, 365, 1095, 1825."
+  }
 }
 
 # --- 5.2  private access only ----------------------------------------------
@@ -80,6 +88,16 @@ variable "db_security_group" {
   validation {
     condition     = !var.db_security_group.create || length(var.db_security_group.allowed_cidrs) > 0
     error_message = "db_security_group.create is true but allowed_cidrs is empty; that would lock every client out."
+  }
+
+  validation {
+    condition     = alltrue([for cidr in var.db_security_group.allowed_cidrs : can(cidrhost(cidr, 0))])
+    error_message = "db_security_group.allowed_cidrs must contain valid IPv4 CIDR blocks."
+  }
+
+  validation {
+    condition     = var.db_security_group.port >= 1 && var.db_security_group.port <= 65535
+    error_message = "db_security_group.port must be between 1 and 65535."
   }
 }
 

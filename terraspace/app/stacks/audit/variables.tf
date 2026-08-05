@@ -57,9 +57,14 @@ variable "peering_next_types" {
 }
 
 variable "world_cidrs" {
-  description = "CIDRs treated as 'the internet' when reading security group rules."
+  description = "Valid CIDRs treated as 'the internet' when reading security group rules."
   type        = list(string)
-  default     = ["0.0.0.0/0", "0.0.0.0", "::/0", "0::0/0", "::0/0"]
+  default     = ["0.0.0.0/0", "::/0"]
+
+  validation {
+    condition     = alltrue([for cidr in var.world_cidrs : can(cidrhost(cidr, 0))])
+    error_message = "Every world_cidrs entry must be a valid CIDR."
+  }
 }
 
 variable "remote_access_ports" {
