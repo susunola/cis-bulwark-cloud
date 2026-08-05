@@ -34,6 +34,21 @@ variable "mfa_login_flag" {
   default = {}
 
   validation {
+    condition     = contains([0, 1], var.mfa_login_flag.phone)
+    error_message = "mfa_login_flag.phone must be 0 or 1."
+  }
+
+  validation {
+    condition     = contains([0, 1], var.mfa_login_flag.stoken)
+    error_message = "mfa_login_flag.stoken must be 0 or 1."
+  }
+
+  validation {
+    condition     = contains([0, 1], var.mfa_login_flag.wechat)
+    error_message = "mfa_login_flag.wechat must be 0 or 1."
+  }
+
+  validation {
     condition     = (var.mfa_login_flag.phone + var.mfa_login_flag.stoken + var.mfa_login_flag.wechat) > 0
     error_message = "mfa_login_flag must enable at least one factor, otherwise CIS 1.4 is not satisfied."
   }
@@ -47,6 +62,21 @@ variable "mfa_action_flag" {
     wechat = optional(number, 0)
   })
   default = {}
+
+  validation {
+    condition     = contains([0, 1], var.mfa_action_flag.phone)
+    error_message = "mfa_action_flag.phone must be 0 or 1."
+  }
+
+  validation {
+    condition     = contains([0, 1], var.mfa_action_flag.stoken)
+    error_message = "mfa_action_flag.stoken must be 0 or 1."
+  }
+
+  validation {
+    condition     = contains([0, 1], var.mfa_action_flag.wechat)
+    error_message = "mfa_action_flag.wechat must be 0 or 1."
+  }
 
   validation {
     condition     = (var.mfa_action_flag.phone + var.mfa_action_flag.stoken + var.mfa_action_flag.wechat) > 0

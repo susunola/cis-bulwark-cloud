@@ -82,20 +82,18 @@ locals {
       ports     = length(r.parts) > 2 ? upper(r.parts[2]) : "ALL"
       segments  = split(",", length(r.parts) > 2 ? r.parts[2] : "ALL")
       all_ports = contains(["ALL", "", "-1", "0"], length(r.parts) > 2 ? upper(r.parts[2]) : "ALL")
+      tcp_like  = contains(["ALL", "ANY", "-1", "TCP"], length(r.parts) > 3 ? upper(r.parts[3]) : "ALL")
     }
     if length(r.parts) > 1 && upper(r.parts[0]) == "ACCEPT" && contains(var.world_cidrs, r.parts[1])
   ]
 
-  # 3.5 / 3.6 - a specific port reachable from the internet.
-  remote_access_ports = {
-    "3.5" = 22
-    "3.6" = 3389
-  }
+  # CIS 3.1 - ports considered remote administration.
+  remote_access_ports = var.remote_access_ports
 
   sg_open_on_port = {
-    for cid, port in local.remote_access_ports : cid => distinct([
+    for cid, port in { "3.5" = 22, "3.6" = 3389 } : cid => distinct([
       for r in local.sg_internet_rules : "${r.sg_id}(${r.name}) ${r.raw}"
-      if r.all_ports || anytrue([
+      if r.tcp_like && (r.all_ports || anytrue([
         for seg in r.segments :
         can(regex("^[0-9]+$", seg))
         ? tonumber(seg) == port
@@ -104,12 +102,31 @@ locals {
           ? (tonumber(split("-", seg)[0]) <= port && port <= tonumber(split("-", seg)[1]))
           : false
         )
-      ])
+      ]))
     ])
   }
 
-  # 3.1 - remote access in general.
-  sg_remote_access = distinct(concat(local.sg_open_on_port["3.5"], local.sg_open_on_port["3.6"]))
+  # 3.1 - any configured remote administration port reachable from the internet.
+  sg_remote_access = distinct(concat(
+    local.sg_open_on_port["3.5"],
+    local.sg_open_on_port["3.6"],
+    [
+      for r in local.sg_internet_rules : "${r.sg_id}(${r.name}) ${r.raw}"
+      if r.tcp_like && anytrue([
+        for port in local.remote_access_ports :
+        anytrue([
+          for seg in r.segments :
+          can(regex("^[0-9]+$", seg))
+          ? tonumber(seg) == port
+          : (
+            can(regex("^[0-9]+-[0-9]+$", seg))
+            ? (tonumber(split("-", seg)[0]) <= port && port <= tonumber(split("-", seg)[1]))
+            : false
+          )
+        ])
+      ])
+    ]
+  ))
 
   # 3.4 - "fine grained" means: not all ports, not all protocols, and no port
   # range wider than var.max_port_range_span.
@@ -237,7 +254,7 @@ locals {
     }
     "3.1" = {
       bad   = local.sg_remote_access
-      ok    = "${length(local.security_groups)} security group(s), no internet-facing 22/3389"
+      ok    = "${length(local.security_groups)} security group(s), no internet-facing remote administration ports"
       label = "remote access reachable from the internet"
     }
     "3.3" = {

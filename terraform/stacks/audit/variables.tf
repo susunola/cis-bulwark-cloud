@@ -61,3 +61,9 @@ variable "world_cidrs" {
   type        = list(string)
   default     = ["0.0.0.0/0", "0.0.0.0", "::/0", "0::0/0", "::0/0"]
 }
+
+variable "remote_access_ports" {
+  description = "CIS 3.1 - ports considered remote administration."
+  type        = list(number)
+  default     = [22, 23, 135, 139, 445, 1433, 3306, 3389, 5432, 5900, 6379, 27017]
+}
