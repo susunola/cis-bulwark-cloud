@@ -154,7 +154,7 @@ variable "edgeone_log_delivery" {
 
     zone_id     : EdgeOne zone
     entity_list : sites / L4 proxy ids the task covers
-    log_type    : "domain" | "application" | "web-rateLiming" | "web-attack" | "web-rule" | "web-bot"
+    log_type    : "domain" | "application" | "web-rateLimiting" | "web-attack" | "web-rule" | "web-bot"
     task_type   : "cls" for delivery into Cloud Log Service
     area        : "mainland" | "overseas" | "global"
   EOT
@@ -229,6 +229,12 @@ variable "alarm_monitor_period_minutes" {
   default     = 15
 }
 
+variable "alarm_lookback_minutes" {
+  description = "Size of the alarm search window in minutes. Should be >= monitor_period_minutes."
+  type        = number
+  default     = 15
+}
+
 variable "alarm_level" {
   description = "0 warning, 1 reminder, 2 urgent."
   type        = number
@@ -238,5 +244,5 @@ variable "alarm_level" {
 variable "tags" {
   description = "Tags applied to resources created by this stack."
   type        = map(string)
-  default     = { "managed-by" = "cis-terraspace" }
+  default     = { "managed-by" = "cis" }
 }
