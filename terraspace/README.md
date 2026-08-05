@@ -97,7 +97,7 @@ ruby bin/cis apply --tag cos --report                # enforce + HTML record
 ```
 bin/cis                     CLI entry point
 config/
-  controls.yml              Control registry — 91 entries, source of truth
+  controls.yml              Control registry — 91 entries, source of truth (symlink to ../config/controls.yml)
   app.rb                    Terraspace config; computes include_stacks from filters
   terraform/provider.tf     Provider pin, injected into every stack
   terraform/backend.tf      State backend
@@ -109,11 +109,13 @@ app/
   stacks/storage/            |
   stacks/database/           |
   stacks/kubernetes/        /
-  modules/                  security_group_baseline, cos_secure_bucket, cls_audit_alarm
-lib/cis/                    catalog, selector, runner, reporter
-test/                       141 tests, 1569 assertions — no cloud, no credentials
+lib/cis/
+  runner.rb                 Terraspace-specific runner
+  catalog.rb, selector.rb, reporter.rb, control.rb   shared via symlink
+modules/                    security_group_baseline, cos_secure_bucket, cls_audit_alarm (symlink to ../modules)
+test/                       141 tests — no cloud, no credentials
 tools/
-  generate_controls.py      Generate controls.yml from the CIS benchmark PDF
+  generate_controls.py      Generate controls.yml from the CIS benchmark PDF (symlink to ../tools/generate_controls.py)
   validate.sh               terraform init+validate every stack/module offline
 ```
 

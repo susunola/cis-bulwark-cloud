@@ -51,12 +51,12 @@ terraform/
 │   ├── storage/          ← CIS Section 4 (COS)
 │   ├── database/         ← CIS Section 5 (TencentDB)
 │   └── kubernetes/       ← CIS Section 6 (TKE)
-├── modules/              ← Reusable modules
-├── lib/cis/              ← Ruby CLI + report engine
+├── modules/              ← Reusable modules (symlink to ../modules)
+├── lib/cis/              ← Ruby CLI + report engine (shared via symlink)
 ├── bin/cis               ← Entry point
-├── config/controls.yml   ← Control registry
+├── config/controls.yml   ← Control registry (symlink to ../config/controls.yml)
 ├── test/                 ← Offline test suite (no credentials)
-└── tools/                ← Catalog extraction scripts
+└── tools/                ← Catalog extraction scripts (shared via symlink)
 ```
 
 ## Differences from the Terraspace version

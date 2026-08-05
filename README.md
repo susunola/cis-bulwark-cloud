@@ -11,7 +11,7 @@ Two variants are provided in the same repository:
 | State backend | `config/terraform/backend.tf` | `stacks/<name>/backend.tf` |
 | Entry point | `terraspace/bin/cis` | `terraform/bin/cis` |
 
-Both share `config/controls.yml`, the modules under `modules/` / `app/modules/`, the CLI flags, and the HTML report format.
+Both share `config/controls.yml`, the modules under `modules/`, the CLI code under `lib/cis/`, and the HTML report format.
 
 ## Quick start
 
@@ -44,17 +44,19 @@ bin/cis apply --report hardening.html
 
 ```
 cis-tencentcloud/
+├── modules/             # Reusable Terraform modules
+├── lib/cis/             # Shared Ruby CLI code (runner varies by variant)
+├── config/              # Shared control registry
+├── tools/               # Shared catalog + generator
 ├── terraspace/          # Terraspace variant
 │   ├── app/stacks/      # 6 hardening stacks + audit
-│   ├── app/modules/     # Reusable Terraform modules
-│   ├── lib/cis/         # Ruby CLI + reporter
+│   ├── lib/cis/runner.rb
 │   ├── bin/cis          # Entry point
 │   └── test/            # Offline tests
 │
 ├── terraform/           # Plain Terraform variant
 │   ├── stacks/          # Self-contained root modules
-│   ├── modules/         # Reusable Terraform modules
-│   ├── lib/cis/         # Ruby CLI + reporter
+│   ├── lib/cis/runner.rb
 │   ├── bin/cis          # Entry point
 │   └── test/            # Offline tests
 │
