@@ -29,7 +29,7 @@ module CisTest
   end
 
   def module_path(mod, *parts)
-    File.join(ROOT, "modules", mod, *parts)
+    File.join(File.dirname(ROOT), "modules", mod, *parts)
   end
 
   def with_env(vars = {})

@@ -55,7 +55,7 @@ resource "tencentcloud_vpc_flow_log" "this" {
 
 # --- 3.1 / 3.4 / 3.5 / 3.6 security group rule baseline --------------------
 module "security_group" {
-  source   = "../../modules/security_group_baseline"
+  source   = "../../../modules/security_group_baseline"
   for_each = local.sg_set
 
   security_group_id   = each.value.security_group_id
@@ -79,7 +79,7 @@ resource "tencentcloud_security_group" "clb_edge" {
 }
 
 module "clb_edge_rules" {
-  source = "../../modules/security_group_baseline"
+  source = "../../../modules/security_group_baseline"
   count  = local.clb_wanted ? 1 : 0
 
   security_group_id = tencentcloud_security_group.clb_edge[0].id

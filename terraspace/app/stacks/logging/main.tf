@@ -152,7 +152,7 @@ resource "tencentcloud_audit_track" "this" {
 
 # --- 2.2 Ensure the CloudAudit COS bucket is not publicly accessible -------
 module "cloudaudit_bucket" {
-  source = "../../modules/cos_secure_bucket"
+  source = "../../../modules/cos_secure_bucket"
   count  = local.on["2.2"] && var.cloudaudit_cos_bucket != null ? 1 : 0
 
   bucket = var.cloudaudit_cos_bucket
@@ -191,7 +191,7 @@ resource "tencentcloud_teo_realtime_log_delivery" "edgeone" {
 
 # --- 2.9 - 2.19 log monitoring and alerts ----------------------------------
 module "alarms" {
-  source = "../../modules/cls_audit_alarm"
+  source = "../../../modules/cls_audit_alarm"
   count  = local.alarms_wanted ? 1 : 0
 
   logset_id = local.logset_id

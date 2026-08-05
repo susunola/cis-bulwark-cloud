@@ -37,7 +37,7 @@ module CisTest
   end
 
   def module_path(mod, *parts)
-    File.join(ROOT, "app", "modules", mod, *parts)
+    File.join(File.dirname(ROOT), "modules", mod, *parts)
   end
 
   # Swap in an explicit CIS_* environment for the duration of the block.

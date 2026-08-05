@@ -118,7 +118,7 @@ resource "tencentcloud_security_group" "db" {
 }
 
 module "db_security_group" {
-  source = "../../modules/security_group_baseline"
+  source = "../../../modules/security_group_baseline"
   count  = local.create_sg ? 1 : 0
 
   security_group_id = tencentcloud_security_group.db[0].id
