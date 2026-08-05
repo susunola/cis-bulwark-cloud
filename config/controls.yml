@@ -32,7 +32,8 @@ sections:
 controls:
 
   # === 1 Identity and Access Management ===
-  # CAM password policy (1.7-1.14) has no Terraform resource - reported as MANUAL.
+  # CAM password policy (1.7-1.11, 1.13) has no Terraform resource - reported as MANUAL.
+  # 1.12 (prevent password reuse) and 1.14 (account lockout) are classified as Automated.
   - id: "1.1"
     title: "Avoid the use of the \"root\" account"
     assessment: Manual
@@ -115,7 +116,7 @@ controls:
     stack: null
     tags: [password-policy]
   - id: "1.10"
-    title: "Ensure CAM password policy require at least one digit"
+    title: "Ensure CAM password policy requires at least one digit"
     assessment: Manual
     profile: "Level 1"
     enabled: true
@@ -555,7 +556,7 @@ controls:
     stack: database
     tags: [mysql, tde, encryption]
   - id: "5.6"
-    title: "Ensure the TDE (Transparent Data Encryption) protector of theTencentDB for MySQL instance uses BYOK (Bring Your Own Key) encryption"
+    title: "Ensure the TDE (Transparent Data Encryption) protector of the TencentDB for MySQL instance uses BYOK (Bring Your Own Key) encryption"
     assessment: Automated
     profile: "Level 2"
     enabled: true

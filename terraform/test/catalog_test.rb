@@ -53,8 +53,8 @@ class CatalogTest < CisTestCase
 
   def test_controls_are_sorted_numerically_not_lexically
     # "3.10" must land after "3.9"; a string sort would put it before "3.2".
-    section3 = catalog.controls.select { |c| c.section == "2" }.map(&:id)
-    assert_equal section3.sort_by { |id| id.split(".").map(&:to_i) }, section3
+    section2 = catalog.controls.select { |c| c.section == "2" }.map(&:id)
+    assert_equal section2.sort_by { |id| id.split(".").map(&:to_i) }, section2
     assert_operator catalog.ids.index("2.20"), :>, catalog.ids.index("2.9"),
                     "2.20 sorted before 2.9 - sort_key is doing a string compare"
   end

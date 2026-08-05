@@ -55,8 +55,6 @@ module Cis
                     font-size:.8rem; font-weight:600; transition:all .15s; }
       .filter-btn:hover { border-color:var(--primary); color:var(--primary); }
       .filter-btn.active { background:var(--primary); border-color:var(--primary); color:#fff; }
-      .filter-btn[data-status="ENFORCED"] { }
-      .filter-btn[data-status="NOT"] { }
       /* ---- statistic cards ---- */
       .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin:1.25rem 0 1.5rem; }
       .stat { background:var(--card); border:1px solid var(--line); border-radius:12px;

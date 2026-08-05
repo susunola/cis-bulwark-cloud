@@ -80,7 +80,7 @@
     {
       "id": "1.10",
       "section": "1",
-      "title": "Ensure CAM password policy require at least one digit",
+      "title": "Ensure CAM password policy requires at least one digit",
       "assessment": "Manual",
       "profile": "Level 1"
     },
@@ -416,7 +416,7 @@
     {
       "id": "5.6",
       "section": "5",
-      "title": "Ensure the TDE (Transparent Data Encryption) protector of theTencentDB for MySQL instance uses BYOK (Bring Your Own Key) encryption",
+      "title": "Ensure the TDE (Transparent Data Encryption) protector of the TencentDB for MySQL instance uses BYOK (Bring Your Own Key) encryption",
       "assessment": "Automated",
       "profile": "Level 2"
     },

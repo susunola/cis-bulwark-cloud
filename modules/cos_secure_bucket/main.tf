@@ -31,21 +31,21 @@ locals {
 
   # ---- 4.5 / 4.1: nothing anonymous, ever -------------------------------
   deny_anonymous = {
-    Principal = { qcs = ["qcs::cam::anyone:anyone"] }
-    Effect    = "Deny"
-    Action    = ["name/cos:*"]
-    Resource  = [local.resource_arn]
+    principal = { qcs = ["qcs::cam::anyone:anyone"] }
+    effect    = "Deny"
+    action    = ["name/cos:*"]
+    resource  = [local.resource_arn]
   }
 
   # ---- 4.4: 'Secure transfer required' ----------------------------------
   deny_insecure_transport = {
-    Principal = { qcs = ["qcs::cam::anyone:anyone"] }
-    Effect    = "Deny"
-    Action    = ["name/cos:*"]
-    Resource  = [local.resource_arn]
-    Condition = {
-      bool = {
-        "qcs:secure_transport" = "false"
+    principal = { qcs = ["qcs::cam::anyone:anyone"] }
+    effect    = "Deny"
+    action    = ["name/cos:*"]
+    resource  = [local.resource_arn]
+    condition = {
+      bool_equal = {
+        "cos:secure-transport" = "false"
       }
     }
   }
