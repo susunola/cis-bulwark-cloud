@@ -1,0 +1,19 @@
+# Stack: iam — CIS section 1.
+#
+# Copy to terraform.tfvars and fill in your values.
+
+# CIS 1.4 — CAM sub-users holding a console password.
+#   tccli cam ListUsers --filter-console 1 --output json | jq '.Data[].Uin'
+cam_console_user_uins = []
+
+mfa_login_flag = {
+  phone  = 0
+  stoken = 1
+  wechat = 0
+}
+
+mfa_action_flag = {
+  phone  = 0
+  stoken = 1
+  wechat = 0
+}

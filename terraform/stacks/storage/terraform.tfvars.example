@@ -1,0 +1,13 @@
+# Stack: storage — CIS section 4.
+#
+# Copy to terraform.tfvars and fill in your values.
+
+region = "ap-guangzhou"
+app_id = null
+
+buckets = {}
+
+tags = {
+  "managed-by" = "cis"
+  "cis"        = "section-4"
+}

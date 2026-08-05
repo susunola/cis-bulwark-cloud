@@ -1,0 +1,19 @@
+# Stack: database — CIS section 5 (TencentDB for MySQL).
+#
+# Copy to terraform.tfvars and fill in your values.
+
+region = "ap-guangzhou"
+
+mysql_instances             = {}
+default_security_group_ids  = []
+db_security_group = { create = false }
+wan_endpoint_reviewed       = false
+audit_all                   = true
+audit_log_expire_day        = 365
+kms_key_id                  = null
+kms_key_region              = null
+
+tags = {
+  "managed-by" = "cis"
+  "cis"        = "section-5"
+}

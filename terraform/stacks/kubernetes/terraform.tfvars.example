@@ -1,0 +1,17 @@
+# Stack: kubernetes — CIS section 6 (TKE).
+#
+# Copy to terraform.tfvars and fill in your values.
+
+region = "ap-guangzhou"
+
+clusters                       = {}
+prometheus_instance_id         = null
+monitor_enable_external        = false
+network_policy_addon_name      = "NetworkPolicy"
+network_policy_version         = null
+manage_cluster_endpoint        = true
+
+tags = {
+  "managed-by" = "cis"
+  "cis"        = "section-6"
+}

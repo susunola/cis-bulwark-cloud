@@ -1,0 +1,18 @@
+# Stack: audit — read-only assessment.
+#
+# Copy to terraform.tfvars and fill in your values.
+# enabled_controls is managed by `bin/cis` and passed via -var.
+
+region = "ap-guangzhou"
+
+admin_policy_names = [
+  "AdministratorAccess",
+  "QcloudResourceFullAccess",
+]
+
+cls_min_retention_days = 365
+max_port_range_span     = 100
+
+peering_next_types = ["PEERCONNECTION", "CCN", "DIRECTCONNECT", "VPN"]
+public_acls        = ["public-read", "public-read-write"]
+world_cidrs        = ["0.0.0.0/0", "0.0.0.0", "::/0", "0::0/0", "::0/0"]
