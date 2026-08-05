@@ -37,6 +37,26 @@ module Cis
       }
       header.hero h1 { color:#fff; margin:0 0 .35rem; font-size:1.6rem; letter-spacing:.01em; }
       header.hero .meta { color:rgba(255,255,255,.82); font-size:.85rem; margin:.15rem 0; }
+      /* ---- account bar (UIN / name / region) ---- */
+      .acct { display:flex; flex-wrap:wrap; gap:.5rem 1.4rem; margin-top:.9rem; }
+      .acct .kv { display:flex; flex-direction:column; line-height:1.3; }
+      .acct .k { font-size:.66rem; letter-spacing:.08em; text-transform:uppercase;
+                 color:rgba(255,255,255,.7); }
+      .acct .v { font-size:.95rem; font-weight:600; color:#fff;
+                 font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+      /* ---- filter bar ---- */
+      .filters { display:flex; flex-wrap:wrap; align-items:center; gap:.55rem;
+                 margin:1.25rem 0 .5rem; }
+      .filters #q { flex:1 1 240px; min-width:200px; padding:.55rem .8rem; font-size:.9rem;
+                    border:1px solid var(--line); border-radius:9px; background:var(--card);
+                    color:var(--ink); }
+      .filter-btn { cursor:pointer; border:1px solid var(--line); background:var(--card);
+                    color:var(--muted); padding:.45rem .85rem; border-radius:999px;
+                    font-size:.8rem; font-weight:600; transition:all .15s; }
+      .filter-btn:hover { border-color:var(--primary); color:var(--primary); }
+      .filter-btn.active { background:var(--primary); border-color:var(--primary); color:#fff; }
+      .filter-btn[data-status="ENFORCED"] { }
+      .filter-btn[data-status="NOT"] { }
       /* ---- statistic cards ---- */
       .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin:1.25rem 0 1.5rem; }
       .stat { background:var(--card); border:1px solid var(--line); border-radius:12px;
@@ -107,11 +127,11 @@ module Cis
 
     # ---- `cis scan` -------------------------------------------------------
 
-    def scan(findings, selector, format: "table")
+    def scan(findings, selector, format: "table", account: nil)
       body = case format
              when "json"     then JSON.pretty_generate(scan_payload(findings, selector))
              when "markdown" then scan_markdown(findings)
-             when "html"     then scan_html(findings, selector)
+             when "html"     then scan_html(findings, selector, account: account)
              else                 scan_table(findings)
              end
       @io.puts body
@@ -161,6 +181,71 @@ module Cis
     def badge(status)
       cls = status.to_s.downcase
       "<span class=\"badge #{cls}\">#{h(status)}</span>"
+    end
+
+    # Account header: UIN, account name, app id, region. Returns "" when there
+    # is nothing to show, so reports that cannot resolve an account stay clean.
+    def account_bar(account)
+      acct = (account || {}).reject { |_, v| v.nil? || v.to_s.empty? }
+      return "" if acct.empty?
+      fields = []
+      fields << ["UIN", acct["uin"]]          if acct["uin"]
+      fields << ["Account name", acct["name"]] if acct["name"]
+      fields << ["APP ID", acct["app_id"]]     if acct["app_id"]
+      fields << ["Region", acct["region"]]     if acct["region"]
+      items = fields.map do |k, v|
+        "<div class=\"kv\"><span class=\"k\">#{h(k)}</span><span class=\"v\">#{h(v)}</span></div>"
+      end.join
+      "<div class=\"acct\">#{items}</div>\n"
+    end
+
+    # Filter bar above the findings tables. "Enforced" = PASS, "Not enforced" =
+    # everything else. Filtering is client-side, so the file stays self-contained.
+    def filter_bar
+      buttons = [
+        ["ALL",      "All"],
+        ["ENFORCED", "Enforced"],
+        ["NOT",      "Not enforced"],
+        ["FAIL",     "FAIL"],
+        ["MANUAL",   "MANUAL"],
+        ["SKIPPED",  "SKIPPED"]
+      ].map do |status, label|
+        cls = status == "ALL" ? "filter-btn active" : "filter-btn"
+        "<button class=\"#{cls}\" data-status=\"#{status}\" onclick=\"setFilter(this)\">#{label}</button>"
+      end.join
+      "<div class=\"filters\">" \
+      "<input id=\"q\" type=\"search\" placeholder=\"Search by ID or title…\" oninput=\"applyFilter()\">" \
+      "#{buttons}</div>\n"
+    end
+
+    def filter_script
+      <<~JS
+        <script>
+        function setFilter(btn){
+          document.querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('active');});
+          btn.classList.add('active');
+          applyFilter();
+        }
+        function applyFilter(){
+          var q = (document.getElementById('q').value||'').trim().toLowerCase();
+          var st = document.querySelector('.filter-btn.active').getAttribute('data-status');
+          document.querySelectorAll('tbody tr[data-status]').forEach(function(tr){
+            var s = tr.getAttribute('data-status');
+            var okS = st==='ALL' || (st==='ENFORCED' && s==='PASS') ||
+                      (st==='NOT' && s!=='PASS') || st===s;
+            var txt = (tr.getAttribute('data-search')||'').toLowerCase();
+            var okT = q==='' || txt.indexOf(q) !== -1;
+            tr.style.display = (okS && okT) ? '' : 'none';
+          });
+          document.querySelectorAll('section.card').forEach(function(sec){
+            var rows = sec.querySelectorAll('tbody tr[data-status]');
+            if (rows.length === 0) return;
+            var visible = Array.prototype.filter.call(rows, function(r){return r.style.display !== 'none';});
+            sec.style.display = visible.length === 0 ? 'none' : '';
+          });
+        }
+        </script>
+      JS
     end
 
     def capability(control)
@@ -291,27 +376,35 @@ module Cis
       @io.puts STATUS_ORDER.map { |s| "**#{s}** #{t[s]}" }.join(" / ")
     end
 
-    def scan_html(findings, selector)
+    def scan_html(findings, selector, account: nil)
       t = tally(findings)
       sections = findings.group_by { |f| f["id"].to_s.split(".").first }
       catalog = Cis.catalog
       html = +"" << doctype << head("CIS Tencent Cloud — Scan Report")
       html << "<header class=\"hero\"><h1>Scan Report</h1>\n"
       html << "<p class=\"meta\">#{h(catalog.benchmark)} #{h(catalog.version)} · " \
-              "generated #{h(Time.now.utc.strftime('%Y-%m-%d %H:%M UTC'))}</p></header>\n"
+              "generated #{h(Time.now.utc.strftime('%Y-%m-%d %H:%M UTC'))}</p>\n"
+      html << account_bar(account)
+      html << "</header>\n"
       html << summary_bar(t)
+      html << filter_bar
       html << "<main>\n"
+      # "enforced" = PASS, everything else is "not enforced".
       sections.sort_by { |s, _| s.to_i }.each do |sec, rows|
         html << "<section class=\"card\"><h2>#{h(sec)} #{h(catalog.section_title(sec))}</h2>\n"
         html << "<table><thead><tr><th>Status</th><th>ID</th><th>Title</th>" \
                 "<th>Evidence</th></tr></thead><tbody>\n"
         sorted(rows).each do |f|
-          html << "<tr><td>#{badge(f['status'])}</td><td><span class=\"mono\">#{h(f['id'])}</span></td>" \
+          s = h(f["status"])
+          search = h("#{f['id']} #{f['title']}".downcase)
+          html << "<tr data-status=\"#{s}\" data-search=\"#{search}\">" \
+                  "<td>#{badge(f['status'])}</td><td><span class=\"mono\">#{h(f['id'])}</span></td>" \
                   "<td>#{h(f['title'])}</td><td>#{h(f['evidence'])}</td></tr>\n"
         end
         html << "</tbody></table></section>\n"
       end
       html << "</main>\n"
+      html << filter_script
       html << "<footer>Generated by cis — CIS Tencent Cloud Foundation Benchmark toolkit.</footer>\n"
       html << "</body>\n</html>\n"
       html
@@ -325,6 +418,7 @@ module Cis
       html << "<header class=\"hero\"><h1>Hardening Report</h1>\n"
       html << "<p class=\"meta\">action: #{h(payload[:label])} · " \
               "generated #{h(payload[:generated_at])}</p>\n"
+      html << account_bar(payload[:account])
       if s.any?
         html << "<p class=\"meta\">Selection: #{s['selected']}/#{s['of']} controls " \
                 "(remediable #{s['remediable']}, detectable #{s['detectable']}, " \

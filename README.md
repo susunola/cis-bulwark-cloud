@@ -163,15 +163,23 @@ The toolkit can emit self-contained HTML (inline CSS, no external assets) that
 opens offline and prints cleanly to PDF — useful as an audit artifact.
 
 - **Compliance report** — `cis scan --format html` renders the same findings
-  the table shows, grouped by section with colour-coded status badges. Pair it
-  with `-o` to save a file:
+  the table shows, grouped by section with colour-coded status badges. The
+  header names the **account** (UIN, account name, app id, region) — read live
+  from the `audit` stack's `cis_account` output, or supplied via the
+  `CIS_UIN` / `CIS_ACCOUNT_NAME` / `CIS_APP_ID` / `TENCENTCLOUD_REGION`
+  environment variables when the report is generated out of band. Below the
+  summary there is a **filter bar**: a free-text search plus buttons to show
+  *Enforced* (status = PASS), *Not enforced* (everything else), or any single
+  status. Pair it with `-o` to save a file:
 
   ```bash
   cis scan --section 4 --format html --output report.html
+  CIS_UIN=100012345678 CIS_ACCOUNT_NAME=acme-prod cis scan --format html
   ```
 
 - **Hardening report** — `cis apply --report` writes an HTML record of what was
-  actually enforced, per stack, plus the controls Terraform could not touch:
+  actually enforced, per stack, plus the controls Terraform could not touch.
+  Its header carries the same account block:
 
   ```bash
   cis apply --tag cos --exclude 4.6 --report            # -> cis-hardening-<ts>.html

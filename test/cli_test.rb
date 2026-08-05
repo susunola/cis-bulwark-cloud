@@ -256,6 +256,23 @@ class CliTest < CisTestCase
     assert_includes r.stdout, "9.1"
   end
 
+  def test_scan_html_carries_account_header_and_filter
+    # The report header must name the account (UIN / name) and ship a filter.
+    r = cis("scan", "--section", "9", "--format", "html", "--dry-run",
+            env: { "CIS_UIN" => "100012345678", "CIS_ACCOUNT_NAME" => "acme-prod" })
+    assert_equal 0, r.status, r
+    assert_includes r.stdout, "UIN"
+    assert_includes r.stdout, "100012345678"
+    assert_includes r.stdout, "Account name"
+    assert_includes r.stdout, "acme-prod"
+    # client-side filtering: button bar + per-row data attributes + script.
+    assert_includes r.stdout, "filter-btn"
+    assert_includes r.stdout, "Enforced"
+    assert_includes r.stdout, "Not enforced"
+    assert_includes r.stdout, "data-status=\"MANUAL\""
+    assert_includes r.stdout, "applyFilter"
+  end
+
   def test_output_writes_html_to_a_file
     path = File.join(Dir.tmpdir, "cis_list_#{Process.pid}.html")
     r = cis("list", "--format", "html", "--only", "4.1", "--output", path)
@@ -277,6 +294,20 @@ class CliTest < CisTestCase
     assert_includes html, "<!DOCTYPE html>"
     assert_includes html, "storage"      # the stack that owns the 4.* controls
     assert_includes html, "planned"      # dry-run => planned, not ok/fail
+  ensure
+    File.unlink(path) if path && File.exist?(path)
+  end
+
+  def test_hardening_report_carries_account_header
+    path = File.join(Dir.tmpdir, "cis_harden_acct_#{Process.pid}.html")
+    r = cis("apply", "--only", "4.*", "--dry-run", "--report", path,
+            env: { "CIS_UIN" => "100099999888", "CIS_ACCOUNT_NAME" => "acme-root" })
+    assert_equal 0, r.status, r
+    html = File.read(path)
+    assert_includes html, "UIN"
+    assert_includes html, "100099999888"
+    assert_includes html, "Account name"
+    assert_includes html, "acme-root"
   ensure
     File.unlink(path) if path && File.exist?(path)
   end

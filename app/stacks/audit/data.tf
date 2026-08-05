@@ -83,3 +83,11 @@ data "tencentcloud_cwp_machines_simple" "cvm" {
   machine_region = var.region
   machine_type   = "CVM"
 }
+
+# Account identity for the report header. A single account-level read; the UIN /
+# account name are exactly what an operator expects at the top of every scan
+# report. Gated on a non-empty selection so a `cis list` (nothing to assess)
+# never calls the API.
+data "tencentcloud_user_info" "self" {
+  count = length(var.enabled_controls) > 0 ? 1 : 0
+}

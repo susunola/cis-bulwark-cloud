@@ -14,6 +14,20 @@ output "cis_summary" {
   }
 }
 
+# Account identity shown at the top of the scan/hardening report. `bin/cis`
+# reads this back with `terraform output -json cis_account`. Null when no
+# controls were selected, in which case `bin/cis` falls back to CIS_UIN /
+# CIS_ACCOUNT_NAME / CIS_APP_ID / TENCENTCLOUD_REGION.
+output "cis_account" {
+  description = "Account identity (UIN, name, app id, region) for the report header."
+  value = length(data.tencentcloud_user_info.self) > 0 ? {
+    uin    = data.tencentcloud_user_info.self[0].uin
+    name   = data.tencentcloud_user_info.self[0].nickname
+    app_id = data.tencentcloud_user_info.self[0].app_id
+    region = var.region
+  } : null
+}
+
 # Makes `terraspace plan audit` useful on its own: checks are evaluated during
 # plan, so a failing baseline shows up without applying anything.
 check "cis_baseline" {

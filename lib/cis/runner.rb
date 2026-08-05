@@ -48,11 +48,12 @@ module Cis
         # one of them still needs to appear as MANUAL. Returning an empty table
         # here would read as a clean bill of health.
         warn_no_detectable
-        return report(manual_findings, EXIT_OK)
+        return report(manual_findings, EXIT_OK, account: build_account)
       end
 
       say "Scanning #{selector.detectable.size} control(s) via the `audit` stack (read-only)."
 
+      account = build_account
       if options[:dry_run]
         say "Will scan:"
         say format("  terraspace %-5s %-11s # %s", "up", Cis::AUDIT_STACK,
@@ -63,8 +64,10 @@ module Cis
       code = terraspace(%W[up #{Cis::AUDIT_STACK} -y], action: "scan")
       return EXIT_ERROR unless code.zero?
 
+      account = build_account(terraform: true)
       findings = read_findings + manual_findings
-      report(findings, findings.any? { |f| f["status"] == "FAIL" } ? EXIT_FINDING : EXIT_OK)
+      report(findings, findings.any? { |f| f["status"] == "FAIL" } ? EXIT_FINDING : EXIT_OK,
+             account: account)
     rescue Error => e
       abort_with(e.message)
     end
@@ -163,8 +166,8 @@ module Cis
       report_gaps
     end
 
-    def report(findings, code)
-      body = @reporter.scan(findings, selector, format: options.fetch(:format, "table"))
+    def report(findings, code, account: nil)
+      body = @reporter.scan(findings, selector, format: options.fetch(:format, "table"), account: account)
       write_output(body)
       code
     end
@@ -187,6 +190,7 @@ module Cis
       payload = {
         label:       label,
         generated_at: Time.now.utc.strftime("%Y-%m-%d %H:%M:%S UTC"),
+        account:     build_account,
         summary:     selector.summary,
         stacks:      results,
         gaps:        selector.not_remediable.map { |c| { "id" => c.id, "title" => c.title } }
@@ -200,6 +204,38 @@ module Cis
 
     def default_report_path
       "cis-hardening-#{Time.now.utc.strftime('%Y%m%d-%H%M%S')}.html"
+    end
+
+    # Account identity for the report header. Prefer real data read back from the
+    # audit stack's `cis_account` output; fall back to CIS_UIN / CIS_ACCOUNT_NAME
+    # / CIS_APP_ID / TENCENTCLOUD_REGION so a report can still name the account
+    # when terraform output is unavailable (e.g. `cis apply`, or a manual run).
+    def build_account(terraform: false)
+      acct = {
+        "uin"    => ENV["CIS_UIN"],
+        "name"   => ENV["CIS_ACCOUNT_NAME"],
+        "app_id" => ENV["CIS_APP_ID"],
+        "region" => ENV["TENCENTCLOUD_REGION"]
+      }.compact
+      if terraform && !options[:dry_run]
+        (read_account || {}).each { |k, v| acct[k] = v unless v.nil? || v.to_s.empty? }
+      end
+      acct
+    end
+
+    # Reads the audit stack's `cis_account` output. Returns nil on any failure
+    # (stack not built, missing output) so the report degrades to env-supplied
+    # values instead of raising.
+    def read_account
+      dir = build_dir(Cis::AUDIT_STACK)
+      return nil unless dir && Dir.exist?(dir)
+      out, err, status = Open3.capture3("terraform", "output", "-json", "cis_account", chdir: dir)
+      return nil unless status.success?
+      parsed = JSON.parse(out)
+      val = parsed["value"]
+      val.is_a?(Hash) ? val.each_with_object({}) { |(k, v), h| h[k.to_s] = v } : nil
+    rescue StandardError
+      nil
     end
 
     # Controls the operator asked for that Terraform cannot assess. Emitting

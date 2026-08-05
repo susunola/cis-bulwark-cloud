@@ -26,6 +26,26 @@ header.hero {
 }
 header.hero h1 { color:#fff; margin:0 0 .35rem; font-size:1.6rem; letter-spacing:.01em; }
 header.hero .meta { color:rgba(255,255,255,.82); font-size:.85rem; margin:.15rem 0; }
+/* ---- account bar (UIN / name / region) ---- */
+.acct { display:flex; flex-wrap:wrap; gap:.5rem 1.4rem; margin-top:.9rem; }
+.acct .kv { display:flex; flex-direction:column; line-height:1.3; }
+.acct .k { font-size:.66rem; letter-spacing:.08em; text-transform:uppercase;
+           color:rgba(255,255,255,.7); }
+.acct .v { font-size:.95rem; font-weight:600; color:#fff;
+           font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+/* ---- filter bar ---- */
+.filters { display:flex; flex-wrap:wrap; align-items:center; gap:.55rem;
+           margin:1.25rem 0 .5rem; }
+.filters #q { flex:1 1 240px; min-width:200px; padding:.55rem .8rem; font-size:.9rem;
+              border:1px solid var(--line); border-radius:9px; background:var(--card);
+              color:var(--ink); }
+.filter-btn { cursor:pointer; border:1px solid var(--line); background:var(--card);
+              color:var(--muted); padding:.45rem .85rem; border-radius:999px;
+              font-size:.8rem; font-weight:600; transition:all .15s; }
+.filter-btn:hover { border-color:var(--primary); color:var(--primary); }
+.filter-btn.active { background:var(--primary); border-color:var(--primary); color:#fff; }
+.filter-btn[data-status="ENFORCED"] { }
+.filter-btn[data-status="NOT"] { }
 /* ---- statistic cards ---- */
 .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin:1.25rem 0 1.5rem; }
 .stat { background:var(--card); border:1px solid var(--line); border-radius:12px;
@@ -78,25 +98,60 @@ footer { margin-top:2.5rem; padding-top:1rem; border-top:1px solid var(--line);
 </style></head>
 <body>
 <header class="hero"><h1>Scan Report</h1>
-<p class="meta">CIS Tencent Cloud Foundation Benchmark v1.0.0 · generated 2026-08-04 07:48 UTC</p></header>
-<div class="stats"><div class="stat stat-fail"><span class="num">0</span><span class="lbl">FAIL</span></div><div class="stat stat-pass"><span class="num">0</span><span class="lbl">PASS</span></div><div class="stat stat-manual"><span class="num">12</span><span class="lbl">MANUAL</span></div><div class="stat stat-skipped"><span class="num">0</span><span class="lbl">SKIPPED</span></div></div>
+<p class="meta">CIS Tencent Cloud Foundation Benchmark v1.0.0 · generated 2026-08-04 08:01 UTC</p>
+<div class="acct"><div class="kv"><span class="k">UIN</span><span class="v">100012345678</span></div><div class="kv"><span class="k">Account name</span><span class="v">acme-prod-account</span></div><div class="kv"><span class="k">APP ID</span><span class="v">1250000000</span></div><div class="kv"><span class="k">Region</span><span class="v">ap-guangzhou</span></div></div>
+</header>
+<div class="stats"><div class="stat stat-fail"><span class="num">2</span><span class="lbl">FAIL</span></div><div class="stat stat-pass"><span class="num">3</span><span class="lbl">PASS</span></div><div class="stat stat-manual"><span class="num">1</span><span class="lbl">MANUAL</span></div><div class="stat stat-skipped"><span class="num">1</span><span class="lbl">SKIPPED</span></div></div>
+<div class="filters"><input id="q" type="search" placeholder="Search by ID or title…" oninput="applyFilter()"><button class="filter-btn active" data-status="ALL" onclick="setFilter(this)">All</button><button class="filter-btn" data-status="ENFORCED" onclick="setFilter(this)">Enforced</button><button class="filter-btn" data-status="NOT" onclick="setFilter(this)">Not enforced</button><button class="filter-btn" data-status="FAIL" onclick="setFilter(this)">FAIL</button><button class="filter-btn" data-status="MANUAL" onclick="setFilter(this)">MANUAL</button><button class="filter-btn" data-status="SKIPPED" onclick="setFilter(this)">SKIPPED</button></div>
 <main>
+<section class="card"><h2>1 Identity and Access Management</h2>
+<table><thead><tr><th>Status</th><th>ID</th><th>Title</th><th>Evidence</th></tr></thead><tbody>
+<tr data-status="FAIL" data-search="1.4 mfa for console users"><td><span class="badge fail">FAIL</span></td><td><span class="mono">1.4</span></td><td>MFA for Console Users</td><td>3 of 8 users without MFA</td></tr>
+<tr data-status="PASS" data-search="1.1 avoid the use of the root account"><td><span class="badge pass">PASS</span></td><td><span class="mono">1.1</span></td><td>Avoid the use of the root account</td><td>no root key, MFA on</td></tr>
+</tbody></table></section>
+<section class="card"><h2>2 Logging and Monitoring</h2>
+<table><thead><tr><th>Status</th><th>ID</th><th>Title</th><th>Evidence</th></tr></thead><tbody>
+<tr data-status="PASS" data-search="2.1 cloudaudit enabled in all regions"><td><span class="badge pass">PASS</span></td><td><span class="mono">2.1</span></td><td>CloudAudit enabled in all regions</td><td>trail multi-region</td></tr>
+</tbody></table></section>
+<section class="card"><h2>3 Networking</h2>
+<table><thead><tr><th>Status</th><th>ID</th><th>Title</th><th>Evidence</th></tr></thead><tbody>
+<tr data-status="FAIL" data-search="3.1 no 0.0.0.0/0 ingress on sg"><td><span class="badge fail">FAIL</span></td><td><span class="mono">3.1</span></td><td>No 0.0.0.0/0 ingress on SG</td><td>sg-abc allows 0.0.0.0/0:22</td></tr>
+</tbody></table></section>
+<section class="card"><h2>4 Storage</h2>
+<table><thead><tr><th>Status</th><th>ID</th><th>Title</th><th>Evidence</th></tr></thead><tbody>
+<tr data-status="PASS" data-search="4.1 cos buckets private"><td><span class="badge pass">PASS</span></td><td><span class="mono">4.1</span></td><td>COS buckets private</td><td>acl=private</td></tr>
+<tr data-status="MANUAL" data-search="4.2 cos logging enabled"><td><span class="badge manual">MANUAL</span></td><td><span class="mono">4.2</span></td><td>COS logging enabled</td><td>verify in console</td></tr>
+</tbody></table></section>
 <section class="card"><h2>9 Tencent Container Security Service</h2>
 <table><thead><tr><th>Status</th><th>ID</th><th>Title</th><th>Evidence</th></tr></thead><tbody>
-<tr><td><span class="badge manual">MANUAL</span></td><td><span class="mono">9.1</span></td><td>Ensure Container Security protection is enabled for clusters and hosts</td><td>verify in console</td></tr>
-<tr><td><span class="badge manual">MANUAL</span></td><td><span class="mono">9.2</span></td><td>Ensure Image Scan is Enabled</td><td>verify in console</td></tr>
-<tr><td><span class="badge manual">MANUAL</span></td><td><span class="mono">9.3</span></td><td>Ensure TCSS application protection switch is 'Turn on'</td><td>verify in console</td></tr>
-<tr><td><span class="badge manual">MANUAL</span></td><td><span class="mono">9.4</span></td><td>Ensure Container Asset has installed Container Security Agent</td><td>verify in console</td></tr>
-<tr><td><span class="badge manual">MANUAL</span></td><td><span class="mono">9.5</span></td><td>Ensure Scheduled Image Scanning is Configured</td><td>verify in console</td></tr>
-<tr><td><span class="badge manual">MANUAL</span></td><td><span class="mono">9.6</span></td><td>Ensure Automatic Cluster Check is ‘Enabled’</td><td>verify in console</td></tr>
-<tr><td><span class="badge manual">MANUAL</span></td><td><span class="mono">9.7</span></td><td>Ensure Vulnerability Scanning is enabled</td><td>verify in console</td></tr>
-<tr><td><span class="badge manual">MANUAL</span></td><td><span class="mono">9.8</span></td><td>Ensure Baseline Cycle Detection is Enabled</td><td>verify in console</td></tr>
-<tr><td><span class="badge manual">MANUAL</span></td><td><span class="mono">9.9</span></td><td>Ensure Virus Scanning is Enabled</td><td>verify in console</td></tr>
-<tr><td><span class="badge manual">MANUAL</span></td><td><span class="mono">9.10</span></td><td>Ensure Mirror Interception policy is configured</td><td>verify in console</td></tr>
-<tr><td><span class="badge manual">MANUAL</span></td><td><span class="mono">9.11</span></td><td>Ensure notification is enabled for all high-risk security activities</td><td>verify in console</td></tr>
-<tr><td><span class="badge manual">MANUAL</span></td><td><span class="mono">9.12</span></td><td>Ensure log analysis is enabled</td><td>verify in console</td></tr>
+<tr data-status="SKIPPED" data-search="9.1 container image scan enabled"><td><span class="badge skipped">SKIPPED</span></td><td><span class="mono">9.1</span></td><td>Container image scan enabled</td><td>enforced by cis apply, not readable</td></tr>
 </tbody></table></section>
 </main>
+<script>
+function setFilter(btn){
+  document.querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  applyFilter();
+}
+function applyFilter(){
+  var q = (document.getElementById('q').value||'').trim().toLowerCase();
+  var st = document.querySelector('.filter-btn.active').getAttribute('data-status');
+  document.querySelectorAll('tbody tr[data-status]').forEach(function(tr){
+    var s = tr.getAttribute('data-status');
+    var okS = st==='ALL' || (st==='ENFORCED' && s==='PASS') ||
+              (st==='NOT' && s!=='PASS') || st===s;
+    var txt = (tr.getAttribute('data-search')||'').toLowerCase();
+    var okT = q==='' || txt.indexOf(q) !== -1;
+    tr.style.display = (okS && okT) ? '' : 'none';
+  });
+  document.querySelectorAll('section.card').forEach(function(sec){
+    var rows = sec.querySelectorAll('tbody tr[data-status]');
+    if (rows.length === 0) return;
+    var visible = Array.prototype.filter.call(rows, function(r){return r.style.display !== 'none';});
+    sec.style.display = visible.length === 0 ? 'none' : '';
+  });
+}
+</script>
 <footer>Generated by cis — CIS Tencent Cloud Foundation Benchmark toolkit.</footer>
 </body>
 </html>
