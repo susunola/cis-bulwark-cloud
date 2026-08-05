@@ -1,3 +1,16 @@
+<p align="center">
+  <img src="https://cdn.jsdelivr.net/gh/susunola/cis-tencentcloud@main/docs/logo-full.png" alt="cis-tencentcloud — SecX Series" width="640">
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License: MIT"></a>
+  <img src="https://img.shields.io/badge/benchmark-v1.0.0-006EFF" alt="Benchmark v1.0.0">
+  <img src="https://img.shields.io/badge/ruby-3.1%2B-CC342D?logo=ruby&logoColor=white" alt="Ruby 3.1+">
+  <img src="https://img.shields.io/badge/terraform-1.6%2B-7B42BC?logo=terraform&logoColor=white" alt="Terraform 1.6+">
+  <img src="https://img.shields.io/badge/provider-tencentcloud-0052D9" alt="Tencent Cloud Provider">
+  <a href="https://github.com/susunola/cis-tencentcloud/actions/workflows/ci.yml"><img src="https://github.com/susunola/cis-tencentcloud/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+</p>
+
 # cis-tencentcloud
 
 Terraform and Terraspace implementations of the **CIS Tencent Cloud Foundation Benchmark v1.0.0**.

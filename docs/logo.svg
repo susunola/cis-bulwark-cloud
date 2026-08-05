@@ -1,0 +1,44 @@
+<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#006EFF"/>
+      <stop offset="100%" stop-color="#00B4D8"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#006EFF"/>
+      <stop offset="100%" stop-color="#00B4D8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- IaC module boundary (Terraform) -->
+  <rect x="16" y="18" width="68" height="64" rx="4"
+        stroke="url(#g1)" stroke-width="0.8" stroke-dasharray="4 4" opacity="0.25"/>
+
+  <!-- Arc 1: from source 1 → target -->
+  <path d="M28 32 Q52 22 70 46"
+        stroke="url(#g2)" stroke-width="2.8" stroke-linecap="round" opacity="0.35"/>
+  <!-- Arc 2: from source 2 → target -->
+  <path d="M28 50 Q56 50 70 46"
+        stroke="url(#g2)" stroke-width="2.8" stroke-linecap="round" opacity="0.6"/>
+  <!-- Arc 3: from source 3 → target -->
+  <path d="M28 68 Q52 78 70 46"
+        stroke="url(#g2)" stroke-width="3.2" stroke-linecap="round" opacity="0.95"/>
+
+  <!-- Source node 1 (COS storage) — rounded square with bump -->
+  <rect x="22" y="27" width="12" height="12" rx="3"
+        fill="url(#g1)" opacity="0.35"/>
+  <!-- Source node 2 (Network/SG) — diamond -->
+  <rect x="22" y="45" width="12" height="12" rx="3"
+        fill="url(#g1)" opacity="0.6"
+        transform="rotate(45 28 51)"/>
+  <!-- Source node 3 (Database) — circle -->
+  <circle cx="28" cy="68" r="6" fill="url(#g1)" opacity="0.95"/>
+
+  <!-- Target node (compliance checkmark) -->
+  <circle cx="73" cy="44" r="10" fill="url(#g1)" opacity="0.85"/>
+  <circle cx="73" cy="44" r="7.5" fill="white" opacity="0.15"/>
+  <!-- Checkmark -->
+  <path d="M69 44 L72 47 L77 40"
+        stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        fill="none"/>
+</svg>
