@@ -103,7 +103,7 @@ module Cis
     def head(title)
       +"" << "<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n" \
         "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n" \
-        "<title>#{h(title)}</title>\n" << STYLE << "</head>\n<body>\n"
+        "<title>#{h(title)}</title>\n<style>\n" << STYLE << "\n</style></head>\n<body>\n"
     end
 
     def summary_bar(t)
