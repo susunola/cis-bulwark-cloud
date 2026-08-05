@@ -147,13 +147,40 @@ the same answer. There is exactly one place the selection is decided.
 
 | Flag | Meaning |
 |---|---|
-| `--format table\|json\|markdown` | default `table` |
+| `--format table\|json\|markdown\|html` | default `table` |
+| `-o, --output PATH` | write the `list`/`scan` report to a file (any format) instead of stdout |
+| `--report [PATH]` | after `apply`, write an HTML hardening report (default `cis-hardening-<ts>.html`) |
 | `--dry-run` | print the terraspace commands, execute nothing |
 | `--verbose` | echo each terraspace invocation |
 | `--no-color` | disable ANSI colour |
 
 With `--format json`, all narration goes to **stderr**, so
 `cis scan --format json \| jq` is always safe.
+
+### HTML reports
+
+The toolkit can emit self-contained HTML (inline CSS, no external assets) that
+opens offline and prints cleanly to PDF — useful as an audit artifact.
+
+- **Compliance report** — `cis scan --format html` renders the same findings
+  the table shows, grouped by section with colour-coded status badges. Pair it
+  with `-o` to save a file:
+
+  ```bash
+  cis scan --section 4 --format html --output report.html
+  ```
+
+- **Hardening report** — `cis apply --report` writes an HTML record of what was
+  actually enforced, per stack, plus the controls Terraform could not touch:
+
+  ```bash
+  cis apply --tag cos --exclude 4.6 --report            # -> cis-hardening-<ts>.html
+  cis apply --only 4.*            --report harden.html  # -> harden.html
+  ```
+
+  `--report` works under `--dry-run` too: the stacks are then marked `planned`
+  rather than `ok`/`fail`, so you get a preview artifact before touching the
+  account.
 
 ---
 
@@ -371,6 +398,10 @@ alignment gate in force on every change without requiring a cloud account in CI.
 What is deliberately out of scope today, and where the leverage is if you pick
 this up again:
 
+- **HTML artifacts are now available** (added this cycle): `cis scan --format html`
+  for a compliance report and `cis apply --report` for a hardening record. Both
+  are self-contained, print-to-PDF friendly, and work under `--dry-run`. The
+  remaining gap is an *automated* post-apply `scan` (see below), not the rendering.
 - **Coverage is the ceiling.** 39/91 remediable and 20/91 detectable. Several
   `MANUAL` controls are manual only because we have not wired up the
   corresponding provider data source, not because the provider lacks one — the

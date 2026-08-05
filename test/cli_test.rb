@@ -236,6 +236,63 @@ class CliTest < CisTestCase
     payload["findings"].each { |f| assert_equal "MANUAL", f["status"] }
   end
 
+  # ---- html output / reports ---------------------------------------------
+
+  def test_list_html_is_a_self_contained_document
+    r = cis("list", "--format", "html", "--only", "4.1")
+    assert_equal 0, r.status, r
+    assert_includes r.stdout, "<!DOCTYPE html>"
+    assert_includes r.stdout, "<title>"
+    assert_includes r.stdout, "4.1"
+    assert_includes r.stdout, "<table"
+  end
+
+  def test_scan_html_renders_manual_findings
+    # Section 9 is entirely manual, so the HTML must carry MANUAL rows.
+    r = cis("scan", "--section", "9", "--format", "html", "--dry-run")
+    assert_equal 0, r.status, r
+    assert_includes r.stdout, "<!DOCTYPE html>"
+    assert_includes r.stdout, "MANUAL"
+    assert_includes r.stdout, "9.1"
+  end
+
+  def test_output_writes_html_to_a_file
+    path = File.join(Dir.tmpdir, "cis_list_#{Process.pid}.html")
+    r = cis("list", "--format", "html", "--only", "4.1", "--output", path)
+    assert_equal 0, r.status, r
+    assert File.exist?(path), "report file not created"
+    html = File.read(path)
+    assert_includes html, "<!DOCTYPE html>"
+    assert_includes html, "4.1"
+  ensure
+    File.unlink(path) if path && File.exist?(path)
+  end
+
+  def test_apply_report_writes_hardening_html
+    path = File.join(Dir.tmpdir, "cis_harden_#{Process.pid}.html")
+    r = cis("apply", "--only", "4.*", "--dry-run", "--report", path)
+    assert_equal 0, r.status, r
+    assert File.exist?(path), "hardening report not created"
+    html = File.read(path)
+    assert_includes html, "<!DOCTYPE html>"
+    assert_includes html, "storage"      # the stack that owns the 4.* controls
+    assert_includes html, "planned"      # dry-run => planned, not ok/fail
+  ensure
+    File.unlink(path) if path && File.exist?(path)
+  end
+
+  def test_apply_report_default_path_when_no_value
+    path = nil
+    r = cis("apply", "--only", "4.*", "--dry-run", "--report")
+    assert_equal 0, r.status, r
+    m = (r.stdout + r.stderr).match(%r{written to (cis-hardening-\d{8}-\d{6}\.html)})
+    assert m, "no report path announced"
+    path = File.join(CisTest::ROOT, m[1])
+    assert File.exist?(path), "report not created at #{path}"
+  ensure
+    File.unlink(path) if path && File.exist?(path)
+  end
+
   # ---- cis destroy --------------------------------------------------------
 
   def test_destroy_needs_a_stack

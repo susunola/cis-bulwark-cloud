@@ -19,10 +19,13 @@
 #
 # Output / behaviour:
 #
-#   --format table|json|markdown    default: table
-#   --dry-run                       print the terraspace commands, run nothing
-#   --verbose                       echo each terraspace invocation
-#   --no-color                      disable ANSI colour
+#   --format table|json|markdown|html   default: table
+#   -o, --output PATH                   write the list/scan report to a file
+#   --report [PATH]                     after `apply`, write an HTML hardening
+#                                        report (default: cis-hardening-<ts>.html)
+#   --dry-run                           print the terraspace commands, run nothing
+#   --verbose                           echo each terraspace invocation
+#   --no-color                          disable ANSI colour
 
 require "optparse"
 require_relative "../lib/cis"
@@ -45,7 +48,9 @@ parser = OptionParser.new do |o|
 
   o.separator ""
   o.separator "Output:"
-  o.on("--format FORMAT", %w[table json markdown], "table (default), json, markdown") { |v| options[:format] = v }
+  o.on("--format FORMAT", %w[table json markdown html], "table (default), json, markdown, html") { |v| options[:format] = v }
+  o.on("-o", "--output PATH", "Write the list/scan report to a file (any format)") { |v| options[:output] = v }
+  o.on("--report [PATH]", "After `apply`, write an HTML hardening report (default: cis-hardening-<ts>.html)") { |v| options[:report] = v || true }
   o.on("--dry-run",  "Print what would run, execute nothing") { options[:dry_run] = true }
   o.on("--verbose",  "Echo each terraspace invocation")       { options[:verbose] = true }
   o.on("--no-color", "Disable ANSI colour")                   { options[:color] = false }
@@ -54,8 +59,9 @@ parser = OptionParser.new do |o|
   o.separator "Examples:"
   o.separator "  cis list --profile level1"
   o.separator "  cis scan --section 3,4 --format json"
+  o.separator "  cis scan --section 4 --format html --output report.html"
   o.separator "  cis plan --only 4.*"
-  o.separator "  cis apply --tag cos --exclude 4.6"
+  o.separator "  cis apply --tag cos --exclude 4.6 --report"
   o.on("-h", "--help", "Show this message") { puts o; exit 0 }
 end
 

@@ -37,7 +37,8 @@ module Cis
     # ---- actions ----------------------------------------------------------
 
     def list
-      @reporter.list(Cis.catalog, selector, format: options.fetch(:format, "table"))
+      body = @reporter.list(Cis.catalog, selector, format: options.fetch(:format, "table"))
+      write_output(body)
       EXIT_OK
     end
 
@@ -92,7 +93,7 @@ module Cis
 
     private
 
-    def run_hardening(label)
+    def run_hardening(label, &build)
       stacks = selector.stacks_for_apply
       if stacks.empty?
         warn_no_remediable
@@ -100,25 +101,36 @@ module Cis
       end
 
       print_plan_preamble(label, stacks)
-      return EXIT_OK if options[:dry_run]
+      results = stacks.map do |stack|
+        { name: stack, ids: Cis.controls_for_stack(stack), status: "planned" }
+      end
 
-      stacks.each do |stack|
-        ids = Cis.controls_for_stack(stack)
+      code = if options[:dry_run]
+               EXIT_OK
+             else
+               run_stacks(label, results, &build)
+             end
+
+      report_gaps
+      emit_hardening_report(label, results) if options[:report]
+      code
+    end
+
+    def run_stacks(label, results, &build)
+      results.each do |r|
         say ""
         say "#{'=' * 70}"
-        say "#{label} #{stack}  (#{ids.size} control(s): #{ids.join(', ')})"
+        say "#{label} #{r[:name]}  (#{r[:ids].size} control(s): #{r[:ids].join(', ')})"
         say "#{'=' * 70}"
-        code = terraspace(yield(stack), action: "apply")
-        unless code.zero?
-          @io.puts "\n  stack #{stack} failed (exit #{code}); stopping."
-          report_gaps
+        code = terraspace(build.call(r[:name]), action: "apply")
+        if code.zero?
+          r[:status] = "ok"
+        else
+          r[:status] = "fail"
+          @io.puts "\n  stack #{r[:name]} failed (exit #{code}); stopping."
           return EXIT_ERROR
         end
       end
-
-      say ""
-      say "#{label} complete: #{stacks.join(', ')}"
-      report_gaps
       EXIT_OK
     end
 
@@ -152,8 +164,42 @@ module Cis
     end
 
     def report(findings, code)
-      @reporter.scan(findings, selector, format: options.fetch(:format, "table"))
+      body = @reporter.scan(findings, selector, format: options.fetch(:format, "table"))
+      write_output(body)
       code
+    end
+
+    # `--output PATH` diverts the rendered list/scan report to a file instead
+    # of stdout; the operator still sees the narration on the console.
+    def write_output(body)
+      return unless options[:output]
+      File.write(options[:output], body)
+      say "Report written to #{options[:output]}" unless json?
+    rescue SystemCallError => e
+      abort_with("could not write report to #{options[:output]}: #{e.message}")
+    end
+
+    # `cis apply --report [PATH]` writes an HTML hardening report after the run.
+    # It is the artifact this toolkit was missing: a durable record of what was
+    # actually enforced, per stack, plus the controls Terraform could not touch.
+    def emit_hardening_report(label, results)
+      path = options[:report] == true ? default_report_path : options[:report].to_s
+      payload = {
+        label:       label,
+        generated_at: Time.now.utc.strftime("%Y-%m-%d %H:%M:%S UTC"),
+        summary:     selector.summary,
+        stacks:      results,
+        gaps:        selector.not_remediable.map { |c| { "id" => c.id, "title" => c.title } }
+      }
+      body = @reporter.hardening(payload, selector, format: "html")
+      File.write(path, body)
+      say "Hardening report written to #{path}"
+    rescue SystemCallError => e
+      abort_with("could not write report to #{path}: #{e.message}")
+    end
+
+    def default_report_path
+      "cis-hardening-#{Time.now.utc.strftime('%Y%m%d-%H%M%S')}.html"
     end
 
     # Controls the operator asked for that Terraform cannot assess. Emitting
