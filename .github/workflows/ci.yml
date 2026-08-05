@@ -48,3 +48,11 @@ jobs:
       - name: Run suite
         working-directory: terraform
         run: ruby test/run.rb
+
+      - name: Terraform validate
+        run: |
+          set -e
+          for dir in modules/* terraform/stacks/*; do
+            echo "==> $dir"
+            (cd "$dir" && terraform init -backend=false && terraform validate)
+          done
