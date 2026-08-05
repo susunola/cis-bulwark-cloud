@@ -148,11 +148,13 @@ resource "tencentcloud_audit_track" "this" {
     storage_region = var.audit_track_storage.storage_region
     compress       = var.audit_track_storage.compress
   }
+
+  depends_on = [tencentcloud_cls_topic.audit]
 }
 
 # --- 2.2 Ensure the CloudAudit COS bucket is not publicly accessible -------
 module "cloudaudit_bucket" {
-  source = "../../modules/cos_secure_bucket"
+  source = "../../../modules/cos_secure_bucket"
   count  = local.on["2.2"] && var.cloudaudit_cos_bucket != null ? 1 : 0
 
   bucket = var.cloudaudit_cos_bucket
@@ -191,7 +193,7 @@ resource "tencentcloud_teo_realtime_log_delivery" "edgeone" {
 
 # --- 2.9 - 2.19 log monitoring and alerts ----------------------------------
 module "alarms" {
-  source = "../../modules/cls_audit_alarm"
+  source = "../../../modules/cls_audit_alarm"
   count  = local.alarms_wanted ? 1 : 0
 
   logset_id = local.logset_id
@@ -205,7 +207,7 @@ module "alarms" {
 
   alarm_period           = var.alarm_period_minutes
   monitor_period_minutes = var.alarm_monitor_period_minutes
-  lookback_minutes       = var.alarm_monitor_period_minutes
+  lookback_minutes       = var.alarm_lookback_minutes
   alarm_level            = var.alarm_level
 
   tags = var.tags
@@ -220,6 +222,13 @@ check "cis_registry_alignment" {
       "controls.yml routes %s to the logging stack but main.tf does not implement it.",
       join(", ", setsubtract(var.enabled_controls, local.implemented))
     )
+  }
+}
+
+check "cls_topic_requires_logset" {
+  assert {
+    condition     = var.cls_topic_id == null || var.cls_logset_id != null
+    error_message = "cls_topic_id is set but cls_logset_id is null. Reusing a topic requires the logset it belongs to."
   }
 }
 

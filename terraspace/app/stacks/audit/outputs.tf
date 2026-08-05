@@ -22,7 +22,7 @@ output "cis_account" {
   description = "Account identity (UIN, name, app id, region) for the report header."
   value = length(data.tencentcloud_user_info.self) > 0 ? {
     uin    = data.tencentcloud_user_info.self[0].uin
-    name   = data.tencentcloud_user_info.self[0].nickname
+    name   = data.tencentcloud_user_info.self[0].name
     app_id = data.tencentcloud_user_info.self[0].app_id
     region = var.region
   } : null

@@ -49,7 +49,7 @@ locals {
 # One module instance per bucket. The module decides per control whether it can
 # act, so adding a bucket never silently changes the meaning of a control.
 module "bucket" {
-  source   = "../../modules/cos_secure_bucket"
+  source   = "../../../modules/cos_secure_bucket"
   for_each = local.any_selected ? var.buckets : {}
 
   bucket = each.key
