@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://cdn.jsdelivr.net/gh/susunola/cis-bulwark-cloud@317caaf/docs/logo-full.png" alt="cis-bulwark-cloud — SecX Series" width="640">
+  <img src="https://cdn.jsdelivr.net/gh/susunola/cis-bulwark-cloud@2c345c2/docs/logo-full.png" alt="cis-bulwark-cloud — SecX Series" width="640">
 </p>
 
 <p align="center">
