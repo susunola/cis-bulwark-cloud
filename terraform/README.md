@@ -1,12 +1,12 @@
 <p align="center">
-  <a href="https://github.com/susunola/cis-tencentcloud/actions/workflows/ci.yml"><img src="https://github.com/susunola/cis-tencentcloud/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/susunola/cis-bulwark-cloud/actions/workflows/ci.yml"><img src="https://github.com/susunola/cis-bulwark-cloud/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="../LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
   <a href="#"><img src="https://img.shields.io/badge/benchmark-CIS%20Foundation%20v1.0.0-0052d9" alt="CIS Foundation v1.0.0"></a>
   <a href="#"><img src="https://img.shields.io/badge/ruby-%3E%3D%203.1-cc342d" alt="Ruby >= 3.1"></a>
   <a href="#"><img src="https://img.shields.io/badge/terraform-%3E%3D%201.5.0-7b42bc" alt="Terraform >= 1.5.0"></a>
 </p>
 
-# cis-tencentcloud — Terraform Version
+# cis-bulwark-cloud — Terraform Version
 
 Scan and enforce the CIS Tencent Cloud Foundation Benchmark v1.0.0 using plain
 Terraform CLI. Each stack is a self-contained root module — no Terraspace required.
