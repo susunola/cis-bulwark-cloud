@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/susunola/cis-tencentcloud/actions/workflows/ci.yml"><img src="https://github.com/susunola/cis-tencentcloud/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/susunola/cis-bulwark-cloud/actions/workflows/ci.yml"><img src="https://github.com/susunola/cis-bulwark-cloud/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="../LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
   <a href="#"><img src="https://img.shields.io/badge/benchmark-CIS%20Foundation%20v1.0.0-0052d9" alt="CIS Foundation v1.0.0"></a>
   <a href="#"><img src="https://img.shields.io/badge/ruby-%3E%3D%203.1-cc342d" alt="Ruby >= 3.1"></a>
@@ -60,8 +60,8 @@ than no report.
 ## Quick Start
 
 ```bash
-git clone https://github.com/susunola/cis-tencentcloud.git
-cd cis-tencentcloud/terraspace
+git clone https://github.com/susunola/cis-bulwark-cloud.git
+cd cis-bulwark-cloud/terraspace
 bundle install
 
 export TENCENTCLOUD_SECRET_ID=<your-secret-id>

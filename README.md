@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://cdn.jsdelivr.net/gh/susunola/cis-tencentcloud@317caaf/docs/logo-full.png" alt="cis-tencentcloud — SecX Series" width="640">
+  <img src="https://cdn.jsdelivr.net/gh/susunola/cis-bulwark-cloud@317caaf/docs/logo-full.png" alt="cis-bulwark-cloud — SecX Series" width="640">
 </p>
 
 <p align="center">
@@ -8,10 +8,10 @@
   <img src="https://img.shields.io/badge/ruby-3.1%2B-CC342D?logo=ruby&logoColor=white" alt="Ruby 3.1+">
   <img src="https://img.shields.io/badge/terraform-1.6%2B-7B42BC?logo=terraform&logoColor=white" alt="Terraform 1.6+">
   <img src="https://img.shields.io/badge/provider-tencentcloud-0052D9" alt="Tencent Cloud Provider">
-  <a href="https://github.com/susunola/cis-tencentcloud/actions/workflows/ci.yml"><img src="https://github.com/susunola/cis-tencentcloud/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/susunola/cis-bulwark-cloud/actions/workflows/ci.yml"><img src="https://github.com/susunola/cis-bulwark-cloud/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
 </p>
 
-# cis-tencentcloud
+# cis-bulwark-cloud
 
 Terraform and Terraspace implementations of the **CIS Tencent Cloud Foundation Benchmark v1.0.0**.
 
@@ -56,7 +56,7 @@ bin/cis apply --report hardening.html
 ## Repository layout
 
 ```
-cis-tencentcloud/
+cis-bulwark-cloud/
 ├── modules/             # Reusable Terraform modules
 ├── lib/cis/             # Shared Ruby CLI code (runner varies by variant)
 ├── config/              # Shared control registry
