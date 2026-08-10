@@ -1,0 +1,7 @@
+#   terraform init
+#   terraform apply -auto-approve \
+#     -var 'enabled_controls=["6.2.2","6.4","5.1"]' \
+#     -var 'compute_instances=[{name="web-1",zone="us-central1-a"}]'
+enabled_controls  = []
+compute_instances = []
+log_export_buckets = []

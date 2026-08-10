@@ -378,9 +378,19 @@ class CliTest < CisTestCase
   end
 
   def test_reference_only_clouds_are_refused
-    r = cis("--cloud", "gcp", "list")
+    r = cis("--cloud", "alibaba", "list")
     assert_equal 2, r.status
     assert_includes r.stdout + r.stderr, "reference-only"
+  end
+
+  def test_gcp_list_and_scan_dry_run
+    r = cis("--cloud", "gcp", "list", "--only", "6.4", "--no-color")
+    assert_equal 0, r.status, r
+    assert_includes r.stdout, "CIS Google Cloud Platform Foundation Benchmark v5.0.0"
+
+    r2 = cis("--cloud", "gcp", "scan", "--only", "6.4", "--dry-run")
+    assert_equal 0, r2.status, r2
+    assert_includes r2.stdout, "terraform -chdir=stacks/gcp/audit apply"
   end
 
   def test_unknown_cloud_is_refused
