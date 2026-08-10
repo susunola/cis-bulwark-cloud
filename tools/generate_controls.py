@@ -277,6 +277,121 @@ AWS_MAPPING = {
     "6.8":   (N, N, None, ["vpc", "endpoints"]),
 }
 
+
+# ---- hashicorp/azurerm ~> 4.0 ------------------------------------------------
+# azurerm data sources are name-based, not list-based: there is no
+# azurerm_network_security_groups / azurerm_storage_accounts enumerator. So
+# `detect` means "checkable given operator-supplied inventory" (see the audit
+# stack variables); `remediate` means a resource exists and apply does not
+# delete user resources or force a destructive replacement.
+AZURE_MAPPING = {
+    # ---- 2 Analytics (Azure Databricks) ----------------------------------
+    # custom_parameters.virtual_network_id non-empty == customer-managed VNet.
+    "2.1.1":  (N, T, "databricks", ["databricks", "vnet"]),
+    "2.1.2":  (N, N, None, ["databricks", "nsg"]),
+    "2.1.3":  (N, N, None, ["databricks", "encryption"]),
+    "2.1.4":  (N, N, None, ["databricks", "identity"]),
+    "2.1.5":  (N, N, None, ["databricks", "unity-catalog"]),
+    "2.1.6":  (N, N, None, ["databricks", "pat"]),
+    "2.1.7":  (N, N, None, ["databricks", "diagnostics"]),
+    "2.1.8":  (N, N, None, ["databricks", "cmk"]),
+    "2.1.9":  (N, T, "databricks", ["databricks", "no-public-ip"]),
+    # no_public_ip covers 2.1.9; the workspace data source does not expose a
+    # public-network-access flag.
+    "2.1.10": (N, N, None, ["databricks", "public-network-access"]),
+    "2.1.11": (N, N, None, ["databricks", "private-endpoint"]),
+
+    # ---- 5 Identity --------------------------------------------------------
+    # Entra ID security defaults / MFA / directory settings have no surface in
+    # the azurerm provider (that is the separate azuread provider).
+    "5.1.1":  (N, N, None, ["entra", "security-defaults"]),
+    "5.1.2":  (N, N, None, ["entra", "mfa"]),
+    "5.1.3":  (N, N, None, ["entra", "mfa"]),
+    "5.3.1":  (N, N, None, ["entra", "admin-usage"]),
+    "5.3.2":  (N, N, None, ["entra", "guest-review"]),
+    "5.3.3":  (N, N, None, ["rbac", "user-access-admin"]),
+    "5.3.4":  (N, N, None, ["rbac", "privileged-review"]),
+    "5.3.5":  (N, N, None, ["entra", "disabled-accounts"]),
+    "5.3.6":  (N, N, None, ["entra", "tenant-creator"]),
+    "5.3.7":  (N, N, None, ["rbac", "non-privileged-review"]),
+    # Judging "custom administrator role" requires parsing role definitions.
+    "5.4":    (N, N, None, ["rbac", "custom-admin-role"]),
+    "5.5":    (N, N, None, ["rbac", "resource-lock-role"]),
+    "5.6":    (N, N, None, ["entra", "tenant-migration"]),
+
+    # ---- 6 Monitoring ------------------------------------------------------
+    "6.1.4":  (N, N, None, ["monitor", "diagnostics"]),
+    "6.1.5":  (N, N, None, ["monitor", "sku"]),
+
+    # ---- 7 Networking --------------------------------------------------------
+    # NSG rules are read from azurerm_network_security_group for each
+    # operator-listed group.
+    "7.1":    (N, T, "network", ["nsg", "rdp"]),
+    "7.2":    (N, T, "network", ["nsg", "ssh"]),
+    "7.3":    (N, T, "network", ["nsg", "udp"]),
+    "7.4":    (N, T, "network", ["nsg", "http-https"]),
+    # No flow-log data source in azurerm.
+    "7.5":    (N, N, None, ["nsg", "flow-log-retention"]),
+    # azurerm_network_watcher is created by this stack; one per listed region.
+    "7.6":    (T, N, "network", ["network-watcher"]),
+    "7.7":    (N, N, None, ["public-ip", "review"]),
+    "7.8":    (N, N, None, ["vnet", "flow-log"]),
+    "7.9":    (N, N, None, ["vpn", "auth"]),
+    # Application Gateway checks read waf_configuration / ssl_policy.
+    "7.10":   (N, T, "network", ["waf", "app-gateway"]),
+    # Subnet -> NSG association is readable per subnet; wiring every subnet is
+    # operator inventory, enforcement would take over the association.
+    "7.11":   (N, N, None, ["subnet", "nsg"]),
+    "7.12":   (N, T, "network", ["app-gateway", "tls"]),
+    # http2_enabled is not exposed by the app gateway data source.
+    "7.13":   (N, N, None, ["app-gateway", "http2"]),
+    "7.14":   (N, T, "network", ["waf", "body-inspection"]),
+    # Bot protection is not exposed by the app gateway data source.
+    "7.15":   (N, N, None, ["waf", "bot-protection"]),
+
+    # ---- 8 Defender / Key Vault ---------------------------------------------
+    "8.1.10": (N, N, None, ["defender", "vm-updates"]),
+    "8.1.11": (N, N, None, ["defender", "mcsb"]),
+    "8.1.12": (N, N, None, ["defender", "owner-notify"]),
+    # azurerm_security_center_contact resource creates the contact; there is no
+    # data source to read it back.
+    "8.1.13": (T, N, "security", ["defender", "security-contact"]),
+    "8.1.14": (N, N, None, ["defender", "alert-severity"]),
+    "8.1.15": (N, N, None, ["defender", "attack-paths"]),
+    # Key/secret expiry needs per-key enumeration - no list source.
+    "8.3.1":  (N, N, None, ["keyvault", "expiry"]),
+    "8.3.2":  (N, N, None, ["keyvault", "expiry"]),
+    "8.3.3":  (N, N, None, ["keyvault", "expiry"]),
+    "8.3.4":  (N, N, None, ["keyvault", "expiry"]),
+    # purge_protection is read-only after creation - detect only.
+    "8.3.5":  (N, T, "security", ["keyvault", "purge-protection"]),
+    "8.3.6":  (N, T, "security", ["keyvault", "rbac"]),
+    "8.3.7":  (N, T, "security", ["keyvault", "public-network"]),
+    "8.3.8":  (N, N, None, ["keyvault", "private-endpoint"]),
+    "8.3.9":  (N, N, None, ["keyvault", "rotation"]),
+    "8.3.10": (N, N, None, ["keyvault", "hsm"]),
+    # No list source and a 404 on a missing host aborts the audit - Manual.
+    "8.4.1":  (N, N, None, ["bastion", "exists"]),
+
+    # ---- 9 Storage -----------------------------------------------------------
+    # File-share soft delete is settable on azurerm_storage_account but not
+    # readable back from the data source.
+    "9.1.1":  (T, N, "storage", ["storage", "file-share-soft-delete"]),
+    "9.1.2":  (N, N, None, ["storage", "smb-version"]),
+    "9.2.1":  (T, N, "storage", ["storage", "blob-soft-delete"]),
+    "9.2.2":  (T, N, "storage", ["storage", "container-soft-delete"]),
+    "9.3.4":  (T, T, "storage", ["storage", "secure-transfer"]),
+    # Setting bypass requires flipping the account to Deny-by-default - a
+    # network behaviour change this tool should not make silently.
+    "9.3.5":  (N, N, None, ["storage", "trusted-microsoft"]),
+    "9.3.6":  (T, T, "storage", ["storage", "min-tls"]),
+    "9.3.7":  (T, N, "storage", ["storage", "cross-tenant-replication"]),
+    "9.3.8":  (T, T, "storage", ["storage", "blob-anonymous"]),
+    "9.3.9":  (N, N, None, ["storage", "delete-lock"]),
+    "9.3.10": (N, N, None, ["storage", "readonly-lock"]),
+    "9.3.11": (T, T, "storage", ["storage", "redundancy"]),
+}
+
 CLOUD_CONFIG = {
     "tencent": {
         "mapping": TENCENT_MAPPING,
@@ -294,6 +409,14 @@ CLOUD_CONFIG = {
         "out": os.path.join(ROOT, "config", "aws", "controls.yml"),
         "section_notes": {
             5: "CloudWatch monitoring recommendations are operational decisions, not resource state - whole section is MANUAL.",
+        },
+    },
+    "azure": {
+        "mapping": AZURE_MAPPING,
+        "catalog": os.path.join(ROOT, "benchmarks", "azure", "catalog.json"),
+        "out": os.path.join(ROOT, "config", "azure", "controls.yml"),
+        "section_notes": {
+            5: "Entra ID settings have no surface in the azurerm provider - whole section is MANUAL.",
         },
     },
 }

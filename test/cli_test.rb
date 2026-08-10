@@ -378,7 +378,7 @@ class CliTest < CisTestCase
   end
 
   def test_reference_only_clouds_are_refused
-    r = cis("--cloud", "azure", "list")
+    r = cis("--cloud", "gcp", "list")
     assert_equal 2, r.status
     assert_includes r.stdout + r.stderr, "reference-only"
   end
@@ -387,5 +387,21 @@ class CliTest < CisTestCase
     r = cis("--cloud", "oracle", "list")
     assert_equal 2, r.status
     assert_includes r.stdout + r.stderr, "unknown cloud"
+  end
+
+  def test_azure_list_and_scan_dry_run
+    r = cis("--cloud", "azure", "list", "--only", "9.3.6", "--no-color")
+    assert_equal 0, r.status, r
+    assert_includes r.stdout, "CIS Microsoft Azure Foundations Benchmark v6.0.0"
+
+    r2 = cis("--cloud", "azure", "scan", "--only", "9.3.6", "--dry-run")
+    assert_equal 0, r2.status, r2
+    assert_includes r2.stdout, "terraform -chdir=stacks/azure/audit apply"
+  end
+
+  def test_azure_apply_dry_run_uses_azure_hardening_stacks
+    r = cis("--cloud", "azure", "apply", "--only", "7.6", "--dry-run")
+    assert_equal 0, r.status, r
+    assert_match(%r{terraform -chdir=stacks/azure/network\s+apply}, r.stdout)
   end
 end

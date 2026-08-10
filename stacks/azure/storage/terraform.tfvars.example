@@ -1,0 +1,7 @@
+#   terraform init
+#   terraform import 'azurerm_storage_account.cis["mystorage"]' <id>
+#   terraform apply -auto-approve \
+#     -var 'enabled_controls=["9.3.4","9.3.6","9.3.11"]' \
+#     -var 'storage_accounts=[{name="mystorage",resource_group_name="rg",location="eastus",account_tier="Standard",account_replication_type="LRS"}]'
+enabled_controls = []
+storage_accounts = []

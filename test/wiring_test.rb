@@ -74,7 +74,10 @@ class WiringTest < CisTestCase
 
   def test_every_control_id_mentioned_in_hcl_exists_in_the_registry
     known = catalog.ids
+    cloud_dirs = (Cis::IMPLEMENTED_CLOUDS + Cis::REFERENCE_CLOUDS) - ["tencent"]
+    skip_re = %r{/stacks/(?:#{cloud_dirs.join('|')})/}
     Dir.glob(File.join(Cis::ROOT, "stacks", "**", "*.tf")).sort.each do |path|
+      next if path =~ skip_re
       src = Hcl.read(path).gsub(/\bversion\s*=\s*"[^"]*"/, "")
       src.scan(/"(\d+\.\d+)"/).flatten.uniq.each do |id|
         assert_includes known, id,

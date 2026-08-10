@@ -1,0 +1,6 @@
+#   terraform init
+#   terraform apply -auto-approve \
+#     -var 'enabled_controls=["7.6"]' \
+#     -var 'watcher_locations=["eastus","westeurope"]'
+enabled_controls   = []
+watcher_locations  = []

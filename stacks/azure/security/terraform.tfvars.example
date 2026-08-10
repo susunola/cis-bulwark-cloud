@@ -1,0 +1,6 @@
+#   terraform init
+#   terraform apply -auto-approve \
+#     -var 'enabled_controls=["8.1.13"]' \
+#     -var security_contact_email=security@example.com
+enabled_controls      = []
+security_contact_email = ""
