@@ -1,0 +1,13 @@
+# bin/cis fills enabled_controls in automatically. Hand-running the stack:
+#
+#   terraform init
+#   terraform apply -auto-approve \
+#     -var 'enabled_controls=["7.1","9.3.6"]' \
+#     -var 'network_security_groups=[{name="web-nsg",resource_group_name="rg-web"}]' \
+#     -var 'storage_accounts=[{name="mystorage",resource_group_name="rg-data"}]'
+enabled_controls = []
+network_security_groups = []
+storage_accounts        = []
+key_vaults              = []
+application_gateways    = []
+databricks_workspaces   = []

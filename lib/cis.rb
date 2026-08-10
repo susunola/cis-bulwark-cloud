@@ -20,10 +20,10 @@ module Cis
   ROOT = File.expand_path("..", __dir__)
 
   # Clouds with a full scan/apply implementation (registry + stacks).
-  IMPLEMENTED_CLOUDS = %w[tencent aws].freeze
+  IMPLEMENTED_CLOUDS = %w[tencent aws azure].freeze
   # Clouds whose benchmark is published under benchmarks/ but not yet mapped
   # onto a Terraform provider; `cis` refuses to run against them.
-  REFERENCE_CLOUDS = %w[alibaba gcp azure].freeze
+  REFERENCE_CLOUDS = %w[alibaba gcp].freeze
 
   AUDIT_STACK = "audit"
 
@@ -35,6 +35,9 @@ module Cis
     # network has no remediable control in AWS v7.0.0 (6.3/6.4/6.5/6.7 are
     # detect-only), so it is not a hardening stack.
     "aws"     => %w[iam logging storage database].freeze,
+    # azure: remediable controls live in network (7.6 watcher), security
+    # (8.1.13 contact) and storage (9.x).
+    "azure"   => %w[network security storage].freeze,
   }.freeze
 
   class Error < StandardError; end
@@ -43,14 +46,12 @@ module Cis
     # Active cloud, from CIS_CLOUD. Raises for reference-only clouds.
     def cloud
       name = ENV["CIS_CLOUD"] || "tencent"
+      return name if IMPLEMENTED_CLOUDS.include?(name)
       raise Error, "#{name.inspect} is a reference-only benchmark (catalog published, " \
                    "no Terraform mapping yet); supported: #{IMPLEMENTED_CLOUDS.join(', ')}" \
         if REFERENCE_CLOUDS.include?(name)
-      unless IMPLEMENTED_CLOUDS.include?(name)
-        raise Error, "unknown cloud #{name.inspect}; expected one of " \
-                     "#{(IMPLEMENTED_CLOUDS + REFERENCE_CLOUDS).join(', ')}"
-      end
-      name
+      raise Error, "unknown cloud #{name.inspect}; expected one of " \
+                   "#{(IMPLEMENTED_CLOUDS + REFERENCE_CLOUDS).join(', ')}"
     end
 
     def hardening_stacks
