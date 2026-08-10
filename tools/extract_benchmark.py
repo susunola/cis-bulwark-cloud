@@ -3,9 +3,8 @@
 structured catalog (JSON), one per cloud.
 
 This is the multi-cloud successor to the earlier Tencent-only parsing scripts.
-It reads the pdftotext
-(-layout) output of any CIS benchmark PDF that follows the standard appendix
-layout:
+It reads the pdftotext (-layout) output of any CIS benchmark PDF that follows
+the standard appendix layout:
 
     Appendix: Summary Table
         <id>  <title>                     Set Correctly?  Yes  No
@@ -20,10 +19,16 @@ Handled across the cloud variants:
     area glyphs; a row with a checkbox is a *control*, a row without one is a
     *section* or a *group* heading
   * multi-line titles continue on indented lines
+  * hyphenated line breaks inside titles ("customer- managed") are re-joined
   * profile applicability is "Profile Applicability:" followed by "• Level N"
 
-Usage:  python3 tools/extract_benchmark.py
+Usage:
+  python3 tools/extract_benchmark.py                 # all clouds
+  python3 tools/extract_benchmark.py aws gcp         # named clouds only
+  python3 tools/extract_benchmark.py --txt aws /path/to/aws.txt
+  python3 tools/extract_benchmark.py --all
 """
+import argparse
 import json
 import os
 import re
@@ -34,7 +39,7 @@ from collections import Counter
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 
-# cloud -> (pdftotext input, benchmark name, version, release date)
+# cloud -> (default pdftotext input, benchmark name, version, release date)
 CLOUDS = {
     "aws": (
         "/tmp/cis_extract/aws.txt",
@@ -71,6 +76,7 @@ NOISE_FRAGMENTS = ("CIS Benchmark Recommendation", "Correctly", "Set")
 O_CB = re.compile(r"\s+o(?:\s+o)?\s*$")    # AWS-style checkbox
 HEAD_START = re.compile(r"^\s*(\d+(?:\.\d+){1,2})\s+\S")
 LEVEL = re.compile(r"^\s*[•\-\*]?\s*Level\s+([12])\s*$")
+BREAK_HYPHEN = re.compile(r"(\S)- ([a-z])")  # hyphenated line break re-join
 
 
 def clean(s: str) -> str:
@@ -90,6 +96,13 @@ def has_checkbox(raw: str) -> bool:
     if any(unicodedata.category(ch) == "Co" for ch in tail):
         return True
     return bool(O_CB.search(raw))
+
+
+def normalize_title(title: str) -> str:
+    """Collapse whitespace and re-join hyphenated line breaks."""
+    t = re.sub(r"\s+", " ", title).strip()
+    t = BREAK_HYPHEN.sub(r"\1-\2", t)
+    return t.strip()
 
 
 def is_noise(line: str) -> bool:
@@ -139,7 +152,7 @@ def parse_table(lines):
         controls.append(cur)
 
     for c in controls:
-        c["title"] = re.sub(r"\s+", " ", c["title"]).strip()
+        c["title"] = normalize_title(c["title"])
         m = STATUS.search(c["title"])
         c["section"] = c["id"].split(".")[0]
         c["assessment"] = m.group(1) if m else "Unknown"
@@ -179,59 +192,107 @@ def parse_profiles(lines, known):
     return profiles
 
 
-def main() -> int:
+def validate(cloud, sections, controls):
+    """Return a list of (kind, message) problems; empty means clean."""
+    issues = []
+    ids = [c["id"] for c in controls]
+    key = lambda k: [int(p) for p in k.split(".")]
+    for dup in sorted({i for i in ids if ids.count(i) > 1}, key=key):
+        issues.append(("duplicate-id", f"{dup} appears {ids.count(dup)}x"))
+    for c in controls:
+        if c["assessment"] not in ("Automated", "Manual"):
+            issues.append(("assessment", f"{c['id']} assessment={c['assessment']!r}"))
+        if c.get("profile") not in ("Level 1", "Level 2"):
+            issues.append(("profile", f"{c['id']} profile={c.get('profile')!r}"))
+        t = c["title"]
+        if BREAK_HYPHEN.search(t):
+            issues.append(("title-hyphen", f"{c['id']}: {t!r}"))
+        if "  " in t:
+            issues.append(("title-space", f"{c['id']}: {t!r}"))
+        if re.search(r"\bo\s+o\b", t):
+            issues.append(("title-checkbox", f"{c['id']}: {t!r}"))
+        if any(unicodedata.category(ch) == "Co" for ch in t):
+            issues.append(("title-private-use", f"{c['id']}: {t!r}"))
+        parts = c["id"].split(".")
+        if len(parts) > 2:
+            gid = ".".join(parts[:-1])
+            if c.get("group") != sections.get(gid):
+                issues.append(("group", f"{c['id']} group={c.get('group')!r} != sections[{gid}]"))
+    for sid in sorted(sections, key=key):
+        sub = [c["id"] for c in controls if c["section"] == sid]
+        if all(len(i.split(".")) == 2 for i in sub):
+            nums = sorted(int(i.split(".")[1]) for i in sub)
+            if nums != list(range(1, len(nums) + 1)):
+                issues.append(("section-gap", f"section {sid}: {nums}"))
+    return issues
+
+
+def extract_cloud(cloud, txt):
+    if not os.path.exists(txt):
+        print(f"!! {cloud}: input missing: {txt}")
+        return 1
+    lines = open(txt, encoding="utf-8").read().split("\n")
+    sections, controls = parse_table(lines)
+    known = {c["id"] for c in controls}
+    profiles = parse_profiles([l.rstrip() for l in lines], known)
+    for c in controls:
+        if c["id"] in profiles:
+            c["profile"] = profiles[c["id"]]
+
+    issues = validate(cloud, sections, controls)
+
+    key = lambda k: [int(p) for p in k.split(".")]
+    catalog = {
+        "benchmark": CLOUDS[cloud][1],
+        "version": CLOUDS[cloud][2],
+        "date": CLOUDS[cloud][3],
+        "sections": dict(sorted(sections.items(), key=lambda kv: key(kv[0]))),
+        "controls": controls,
+    }
+    out = os.path.join(ROOT, "benchmarks", cloud, "catalog.json")
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    with open(out, "w", encoding="utf-8") as fh:
+        json.dump(catalog, fh, indent=2, ensure_ascii=False)
+
+    prof = Counter(c.get("profile") for c in controls)
+    print(f"{cloud}: wrote {out}")
+    print(f"  controls={len(controls)}  sections={len(sections)}  profiles={dict(prof)}")
+    if issues:
+        print(f"  !! {len(issues)} issue(s):")
+        for kind, msg in issues:
+            print(f"     [{kind}] {msg}")
+        return 1
+    print("  clean: ids unique, ids continuous, titles residue-free")
+    return 0
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(
+        description="Extract CIS benchmark catalogs for all clouds.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "examples:\n"
+            "  %(prog)s                    # all clouds (default inputs)\n"
+            "  %(prog)s aws gcp            # named clouds\n"
+            "  %(prog)s --txt aws /path/to/aws.txt\n"
+        ),
+    )
+    ap.add_argument("clouds", nargs="*", choices=sorted(CLOUDS),
+                    help="clouds to extract (default: all)")
+    ap.add_argument("--txt", nargs=2, metavar=("CLOUD", "PATH"),
+                    help="override the pdftotext input for one cloud")
+    args = ap.parse_args(argv)
+
+    if args.txt:
+        cloud, path = args.txt
+        if cloud not in CLOUDS:
+            ap.error(f"unknown cloud {cloud!r}; choose from {sorted(CLOUDS)}")
+        return extract_cloud(cloud, path)
+
+    clouds = args.clouds or sorted(CLOUDS)
     failed = 0
-    for cloud, (src, name, version, date) in CLOUDS.items():
-        if not os.path.exists(src):
-            print(f"!! {cloud}: input missing: {src}")
-            failed = 1
-            continue
-        lines = open(src, encoding="utf-8").read().split("\n")
-        sections, controls = parse_table(lines)
-        known = {c["id"] for c in controls}
-        profiles = parse_profiles([l.rstrip() for l in lines], known)
-
-        missing_p = sorted(known - set(profiles), key=lambda x: [int(p) for p in x.split(".")])
-        unknown = [c["id"] for c in controls if c["assessment"] == "Unknown"]
-        for c in controls:
-            if c["id"] in profiles:
-                c["profile"] = profiles[c["id"]]
-
-        # sanity: no duplicate ids; for purely two-level sections, ids must run
-        # 1..N with no gaps (three-level sections like 2.1.x are checked for
-        # duplicates only, their "continuity" is structural)
-        key = lambda k: [int(p) for p in k.split(".")]
-        for sid in sorted(sections, key=key):
-            ids = [c["id"] for c in controls if c["section"] == sid]
-            dups = sorted({i for i in ids if ids.count(i) > 1}, key=key)
-            if dups:
-                print(f"  !! {cloud} section {sid} duplicate ids: {dups}")
-            if all(len(i.split(".")) == 2 for i in ids):
-                nums = sorted(int(i.split(".")[1]) for i in ids)
-                if nums != list(range(1, len(nums) + 1)):
-                    print(f"  !! {cloud} section {sid} gap: {nums}")
-
-        out = os.path.join(ROOT, "benchmarks", cloud, "catalog.json")
-        os.makedirs(os.path.dirname(out), exist_ok=True)
-        key = lambda k: [int(p) for p in k.split(".")]
-        catalog = {
-            "benchmark": name,
-            "version": version,
-            "date": date,
-            "sections": dict(sorted(sections.items(), key=lambda kv: key(kv[0]))),
-            "controls": controls,
-        }
-        with open(out, "w", encoding="utf-8") as fh:
-            json.dump(catalog, fh, indent=2, ensure_ascii=False)
-
-        print(f"{cloud}: wrote {out}")
-        print(f"  controls={len(controls)}  sections={len(sections)}  "
-              f"profiles={dict(Counter(c.get('profile') for c in controls))}")
-        print(f"  missing-profile={len(missing_p)}  unknown-status={len(unknown)}")
-        if missing_p:
-            print(f"    missing: {missing_p}")
-        if unknown:
-            print(f"    unknown: {unknown}")
+    for cloud in clouds:
+        failed |= extract_cloud(cloud, CLOUDS[cloud][0])
     return failed
 
 

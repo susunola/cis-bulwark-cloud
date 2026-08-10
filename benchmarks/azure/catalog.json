@@ -48,7 +48,7 @@
   "controls": [
     {
       "id": "2.1.1",
-      "title": "Ensure that Azure Databricks is deployed in a customer- managed virtual network (VNet)",
+      "title": "Ensure that Azure Databricks is deployed in a customer-managed virtual network (VNet)",
       "section": "2",
       "assessment": "Automated",
       "group": "Azure Databricks",
