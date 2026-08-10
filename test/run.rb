@@ -18,4 +18,5 @@ require_relative "test_helper"
   benchmarks_test
   aws_wiring_test
   azure_wiring_test
+  gcp_wiring_test
 ].each { |name| require_relative name }

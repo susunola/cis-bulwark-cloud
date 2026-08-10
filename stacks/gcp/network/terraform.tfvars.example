@@ -1,0 +1,6 @@
+#   terraform init
+#   terraform apply -auto-approve \
+#     -var 'enabled_controls=["2.13"]' \
+#     -var 'dns_logging_networks=["default"]'
+enabled_controls    = []
+dns_logging_networks = []

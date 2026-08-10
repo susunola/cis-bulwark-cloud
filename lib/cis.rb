@@ -20,7 +20,7 @@ module Cis
   ROOT = File.expand_path("..", __dir__)
 
   # Clouds with a full scan/apply implementation (registry + stacks).
-  IMPLEMENTED_CLOUDS = %w[tencent aws azure].freeze
+  IMPLEMENTED_CLOUDS = %w[tencent aws azure gcp].freeze
   # Clouds whose benchmark is published under benchmarks/ but not yet mapped
   # onto a Terraform provider; `cis` refuses to run against them.
   REFERENCE_CLOUDS = %w[alibaba gcp].freeze
@@ -38,6 +38,7 @@ module Cis
     # azure: remediable controls live in network (7.6 watcher), security
     # (8.1.13 contact) and storage (9.x).
     "azure"   => %w[network security storage].freeze,
+    "gcp"     => %w[logging network compute].freeze,
   }.freeze
 
   class Error < StandardError; end

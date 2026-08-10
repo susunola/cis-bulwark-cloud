@@ -1,0 +1,6 @@
+#   terraform init
+#   terraform apply -auto-approve \
+#     -var 'enabled_controls=["2.3"]' \
+#     -var sink_destination=storage.googleapis.com/my-audit-bucket
+enabled_controls = []
+sink_destination = ""

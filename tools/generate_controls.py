@@ -392,6 +392,138 @@ AZURE_MAPPING = {
     "9.3.11": (T, T, "storage", ["storage", "redundancy"]),
 }
 
+
+# ---- hashicorp/google ~> 6.0 -------------------------------------------------
+# google has list data sources for networks / subnets / sql instances /
+# storage buckets / bigquery datasets but *not* for firewalls, instances or
+# project metadata. Instance-level controls (4.x) are checked against
+# operator-supplied {name, zone} inventory.
+GCP_MAPPING = {
+    # ---- 1 IAM -------------------------------------------------------------
+    "1.1.1": (N, N, None, ["iam", "super-admin"]),
+    "1.1.2": (N, N, None, ["iam", "super-admin"]),
+    "1.1.3": (N, N, None, ["iam", "folder-structure"]),
+    "1.1.4": (N, N, None, ["org-policy", "centralized"]),
+    "1.2":   (N, N, None, ["iam", "corporate-login"]),
+    "1.3":   (N, N, None, ["iam", "mfa"]),
+    "1.4":   (N, N, None, ["iam", "security-key"]),
+    "1.5":   (N, N, None, ["iam", "sa-key-managed"]),
+    # Service account / key / API-key checks need policy or key enumeration
+    # that the provider data sources do not expose.
+    "1.6":   (N, N, None, ["iam", "service-account"]),
+    "1.7":   (N, N, None, ["iam", "service-account-role"]),
+    "1.8":   (N, N, None, ["iam", "sa-key-rotation"]),
+    "1.9":   (N, N, None, ["iam", "separation-of-duties"]),
+    "1.10":  (N, N, None, ["kms", "public-key"]),
+    # google_kms_crypto_keys needs a key ring, and there is no key-ring list.
+    "1.11":  (N, N, None, ["kms", "rotation"]),
+    "1.12":  (N, N, None, ["kms", "separation-of-duties"]),
+    "1.13":  (N, N, None, ["api-key", "active-services"]),
+    "1.14":  (N, N, None, ["api-key", "restriction"]),
+    "1.15":  (N, N, None, ["api-key", "api-restriction"]),
+    "1.16":  (N, N, None, ["api-key", "rotation"]),
+    "1.17":  (N, N, None, ["essential-contacts"]),
+
+    # ---- 2 Logging ---------------------------------------------------------
+    # google_project_iam_audit_config writes the audit config; there is no
+    # data source to read it back.
+    "2.1":   (T, N, "logging", ["logging", "audit-config"]),
+    "2.2":   (N, N, None, ["logging", "workspace-sharing"]),
+    # google_logging_project_sink writes the sink; no data source.
+    "2.3":   (T, N, "logging", ["logging", "sink"]),
+    # retention_policy is readable on google_storage_bucket; enforcing bucket
+    # lock would take ownership of the export bucket.
+    "2.4":   (N, T, "storage", ["logging", "bucket-lock"]),
+    # Metric filter + alert existence checks need per-name probes against an
+    # operator list - not enumerable.
+    "2.5":   (N, N, None, ["logging", "metric-alert"]),
+    "2.6":   (N, N, None, ["logging", "metric-alert"]),
+    "2.7":   (N, N, None, ["logging", "metric-alert"]),
+    "2.8":   (N, N, None, ["logging", "metric-alert"]),
+    "2.9":   (N, N, None, ["logging", "metric-alert"]),
+    "2.10":  (N, N, None, ["logging", "metric-alert"]),
+    "2.11":  (N, N, None, ["logging", "metric-alert"]),
+    "2.12":  (N, N, None, ["logging", "metric-alert"]),
+    # google_dns_policy writes DNS logging; no data source to read it back.
+    "2.13":  (T, N, "network", ["dns", "logging"]),
+    "2.14":  (N, N, None, ["cloud-asset", "inventory"]),
+    "2.15":  (N, N, None, ["access-transparency"]),
+    "2.16":  (N, N, None, ["access-approval"]),
+
+    # ---- 3 Networking --------------------------------------------------------
+    # google_compute_networks returns self links; a default network exists when
+    # one of them names "default". No legacy flag and no dnssec/flow-log fields
+    # on the respective data sources, so 3.2/3.3-3.5/3.10 are Manual.
+    "3.1":   (N, T, "network", ["vpc", "default-network"]),
+    "3.2":   (N, N, None, ["vpc", "legacy-network"]),
+    "3.3":   (N, N, None, ["dns", "dnssec"]),
+    "3.4":   (N, N, None, ["dns", "dnssec-ksk"]),
+    "3.5":   (N, N, None, ["dns", "dnssec-zsk"]),
+    # No firewall list data source.
+    "3.6":   (N, N, None, ["firewall", "ssh"]),
+    "3.7":   (N, N, None, ["firewall", "rdp"]),
+    "3.8":   (N, N, None, ["vpc", "service-controls"]),
+    "3.9":   (N, N, None, ["vpc", "private-service-connect"]),
+    "3.10":  (N, N, None, ["vpc", "flow-logs"]),
+    "3.11":  (N, N, None, ["lb", "ssl-policy"]),
+
+    # ---- 4 Compute ------------------------------------------------------------
+    # No instance list data source; 4.x checks run against operator-supplied
+    # {name, zone} inventory.
+    "4.1":   (N, T, "compute", ["compute", "default-sa"]),
+    "4.2":   (N, T, "compute", ["compute", "default-sa-full-access"]),
+    "4.3":   (N, T, "compute", ["compute", "block-project-ssh-keys"]),
+    # google_compute_project_metadata writes oslogin for the whole project.
+    "4.4":   (T, N, "compute", ["compute", "oslogin"]),
+    "4.5":   (N, T, "compute", ["compute", "serial-ports"]),
+    "4.6":   (N, T, "compute", ["compute", "ip-forwarding"]),
+    "4.7":   (N, N, None, ["compute", "csek"]),
+    "4.8":   (N, T, "compute", ["compute", "shielded-vm"]),
+    "4.9":   (N, T, "compute", ["compute", "public-ip"]),
+    "4.10":  (N, N, None, ["app-engine", "https"]),
+    "4.11":  (N, T, "compute", ["compute", "confidential"]),
+
+    # ---- 5 Storage ------------------------------------------------------------
+    # google_storage_buckets lists names; each bucket's IAM policy is read for
+    # allUsers / allAuthenticatedUsers bindings.
+    "5.1":   (N, T, "storage", ["gcs", "public"]),
+
+    # ---- 6 Cloud SQL -----------------------------------------------------------
+    # google_sql_database_instances lists; flags live in settings.database_flags.
+    "6.1.1": (N, N, None, ["sql", "mysql-admin"]),
+    "6.1.2": (N, T, "database", ["sql", "mysql-skip-show-database"]),
+    "6.2.1": (N, T, "database", ["sql", "pg-log-error-verbosity"]),
+    "6.2.2": (N, T, "database", ["sql", "pg-log-connections"]),
+    "6.2.3": (N, T, "database", ["sql", "pg-log-disconnections"]),
+    "6.2.4": (N, T, "database", ["sql", "pg-log-statement"]),
+    "6.2.5": (N, T, "database", ["sql", "pg-log-min-messages"]),
+    "6.2.6": (N, T, "database", ["sql", "pg-log-min-error-statement"]),
+    "6.2.7": (N, T, "database", ["sql", "pg-log-min-duration"]),
+    "6.3.1": (N, T, "database", ["sql", "sqlserver-external-scripts"]),
+    "6.3.2": (N, T, "database", ["sql", "sqlserver-cross-db-chaining"]),
+    "6.3.3": (N, T, "database", ["sql", "sqlserver-user-connections"]),
+    "6.3.4": (N, T, "database", ["sql", "sqlserver-user-options"]),
+    "6.3.5": (N, T, "database", ["sql", "sqlserver-remote-access"]),
+    "6.3.6": (N, T, "database", ["sql", "sqlserver-trace-3625"]),
+    "6.3.7": (N, T, "database", ["sql", "sqlserver-contained-auth"]),
+    "6.4":   (N, T, "database", ["sql", "ssl"]),
+    # settings.ip_configuration is readable: authorized 0.0.0.0/0, ipv4 and
+    # backup_configuration cover 6.5 / 6.7 / 6.8.
+    "6.5":   (N, T, "database", ["sql", "public-whitelist"]),
+    "6.6":   (N, N, None, ["sql", "iam-auth"]),
+    "6.7":   (N, T, "database", ["sql", "public-ip"]),
+    "6.8":   (N, T, "database", ["sql", "backups"]),
+
+    # ---- 7 BigQuery -------------------------------------------------------------
+    # google_bigquery_datasets lists; dataset IAM policy read for public access.
+    "7.1":   (N, T, "bigquery", ["bigquery", "public"]),
+    "7.2":   (N, N, None, ["bigquery", "cmek"]),
+    "7.3":   (N, N, None, ["bigquery", "default-cmek"]),
+
+    # ---- 8 Dataproc --------------------------------------------------------------
+    "8.1":   (N, N, None, ["dataproc", "cmek"]),
+}
+
 CLOUD_CONFIG = {
     "tencent": {
         "mapping": TENCENT_MAPPING,
@@ -417,6 +549,15 @@ CLOUD_CONFIG = {
         "out": os.path.join(ROOT, "config", "azure", "controls.yml"),
         "section_notes": {
             5: "Entra ID settings have no surface in the azurerm provider - whole section is MANUAL.",
+        },
+    },
+    "gcp": {
+        "mapping": GCP_MAPPING,
+        "catalog": os.path.join(ROOT, "benchmarks", "gcp", "catalog.json"),
+        "out": os.path.join(ROOT, "config", "gcp", "controls.yml"),
+        "section_notes": {
+            1: "Super-admin, folder-structure and service-account checks are policy judgements or need enumeration the provider lacks.",
+            3: "The network data sources expose no dnssec / flow-log / firewall fields - most of section 3 is MANUAL.",
         },
     },
 }
