@@ -36,7 +36,7 @@ module Cis
     def scan
       if selector.detectable.empty?
         warn_no_detectable
-        return report(manual_findings, EXIT_OK, account: build_account)
+        return report(with_severity(manual_findings), EXIT_OK, account: build_account)
       end
 
       say "Scanning #{selector.detectable.size} control(s) via the `audit` stack (read-only)."
@@ -55,11 +55,24 @@ module Cis
       return EXIT_ERROR unless code.zero?
 
       account = build_account(terraform: true)
-      findings = read_findings + manual_findings
+      findings = with_severity(read_findings + manual_findings)
+      findings = Cis::Suppressions.load.apply(findings, Cis.cloud)
       report(findings, findings.any? { |f| f["status"] == "FAIL" } ? EXIT_FINDING : EXIT_OK,
              account: account)
     rescue Error => e
       abort_with(e.message)
+    end
+
+    def check(findings)
+      body = @reporter.scan(findings, selector, format: options.fetch(:format, "table"))
+      write_output(body)
+      findings.any? { |f| f["status"] == "FAIL" } ? EXIT_FINDING : EXIT_OK
+    end
+
+    def compliance(compliance)
+      body = @reporter.compliance(compliance, format: options.fetch(:format, "table"))
+      write_output(body)
+      EXIT_OK
     end
 
     def plan
@@ -228,6 +241,16 @@ module Cis
           "status"   => c.remediable? ? "SKIPPED" : "MANUAL",
           "evidence" => c.remediable? ? "enforced by `cis apply`, not readable" : "verify in console"
         }
+      end
+    end
+
+    # Attach a risk severity to every finding, derived from the registry
+    # control's tags.
+    def with_severity(findings)
+      by_id = selector.catalog.controls.to_h { |c| [c.id, c] }
+      findings.map do |f|
+        ctl = by_id[f["id"]]
+        f.key?("severity") ? f : f.merge("severity" => Cis::Severity.of(ctl ? ctl.tags : []))
       end
     end
 

@@ -1,0 +1,12 @@
+# Operator-declared exclusions. Copy to config/suppress.yml to enable.
+# Suppressed findings are reported as SUPPRESSED and never trip the scan
+# exit-code gate.
+#
+#   suppress:
+#     - cloud:    "aws"            # cloud name, or "*" for every cloud
+#       control:  "6.3"            # control id, or a glob like "6.*"
+#       resource: "sg-0a1b2c3d4e5f60708"   # optional; matched against the
+#                                         # finding's evidence text
+#       reason:   "known exception - legacy jump host"
+#
+suppress: []

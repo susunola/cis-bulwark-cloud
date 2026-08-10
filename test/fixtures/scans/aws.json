@@ -1,0 +1,33 @@
+{
+  "benchmark": "CIS Amazon Web Services Foundations Benchmark",
+  "version": "v7.0.0",
+  "summary": {
+    "selected": 9,
+    "FAIL": 1,
+    "PASS": 1,
+    "MANUAL": 1
+  },
+  "findings": [
+    {
+      "id": "6.3",
+      "status": "FAIL",
+      "severity": "critical",
+      "title": "Ensure no security groups allow ingress",
+      "evidence": "sg-123 rule x"
+    },
+    {
+      "id": "6.1.1",
+      "status": "PASS",
+      "severity": "high",
+      "title": "EBS encryption",
+      "evidence": "ok"
+    },
+    {
+      "id": "4.1",
+      "status": "MANUAL",
+      "severity": "medium",
+      "title": "CloudTrail",
+      "evidence": "verify"
+    }
+  ]
+}
