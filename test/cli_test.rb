@@ -418,4 +418,36 @@ class CliTest < CisTestCase
     assert_equal 0, r.status, r
     assert_match(%r{terraform -chdir=stacks/azure/network\s+apply}, r.stdout)
   end
+
+  # ---- cis check (IaC pre-deploy) ------------------------------------------
+
+  def test_check_scans_tf_files_without_credentials
+    dir = File.join(Cis::ROOT, "test", "fixtures", "tf")
+    r = cis("--cloud", "aws", "check", "--tf", dir, "--no-color")
+    assert_equal 1, r.status, r # fixture has a failing control (4.2)
+    assert_includes r.stdout, "aws_cloudtrail.trail"
+  end
+
+  def test_check_needs_a_directory
+    r = cis("check")
+    assert_equal 2, r.status
+    assert_includes r.stdout + r.stderr, "--tf"
+  end
+
+  # ---- cis compliance (cross-cloud aggregation) -----------------------------
+
+  def test_compliance_aggregates_scan_jsons
+    dir = File.join(Cis::ROOT, "test", "fixtures", "scans")
+    r = cis("compliance", "--dir", dir, "--no-color")
+    assert_equal 0, r.status, r
+    assert_includes r.stdout, "Cross-cloud compliance"
+    assert_includes r.stdout, "aws"
+    assert_includes r.stdout, "azure"
+  end
+
+  def test_compliance_without_results_fails_cleanly
+    r = cis("compliance", "--dir", File.join(Cis::ROOT, "test", "fixtures", "tf"))
+    assert_equal 2, r.status
+    assert_includes r.stdout + r.stderr, "no scan results"
+  end
 end

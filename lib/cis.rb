@@ -15,6 +15,10 @@ require_relative "cis/catalog"
 require_relative "cis/selector"
 require_relative "cis/reporter"
 require_relative "cis/runner"
+require_relative "cis/severity"
+require_relative "cis/suppress"
+require_relative "cis/compliance"
+require_relative "cis/tfcheck"
 
 module Cis
   ROOT = File.expand_path("..", __dir__)

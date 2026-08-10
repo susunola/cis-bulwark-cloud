@@ -33,7 +33,7 @@
 require "optparse"
 require_relative "../lib/cis"
 
-COMMANDS = %w[list scan plan apply destroy].freeze
+COMMANDS = %w[list scan plan apply destroy compliance check].freeze
 
 options = { format: "table" }
 filters = {}
@@ -55,9 +55,11 @@ parser = OptionParser.new do |o|
 
   o.separator ""
   o.separator "Output:"
-  o.on("--format FORMAT", %w[table json markdown html], "table (default), json, markdown, html") { |v| options[:format] = v }
+  o.on("--format FORMAT", %w[table json markdown html csv junit], "table (default), json, markdown, html, csv, junit") { |v| options[:format] = v }
   o.on("-o", "--output PATH", "Write the list/scan report to a file (any format)") { |v| options[:output] = v }
   o.on("--report [PATH]", "After `apply`, write an HTML hardening report (default: cis-hardening-<ts>.html)") { |v| options[:report] = v || true }
+  o.on("--dir PATH", "Scan results directory for `cis compliance` (default: $CIS_SCAN_DIR or ./scans)") { |v| options[:dir] = v }
+  o.on("--tf DIR", "Directory of Terraform files for `cis check`") { |v| options[:tf_dir] = v }
   o.on("--dry-run",  "Print what would run, execute nothing") { options[:dry_run] = true }
   o.on("--verbose",  "Echo each terraform invocation")        { options[:verbose] = true }
   o.on("--no-color", "Disable ANSI colour")                   { options[:color] = false }
@@ -113,6 +115,26 @@ exit_code =
   when "scan"    then runner.scan
   when "plan"    then runner.plan
   when "apply"   then runner.apply
+  when "check"
+    dir = options[:tf_dir]
+    if dir.nil?
+      warn "error: `cis check` needs --tf DIR (a directory of .tf files)"
+      exit 2
+    end
+    unless Dir.exist?(dir)
+      warn "error: no such directory: #{dir}"
+      exit 2
+    end
+    findings = Cis::TfCheck.scan(dir, Cis.cloud).map { |f| f.to_h.transform_keys(&:to_s) }
+    runner.check(findings)
+  when "compliance"
+    dir = options[:dir] || ENV["CIS_SCAN_DIR"] || File.join(Dir.pwd, "scans")
+    compliance = Cis::Compliance.load_dir(dir)
+    if compliance.empty?
+      warn "error: no scan results found in #{dir}; save per-cloud scans with: cis --cloud X scan --format json -o scans/X.json"
+      exit 2
+    end
+    runner.compliance(compliance)
   when "destroy"
     stack = ARGV.shift
     if stack.nil?

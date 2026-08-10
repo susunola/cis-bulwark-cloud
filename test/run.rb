@@ -20,4 +20,5 @@ require_relative "test_helper"
   azure_wiring_test
   gcp_wiring_test
   alibaba_wiring_test
+  new_features_test
 ].each { |name| require_relative name }

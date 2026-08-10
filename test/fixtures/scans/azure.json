@@ -1,0 +1,8 @@
+{
+  "benchmark": "CIS Microsoft Azure Foundations Benchmark",
+  "version": "v6.0.0",
+  "findings": [
+    {"id": "9.3.6", "status": "FAIL", "severity": "high", "title": "Min TLS", "evidence": "TLS1_0"},
+    {"id": "9.3.4", "status": "PASS", "severity": "high", "title": "Secure transfer", "evidence": "ok"}
+  ]
+}

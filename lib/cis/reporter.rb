@@ -3,13 +3,14 @@
 module Cis
   # Renders control listings, scan findings and hardening runs.
   class Reporter
-    STATUS_ORDER = %w[FAIL PASS MANUAL SKIPPED].freeze
+    STATUS_ORDER = %w[FAIL PASS MANUAL SKIPPED SUPPRESSED].freeze
 
     COLORS = {
       "PASS"    => "\e[32m",
       "FAIL"    => "\e[31m",
       "MANUAL"  => "\e[33m",
-      "SKIPPED" => "\e[90m"
+      "SKIPPED" => "\e[90m",
+      "SUPPRESSED" => "\e[90m"
     }.freeze
     RESET = "\e[0m"
 
@@ -92,7 +93,12 @@ module Cis
       .badge.pass    { background:var(--pass); }
       .badge.fail    { background:var(--fail); }
       .badge.manual  { background:var(--manual); }
-      .badge.skipped { background:var(--skip); }
+      .badge.skipped    { background:var(--skip); }
+      .badge.suppressed { background:var(--skip); }
+      .badge.sev-critical { background:#c92a2a; }
+      .badge.sev-high     { background:#e8590c; }
+      .badge.sev-medium   { background:#f08c00; }
+      .badge.sev-low      { background:#868e96; }
       .badge.planned { background:var(--plan); }
       /* ---- footer ---- */
       footer { margin-top:2.5rem; padding-top:1rem; border-top:1px solid var(--line);
@@ -130,10 +136,113 @@ module Cis
              when "json"     then JSON.pretty_generate(scan_payload(findings, selector))
              when "markdown" then scan_markdown(findings)
              when "html"     then scan_html(findings, selector, account: account)
+             when "csv"      then scan_csv(findings)
+             when "junit"    then scan_junit(findings)
              else                 scan_table(findings)
              end
       @io.puts body
       body
+    end
+
+    # ---- `cis compliance` --------------------------------------------------
+
+    def compliance(compliance, format: "table")
+      body = case format
+             when "json"     then JSON.pretty_generate(compliance_payload(compliance))
+             when "markdown" then compliance_markdown(compliance)
+             when "html"     then compliance_html(compliance)
+             else                 compliance_table(compliance)
+             end
+      @io.puts body
+      body
+    end
+
+    def compliance_payload(c)
+      { "clouds" => c.per_cloud.transform_values { |v| v.slice("benchmark", "version", "summary", "status", "fail_by_severity") },
+        "global" => c.global }
+    end
+
+    def compliance_table(c)
+      g = c.global
+      @io.puts "Cross-cloud compliance posture"
+      @io.puts ""
+      @io.puts format("  %-9s %8s %8s %8s %8s", "CLOUD", "FAIL", "PASS", "MANUAL", "OTHER")
+      @io.puts "  " + "-" * 46
+      c.per_cloud.each do |cloud, v|
+        st = v[:status]
+        other = st["SKIPPED"] + st["SUPPRESSED"]
+        @io.puts format("  %-9s %8d %8d %8d %8d", cloud, st["FAIL"], st["PASS"], st["MANUAL"], other)
+      end
+      @io.puts "  " + "-" * 46
+      gst = g[:status]
+      @io.puts format("  %-9s %8d %8d %8d %8d", "TOTAL", gst["FAIL"], gst["PASS"], gst["MANUAL"], gst["SKIPPED"] + gst["SUPPRESSED"])
+      @io.puts ""
+      @io.puts "  Failing by severity: " + Compliance::SEVERITY_ORDER.map { |lv| "#{lv} #{g[:fail_by_severity][lv]}" }.join("  ")
+      if g[:failing].any?
+        @io.puts ""
+        @io.puts "  Failing controls:"
+        g[:failing].each do |f|
+          cloud = c.entries.find { |e| e[:findings].include?(f) }[:cloud]
+          @io.puts format("    %-10s %-8s %-8s %-52s %s", cloud, f["severity"], f["id"],
+                          truncate(f["title"].to_s, 52), truncate(f["evidence"].to_s, 40))
+        end
+      end
+      @io.puts ""
+    end
+
+    def compliance_markdown(c)
+      g = c.global
+      out = +"# Cross-cloud Compliance\n\n"
+      out << "| Cloud | FAIL | PASS | MANUAL | SKIPPED | SUPPRESSED |\n|---|---|---|---|---|---|\n"
+      c.per_cloud.each do |cloud, v|
+        st = v[:status]
+        out << "| #{cloud} | #{st['FAIL']} | #{st['PASS']} | #{st['MANUAL']} | #{st['SKIPPED']} | #{st['SUPPRESSED']} |\n"
+      end
+      gst = g[:status]
+      out << "| **Total** | **#{gst['FAIL']}** | **#{gst['PASS']}** | **#{gst['MANUAL']}** | **#{gst['SKIPPED']}** | **#{gst['SUPPRESSED']}** |\n\n"
+      out << "Failing by severity: " << Compliance::SEVERITY_ORDER.map { |lv| "#{lv} #{g[:fail_by_severity][lv]}" }.join(" / ") << "\n\n"
+      if g[:failing].any?
+        out << "## Failing controls\n\n| Cloud | Severity | ID | Title | Evidence |\n|---|---|---|---|---|\n"
+        g[:failing].each do |f|
+          cloud = c.entries.find { |e| e[:findings].include?(f) }[:cloud]
+          out << "| #{cloud} | #{f['severity']} | #{f['id']} | #{f['title']} | #{f['evidence']} |\n"
+        end
+      end
+      out
+    end
+
+    def compliance_html(c)
+      g = c.global
+      html = +"" << doctype << head("CIS Multi-Cloud — Compliance Posture")
+      html << "<header class=\"hero\"><h1>Cross-Cloud Compliance Posture</h1>\n"
+      html << "<p class=\"meta\">generated #{h(Time.now.utc.strftime('%Y-%m-%d %H:%M UTC'))}</p></header>\n"
+      html << "<main>\n"
+      html << "<section class=\"card\"><h2>Per cloud</h2>\n<table><thead><tr><th>Cloud</th><th>FAIL</th>" \
+              "<th>PASS</th><th>MANUAL</th><th>SKIPPED</th><th>SUPPRESSED</th><th>Critical fails</th></tr></thead><tbody>\n"
+      c.per_cloud.each do |cloud, v|
+        st = v[:status]
+        html << "<tr><td><span class=\"mono\">#{h(cloud)}</span></td><td>#{st['FAIL']}</td><td>#{st['PASS']}</td>" \
+                "<td>#{st['MANUAL']}</td><td>#{st['SKIPPED']}</td><td>#{st['SUPPRESSED']}</td>" \
+                "<td>#{v[:fail_by_severity]['critical']}</td></tr>\n"
+      end
+      gst = g[:status]
+      html << "<tr><td><strong>Total</strong></td><td><strong>#{gst['FAIL']}</strong></td><td><strong>#{gst['PASS']}</strong></td>" \
+              "<td><strong>#{gst['MANUAL']}</strong></td><td><strong>#{gst['SKIPPED']}</strong></td>" \
+              "<td><strong>#{gst['SUPPRESSED']}</strong></td><td></td></tr>\n"
+      html << "</tbody></table></section>\n"
+      if g[:failing].any?
+        html << "<section class=\"card\"><h2>Failing controls (#{g[:failing].size})</h2>\n" \
+                "<table><thead><tr><th>Cloud</th><th>Severity</th><th>ID</th><th>Title</th><th>Evidence</th></tr></thead><tbody>\n"
+        g[:failing].each do |f|
+          cloud = c.entries.find { |e| e[:findings].include?(f) }[:cloud]
+          html << "<tr><td><span class=\"mono\">#{h(cloud)}</span></td>" \
+                  "<td><span class=\"badge sev-#{f['severity']}\">#{h(f['severity'])}</span></td>" \
+                  "<td><span class=\"mono\">#{h(f['id'])}</span></td><td>#{h(f['title'])}</td><td>#{h(f['evidence'])}</td></tr>\n"
+        end
+        html << "</tbody></table></section>\n"
+      end
+      html << "</main>\n<footer>CIS multi-cloud compliance</footer>\n</body>\n</html>\n"
+      html
     end
 
     # ---- `cis apply --report` ---------------------------------------------
@@ -348,14 +457,15 @@ module Cis
 
     def scan_table(findings)
       @io.puts ""
-      @io.puts format("  %-8s %-6s %-58s %s", "STATUS", "ID", "TITLE", "EVIDENCE")
-      @io.puts "  " + "-" * 108
+      @io.puts format("  %-10s %-8s %-7s %-44s %s", "STATUS", "ID", "SEV", "TITLE", "EVIDENCE")
+      @io.puts "  " + "-" * 110
       sorted(findings).each do |f|
-        @io.puts format("  %-8s %-6s %-58s %s",
+        @io.puts format("  %-10s %-8s %-7s %-44s %s",
                         paint(f["status"], f["status"]),
                         f["id"],
-                        truncate(f["title"].to_s, 58),
-                        truncate(f["evidence"].to_s, 34))
+                        f["severity"],
+                        truncate(f["title"].to_s, 44),
+                        truncate(f["evidence"].to_s, 38))
       end
       @io.puts ""
       t = tally(findings)
@@ -364,14 +474,42 @@ module Cis
     end
 
     def scan_markdown(findings)
-      @io.puts "| Status | ID | Title | Evidence |"
-      @io.puts "|---|---|---|---|"
+      @io.puts "| Status | Severity | ID | Title | Evidence |"
+      @io.puts "|---|---|---|---|---|"
       sorted(findings).each do |f|
-        @io.puts "| #{f['status']} | #{f['id']} | #{f['title']} | #{f['evidence']} |"
+        @io.puts "| #{f['status']} | #{f['severity']} | #{f['id']} | #{f['title']} | #{f['evidence']} |"
       end
       @io.puts ""
       t = tally(findings)
       @io.puts STATUS_ORDER.map { |s| "**#{s}** #{t[s]}" }.join(" / ")
+    end
+
+    def scan_csv(findings)
+      require "csv"
+      out = CSV.generate do |csv|
+        csv << %w[status severity id title evidence]
+        sorted(findings).each { |f| csv << [f["status"], f["severity"], f["id"], f["title"], f["evidence"]] }
+      end
+      @io.puts out
+      out
+    end
+
+    def scan_junit(findings)
+      failed = findings.select { |f| f["status"] == "FAIL" }
+      xml = +"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+      xml << "<testsuite name=\"cis-scan\" tests=\"#{findings.size}\" failures=\"#{failed.size}\">\n"
+      sorted(findings).each do |f|
+        xml << "  <testcase name=\"#{h(f['id'])} #{h(f['title'])}\" classname=\"#{h(f['severity'] || 'unknown')}\">\n"
+        if f["status"] == "FAIL"
+          xml << "    <failure message=\"#{h(f['evidence'])}\" />\n"
+        elsif f["status"] == "SUPPRESSED"
+          xml << "    <skipped message=\"suppressed\" />\n"
+        end
+        xml << "  </testcase>\n"
+      end
+      xml << "</testsuite>\n"
+      @io.puts xml
+      xml
     end
 
     def scan_html(findings, selector, account: nil)
@@ -390,13 +528,15 @@ module Cis
       # "enforced" = PASS, everything else is "not enforced".
       sections.sort_by { |s, _| s.to_i }.each do |sec, rows|
         html << "<section class=\"card\"><h2>#{h(sec)} #{h(catalog.section_title(sec))}</h2>\n"
-        html << "<table><thead><tr><th>Status</th><th>ID</th><th>Title</th>" \
+        html << "<table><thead><tr><th>Status</th><th>Severity</th><th>ID</th><th>Title</th>" \
                 "<th>Evidence</th></tr></thead><tbody>\n"
         sorted(rows).each do |f|
           s = h(f["status"])
           search = h("#{f['id']} #{f['title']}").downcase
           html << "<tr data-status=\"#{s}\" data-search=\"#{search}\">" \
-                  "<td>#{badge(f['status'])}</td><td><span class=\"mono\">#{h(f['id'])}</span></td>" \
+                  "<td>#{badge(f['status'])}</td>" \
+                  "<td><span class=\"badge sev-#{f['severity']}\">#{h(f['severity'])}</span></td>" \
+                  "<td><span class=\"mono\">#{h(f['id'])}</span></td>" \
                   "<td>#{h(f['title'])}</td><td>#{h(f['evidence'])}</td></tr>\n"
         end
         html << "</tbody></table></section>\n"

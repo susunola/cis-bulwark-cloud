@@ -107,7 +107,7 @@ export TENCENTCLOUD_REGION=ap-guangzhou
 
 ```bash
 ruby bin/cis list          # prints the control registry
-ruby test/run.rb           # 212 tests, 6722 assertions, offline
+ruby test/run.rb           # 226 tests, 6792 assertions, offline
 ```
 
 **First scan:**
@@ -202,7 +202,28 @@ cis scan                   Read-only assessment of selected controls
 cis plan                   Show what cis apply would change
 cis apply                  Enforce selected controls
 cis destroy STACK          Roll back one hardening stack
+cis compliance --dir scans Aggregate per-cloud scan JSONs into one posture
+cis check --tf DIR         Pre-deploy CIS checks on Terraform definitions
 ```
+
+### Beyond scan / apply (industry borrowings)
+
+- **Cross-cloud compliance** (`cis compliance --dir scans`, Prowler-style): save
+  each cloud's scan with `cis --cloud X scan --format json -o scans/X.json`, then
+  aggregate all of them into one posture - per-cloud cards, global tally and the
+  failing-control list ordered by severity.
+- **Severity** (Prowler-style): every finding carries a risk level
+  (critical/high/medium/low) inferred from the control's tags, shown in all
+  report formats and used to order the compliance failing list.
+- **Suppression** (`config/suppress.yml`, CloudSploit-style): declare known
+  exceptions per cloud+control+resource; suppressed findings render as
+  SUPPRESSED and never trip the scan gate.
+- **CI formats**: `--format csv` / `--format junit` for pipelines; `scan` exits
+  1 when any assessed control FAILs (suppressed findings excluded).
+- **IaC pre-deploy checks** (`cis check --tf DIR`, Steampipe-style): parse .tf
+  files (no credentials, no terraform run) and verify the arguments CIS
+  requires are present, per cloud. Catches the missing `enable_log_file_validation`
+  before you apply - `cis scan` still covers what runs on the live cloud.
 
 ### Exit Codes
 
@@ -398,7 +419,7 @@ official CIS benchmark PDF.
 ## Tests
 
 ```bash
-ruby test/run.rb                 # 212 runs, 6722 assertions
+ruby test/run.rb                 # 226 runs, 6792 assertions
 ruby test/selector_test.rb       # single file
 ```
 
