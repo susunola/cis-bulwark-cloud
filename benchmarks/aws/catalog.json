@@ -1,0 +1,484 @@
+{
+  "benchmark": "CIS Amazon Web Services Foundations Benchmark",
+  "version": "v7.0.0",
+  "date": "03-25-2026",
+  "sections": {
+    "1": "Introduction",
+    "1.1": "CIS Amazon Web Services Foundations Benchmarks",
+    "1.2": "CIS AWS Service Category Benchmarks",
+    "2": "Identity and Access Management",
+    "2.1": "Organizations",
+    "3": "Storage",
+    "3.1": "Simple Storage Service (S3)",
+    "3.2": "Relational Database Service (RDS)",
+    "3.3": "Elastic File System (EFS)",
+    "4": "Logging",
+    "5": "Monitoring",
+    "6": "Networking",
+    "6.1": "Elastic Compute Cloud (EC2)"
+  },
+  "controls": [
+    {
+      "id": "2.1.1",
+      "title": "Ensure centralized root access in AWS Organizations",
+      "section": "2",
+      "assessment": "Manual",
+      "group": "Organizations",
+      "profile": "Level 2"
+    },
+    {
+      "id": "2.1.2",
+      "title": "Ensure authorization guardrails for all AWS Organization accounts",
+      "section": "2",
+      "assessment": "Manual",
+      "group": "Organizations",
+      "profile": "Level 2"
+    },
+    {
+      "id": "2.1.3",
+      "title": "Ensure Organizations management account is not used for workloads",
+      "section": "2",
+      "assessment": "Manual",
+      "group": "Organizations",
+      "profile": "Level 2"
+    },
+    {
+      "id": "2.1.4",
+      "title": "Ensure Organizational Units are structured by environment and sensitivity",
+      "section": "2",
+      "assessment": "Manual",
+      "group": "Organizations",
+      "profile": "Level 2"
+    },
+    {
+      "id": "2.1.5",
+      "title": "Ensure delegated admin manages AWS Organizations policies",
+      "section": "2",
+      "assessment": "Manual",
+      "group": "Organizations",
+      "profile": "Level 2"
+    },
+    {
+      "id": "2.1.6",
+      "title": "Ensure delegated admins manage AWS Organizations- integrated services",
+      "section": "2",
+      "assessment": "Manual",
+      "group": "Organizations",
+      "profile": "Level 2"
+    },
+    {
+      "id": "2.2",
+      "title": "Maintain current AWS account contact details",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.3",
+      "title": "Ensure security contact information is registered",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.4",
+      "title": "Ensure no 'root' user account access key exists",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.5",
+      "title": "Ensure MFA is enabled for the 'root' user account",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.6",
+      "title": "Ensure hardware MFA is enabled for the 'root' user account",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "2.7",
+      "title": "Eliminate use of the 'root' user for administrative and daily tasks",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.8",
+      "title": "Ensure IAM password policy requires minimum length of 14 or greater",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.9",
+      "title": "Ensure IAM password policy prevents password reuse",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.10",
+      "title": "Ensure multi-factor authentication (MFA) is enabled for all IAM users that have a console password",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.11",
+      "title": "Ensure credentials unused for 45 days or more are disabled",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.12",
+      "title": "Ensure access keys are rotated every 90 days or less",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.13",
+      "title": "Ensure IAM users receive permissions only through groups",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.14",
+      "title": "Ensure IAM policies that allow full \"*:*\" administrative privileges are not attached",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.15",
+      "title": "Ensure a support role has been created to manage incidents with AWS Support",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.16",
+      "title": "Ensure IAM instance roles are used for AWS resource access from instances",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "2.17",
+      "title": "Ensure that all expired SSL/TLS certificates stored in AWS IAM are removed",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.18",
+      "title": "Ensure that IAM External Access Analyzer is enabled for all regions",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.19",
+      "title": "Ensure IAM users are managed centrally via identity federation or AWS Organizations for multi-account environments",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "2.20",
+      "title": "Ensure access to AWSCloudShellFullAccess is restricted",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "3.1.1",
+      "title": "Ensure S3 Bucket Policy is set to deny HTTP requests",
+      "section": "3",
+      "assessment": "Automated",
+      "group": "Simple Storage Service (S3)",
+      "profile": "Level 2"
+    },
+    {
+      "id": "3.1.2",
+      "title": "Ensure MFA Delete is enabled on S3 buckets",
+      "section": "3",
+      "assessment": "Manual",
+      "group": "Simple Storage Service (S3)",
+      "profile": "Level 2"
+    },
+    {
+      "id": "3.1.3",
+      "title": "Ensure all data in Amazon S3 has been discovered, classified, and secured when necessary",
+      "section": "3",
+      "assessment": "Manual",
+      "group": "Simple Storage Service (S3)",
+      "profile": "Level 2"
+    },
+    {
+      "id": "3.2.1",
+      "title": "Ensure that encryption-at-rest is enabled for RDS instances",
+      "section": "3",
+      "assessment": "Automated",
+      "group": "Relational Database Service (RDS)",
+      "profile": "Level 1"
+    },
+    {
+      "id": "3.2.2",
+      "title": "Ensure the Auto Minor Version Upgrade feature is enabled for RDS instances",
+      "section": "3",
+      "assessment": "Automated",
+      "group": "Relational Database Service (RDS)",
+      "profile": "Level 1"
+    },
+    {
+      "id": "3.2.3",
+      "title": "Ensure that RDS instances are not publicly accessible",
+      "section": "3",
+      "assessment": "Automated",
+      "group": "Relational Database Service (RDS)",
+      "profile": "Level 1"
+    },
+    {
+      "id": "4.1",
+      "title": "Ensure CloudTrail is enabled in all regions",
+      "section": "4",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "4.2",
+      "title": "Ensure CloudTrail log file validation is enabled",
+      "section": "4",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "4.3",
+      "title": "Ensure AWS Config is enabled in all regions",
+      "section": "4",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "4.4",
+      "title": "Ensure that server access logging is enabled on the CloudTrail S3 bucket",
+      "section": "4",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "4.5",
+      "title": "Ensure CloudTrail logs are encrypted at rest using KMS CMKs",
+      "section": "4",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "4.6",
+      "title": "Ensure rotation for customer-created symmetric CMKs is enabled",
+      "section": "4",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "4.7",
+      "title": "Ensure VPC flow logging is enabled in all VPCs",
+      "section": "4",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "4.8",
+      "title": "Ensure that object-level logging for write events is enabled for S3 buckets",
+      "section": "4",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "4.9",
+      "title": "Ensure that object-level logging for read events is enabled for S3 buckets",
+      "section": "4",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "5.1",
+      "title": "Ensure unauthorized API calls are monitored",
+      "section": "5",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "5.2",
+      "title": "Ensure management console sign-in without MFA is monitored",
+      "section": "5",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "5.3",
+      "title": "Ensure usage of the 'root' account is monitored",
+      "section": "5",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "5.4",
+      "title": "Ensure IAM policy changes are monitored",
+      "section": "5",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "5.5",
+      "title": "Ensure CloudTrail configuration changes are monitored",
+      "section": "5",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "5.6",
+      "title": "Ensure AWS Management Console authentication failures are monitored",
+      "section": "5",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "5.7",
+      "title": "Ensure disabling or scheduled deletion of customer created CMKs is monitored",
+      "section": "5",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "5.8",
+      "title": "Ensure S3 bucket policy changes are monitored",
+      "section": "5",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "5.9",
+      "title": "Ensure AWS Config configuration changes are monitored",
+      "section": "5",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "5.10",
+      "title": "Ensure security group changes are monitored",
+      "section": "5",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "5.11",
+      "title": "Ensure Network Access Control List (NACL) changes are monitored",
+      "section": "5",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "5.12",
+      "title": "Ensure changes to network gateways are monitored",
+      "section": "5",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "5.13",
+      "title": "Ensure route table changes are monitored",
+      "section": "5",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "5.14",
+      "title": "Ensure VPC changes are monitored",
+      "section": "5",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "5.15",
+      "title": "Ensure AWS Organizations changes are monitored",
+      "section": "5",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.1.1",
+      "title": "Ensure EBS volume encryption is enabled in all regions",
+      "section": "6",
+      "assessment": "Automated",
+      "group": "Elastic Compute Cloud (EC2)",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.1.2",
+      "title": "Ensure CIFS access is restricted to trusted networks to prevent unauthorized access",
+      "section": "6",
+      "assessment": "Automated",
+      "group": "Elastic Compute Cloud (EC2)",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.2",
+      "title": "Ensure no Network ACLs allow ingress from 0.0.0.0/0 to remote server administration ports",
+      "section": "6",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.3",
+      "title": "Ensure no security groups allow ingress from 0.0.0.0/0 to remote server administration ports",
+      "section": "6",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.4",
+      "title": "Ensure no security groups allow ingress from ::/0 to remote server administration ports",
+      "section": "6",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.5",
+      "title": "Ensure the default security group of every VPC restricts all traffic",
+      "section": "6",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "6.6",
+      "title": "Ensure routing tables for VPC peering are \"least access\"",
+      "section": "6",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "6.7",
+      "title": "Ensure that the EC2 Metadata Service only allows IMDSv2",
+      "section": "6",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.8",
+      "title": "Ensure VPC Endpoints are used for access to AWS Services",
+      "section": "6",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    }
+  ]
+}

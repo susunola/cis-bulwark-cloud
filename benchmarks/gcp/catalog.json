@@ -1,0 +1,629 @@
+{
+  "benchmark": "CIS Google Cloud Platform Foundation Benchmark",
+  "version": "v5.0.0",
+  "date": "05-09-2026",
+  "sections": {
+    "1": "Identity and Access Management",
+    "1.1": "Organization Resource",
+    "2": "Logging and Monitoring",
+    "3": "Networking",
+    "4": "Virtual Machines",
+    "5": "Storage",
+    "6": "Cloud SQL Database Services",
+    "6.1": "MySQL Database",
+    "6.2": "PostgreSQL Database",
+    "6.3": "SQL Server",
+    "7": "BigQuery",
+    "8": "Dataproc"
+  },
+  "controls": [
+    {
+      "id": "1.1.1",
+      "title": "Ensure Super Admin Email Address Is Not Tied To A Single User",
+      "section": "1",
+      "assessment": "Manual",
+      "group": "Organization Resource",
+      "profile": "Level 1"
+    },
+    {
+      "id": "1.1.2",
+      "title": "Ensure Super Admin Account Is Not Used For Google Cloud Administration",
+      "section": "1",
+      "assessment": "Manual",
+      "group": "Organization Resource",
+      "profile": "Level 1"
+    },
+    {
+      "id": "1.1.3",
+      "title": "Ensure Folders Are Structured By Environment And Sensitivity",
+      "section": "1",
+      "assessment": "Manual",
+      "group": "Organization Resource",
+      "profile": "Level 2"
+    },
+    {
+      "id": "1.1.4",
+      "title": "Ensure Organization Policies Are Configured For Centralized Constraints",
+      "section": "1",
+      "assessment": "Manual",
+      "group": "Organization Resource",
+      "profile": "Level 2"
+    },
+    {
+      "id": "1.2",
+      "title": "Ensure that Corporate Login Credentials are Used",
+      "section": "1",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "1.3",
+      "title": "Ensure that Multi-Factor Authentication is 'Enabled' for All Non-Service Accounts",
+      "section": "1",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "1.4",
+      "title": "Ensure that Security Key Enforcement is Enabled for All Admin Accounts",
+      "section": "1",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "1.5",
+      "title": "Ensure That There Are Only GCP-Managed Service Account Keys for Each Service Account",
+      "section": "1",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "1.6",
+      "title": "Ensure That Service Account Has No Admin Privileges",
+      "section": "1",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "1.7",
+      "title": "Ensure That IAM Users Are Not Assigned the Service Account User or Service Account Token Creator Roles at Project Level",
+      "section": "1",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "1.8",
+      "title": "Ensure User-Managed/External Keys for Service Accounts Are Rotated Every 90 Days or Fewer",
+      "section": "1",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "1.9",
+      "title": "Ensure That Separation of Duties Is Enforced While Assigning Service Account Related Roles to Users",
+      "section": "1",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "1.10",
+      "title": "Ensure That Cloud KMS Cryptokeys Are Not Anonymously or Publicly Accessible",
+      "section": "1",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "1.11",
+      "title": "Ensure KMS Encryption Keys Are Rotated Within a Period of 90 Days",
+      "section": "1",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "1.12",
+      "title": "Ensure That Separation of Duties Is Enforced While Assigning KMS Related Roles to Users",
+      "section": "1",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "1.13",
+      "title": "Ensure API Keys Only Exist for Active Services",
+      "section": "1",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "1.14",
+      "title": "Ensure API Keys Are Restricted To Use by Only Specified Hosts and Apps",
+      "section": "1",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "1.15",
+      "title": "Ensure API Keys Are Restricted to Only APIs That Application Needs Access",
+      "section": "1",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "1.16",
+      "title": "Ensure API Keys Are Rotated Every 90 Days",
+      "section": "1",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "1.17",
+      "title": "Ensure Essential Contacts is Configured for Organization",
+      "section": "1",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.1",
+      "title": "Ensure That Cloud Audit Logging Is Configured Properly",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.2",
+      "title": "Ensure Google Workspace/Cloud Identity Data Sharing with Google Cloud is Enabled for Admin Audit Logging",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.3",
+      "title": "Ensure That Sinks Are Configured for All Log Entries",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.4",
+      "title": "Ensure That Retention Policies on Cloud Storage Buckets Used for Exporting Logs Are Configured Using Bucket Lock",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "2.5",
+      "title": "Ensure Log Metric Filter and Alerts Exist for Project Ownership Assignments/Changes",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.6",
+      "title": "Ensure That the Log Metric Filter and Alerts Exist for Audit Configuration Changes",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.7",
+      "title": "Ensure That the Log Metric Filter and Alerts Exist for Custom Role Changes",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.8",
+      "title": "Ensure That the Log Metric Filter and Alerts Exist for VPC Network Firewall Rule Changes",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "2.9",
+      "title": "Ensure That the Log Metric Filter and Alerts Exist for VPC Network Route Changes",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "2.10",
+      "title": "Ensure That the Log Metric Filter and Alerts Exist for VPC Network Changes",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "2.11",
+      "title": "Ensure That the Log Metric Filter and Alerts Exist for Cloud Storage IAM Permission Changes",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "2.12",
+      "title": "Ensure That the Log Metric Filter and Alerts Exist for SQL Instance Configuration Changes",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "2.13",
+      "title": "Ensure That Cloud DNS Logging Is Enabled for All VPC Networks",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.14",
+      "title": "Ensure Cloud Asset Inventory Is Enabled",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.15",
+      "title": "Ensure 'Access Transparency' is 'Enabled'",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "2.16",
+      "title": "Ensure 'Access Approval' is 'Enabled'",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "3.1",
+      "title": "Ensure That the Default Network Does Not Exist in a Project",
+      "section": "3",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "3.2",
+      "title": "Ensure Legacy Networks Do Not Exist for Older Projects",
+      "section": "3",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "3.3",
+      "title": "Ensure That DNSSEC Is Enabled for Cloud DNS",
+      "section": "3",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "3.4",
+      "title": "Ensure That RSASHA1 Is Not Used for the Key-Signing Key in Cloud DNS DNSSEC",
+      "section": "3",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "3.5",
+      "title": "Ensure That RSASHA1 Is Not Used for the Zone-Signing Key in Cloud DNS DNSSEC",
+      "section": "3",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "3.6",
+      "title": "Ensure That SSH Access Is Restricted From the Internet",
+      "section": "3",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "3.7",
+      "title": "Ensure That RDP Access Is Restricted From the Internet",
+      "section": "3",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "3.8",
+      "title": "Ensure VPC Service Controls Is Enabled for Supported Google Cloud Services",
+      "section": "3",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "3.9",
+      "title": "Ensure Private Service Connect is Used for Access to Google APIs",
+      "section": "3",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "3.10",
+      "title": "Ensure that VPC Flow Logs is Enabled for Every Subnet in a VPC Network",
+      "section": "3",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "3.11",
+      "title": "Ensure No HTTPS or SSL Proxy Load Balancers Permit SSL Policies With Weak Cipher Suites",
+      "section": "3",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "4.1",
+      "title": "Ensure That Instances Are Not Configured To Use the Default Service Account",
+      "section": "4",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "4.2",
+      "title": "Ensure That Instances Are Not Configured To Use the Default Service Account With Full Access to All Cloud APIs",
+      "section": "4",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "4.3",
+      "title": "Ensure “Block Project-Wide SSH Keys” Is Enabled for VM Instances",
+      "section": "4",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "4.4",
+      "title": "Ensure Oslogin Is Enabled for a Project",
+      "section": "4",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "4.5",
+      "title": "Ensure ‘Enable Connecting to Serial Ports’ Is Not Enabled for VM Instance",
+      "section": "4",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "4.6",
+      "title": "Ensure That IP Forwarding Is Not Enabled on Instances",
+      "section": "4",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "4.7",
+      "title": "Ensure VM Disks for Critical VMs Are Encrypted With Customer-Supplied Encryption Keys (CSEK)",
+      "section": "4",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "4.8",
+      "title": "Ensure Compute Instances Are Launched With Shielded VM Enabled",
+      "section": "4",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "4.9",
+      "title": "Ensure That Compute Instances Do Not Have Public IP Addresses",
+      "section": "4",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "4.10",
+      "title": "Ensure That App Engine Applications Enforce HTTPS Connections",
+      "section": "4",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "4.11",
+      "title": "Ensure That Compute Instances Have Confidential Computing Enabled",
+      "section": "4",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "5.1",
+      "title": "Ensure That Cloud Storage Bucket Is Not Anonymously or Publicly Accessible",
+      "section": "5",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.1.1",
+      "title": "Ensure That a MySQL Instance Does Not Allow Anyone To Connect With Administrative Privileges",
+      "section": "6",
+      "assessment": "Manual",
+      "group": "MySQL Database",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.1.2",
+      "title": "Ensure ‘Skip_show_database’ Database Flag for Cloud SQL MySQL Instance Is Set to ‘On’",
+      "section": "6",
+      "assessment": "Automated",
+      "group": "MySQL Database",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.2.1",
+      "title": "Ensure ‘Log_error_verbosity’ Database Flag for Cloud SQL PostgreSQL Instance Is Set to ‘DEFAULT’ or Stricter",
+      "section": "6",
+      "assessment": "Automated",
+      "group": "PostgreSQL Database",
+      "profile": "Level 2"
+    },
+    {
+      "id": "6.2.2",
+      "title": "Ensure That the ‘Log_connections’ Database Flag for Cloud SQL PostgreSQL Instance Is Set to ‘On’",
+      "section": "6",
+      "assessment": "Automated",
+      "group": "PostgreSQL Database",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.2.3",
+      "title": "Ensure That the ‘Log_disconnections’ Database Flag for Cloud SQL PostgreSQL Instance Is Set to ‘On’",
+      "section": "6",
+      "assessment": "Automated",
+      "group": "PostgreSQL Database",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.2.4",
+      "title": "Ensure ‘Log_statement’ Database Flag for Cloud SQL PostgreSQL Instance Is Set Appropriately",
+      "section": "6",
+      "assessment": "Automated",
+      "group": "PostgreSQL Database",
+      "profile": "Level 2"
+    },
+    {
+      "id": "6.2.5",
+      "title": "Ensure that the ‘Log_min_messages’ Flag for a Cloud SQL PostgreSQL Instance is set at minimum to 'Warning'",
+      "section": "6",
+      "assessment": "Automated",
+      "group": "PostgreSQL Database",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.2.6",
+      "title": "Ensure ‘Log_min_error_statement’ Database Flag for Cloud SQL PostgreSQL Instance Is Set to ‘Error’ or Stricter",
+      "section": "6",
+      "assessment": "Automated",
+      "group": "PostgreSQL Database",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.2.7",
+      "title": "Ensure That the ‘Log_min_duration_statement’ Database Flag for Cloud SQL PostgreSQL Instance Is Set to '-1' (Disabled)",
+      "section": "6",
+      "assessment": "Automated",
+      "group": "PostgreSQL Database",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.3.1",
+      "title": "Ensure 'external scripts enabled' Database Flag for Cloud SQL SQL Server Instance Is Set to 'off'",
+      "section": "6",
+      "assessment": "Automated",
+      "group": "SQL Server",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.3.2",
+      "title": "Ensure 'cross db ownership chaining' Database Flag for Cloud SQL SQL Server Instance Is Set to 'off'",
+      "section": "6",
+      "assessment": "Automated",
+      "group": "SQL Server",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.3.3",
+      "title": "Ensure 'user Connections' Database Flag for Cloud SQL SQL Server Instance Is Set to a Non-limiting Value",
+      "section": "6",
+      "assessment": "Automated",
+      "group": "SQL Server",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.3.4",
+      "title": "Ensure 'user options' Database Flag for Cloud SQL SQL Server Instance Is Not Configured",
+      "section": "6",
+      "assessment": "Automated",
+      "group": "SQL Server",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.3.5",
+      "title": "Ensure 'remote access' Database Flag for Cloud SQL SQL Server Instance Is Set to 'off'",
+      "section": "6",
+      "assessment": "Automated",
+      "group": "SQL Server",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.3.6",
+      "title": "Ensure '3625 (trace flag)' Database Flag for all Cloud SQL SQL Server Instances Is Set to 'on'",
+      "section": "6",
+      "assessment": "Automated",
+      "group": "SQL Server",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.3.7",
+      "title": "Ensure 'contained database authentication' Database Flag for Cloud SQL SQL Server Instance Is Set to 'off'",
+      "section": "6",
+      "assessment": "Automated",
+      "group": "SQL Server",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.4",
+      "title": "Ensure That the Cloud SQL Database Instance Requires All Incoming Connections To Use SSL",
+      "section": "6",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.5",
+      "title": "Ensure That Cloud SQL Database Instances Do Not Implicitly Whitelist All Public IP Addresses",
+      "section": "6",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.6",
+      "title": "Ensure Cloud SQL Database Instances Have IAM Database Authentication Enabled",
+      "section": "6",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.7",
+      "title": "Ensure That Cloud SQL Database Instances Do Not Have Public IPs",
+      "section": "6",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "6.8",
+      "title": "Ensure That Cloud SQL Database Instances Are Configured With Automated Backups",
+      "section": "6",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "7.1",
+      "title": "Ensure That BigQuery Datasets Are Not Anonymously or Publicly Accessible",
+      "section": "7",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "7.2",
+      "title": "Ensure That All BigQuery Tables Are Encrypted With Customer-Managed Encryption Key (CMEK)",
+      "section": "7",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "7.3",
+      "title": "Ensure That a Default Customer-Managed Encryption Key (CMEK) Is Specified for All BigQuery Data Sets",
+      "section": "7",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "8.1",
+      "title": "Ensure that Dataproc Cluster is encrypted using Customer-Managed Encryption Key",
+      "section": "8",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    }
+  ]
+}
