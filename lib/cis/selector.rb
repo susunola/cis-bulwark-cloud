@@ -3,9 +3,9 @@
 module Cis
   # Turns filter expressions into a concrete set of controls.
   #
-  # Filters are read from the environment so that bin/cis, terraspace and the
-  # tfvars ERB all agree. bin/cis translates its flags into these variables
-  # before exec'ing terraspace.
+  # Filters are read from the environment so that bin/cis and the terraform
+  # stacks resolve to the same selection. bin/cis translates its flags into
+  # these variables before exec'ing terraform.
   #
   #   CIS_ONLY      comma separated id globs, e.g. "3.5,4.*"   (authoritative)
   #   CIS_EXCLUDE   comma separated id globs, applied last

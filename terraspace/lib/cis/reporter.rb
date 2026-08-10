@@ -1,1 +1,0 @@
-../../../lib/cis/reporter.rb
