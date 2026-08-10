@@ -1,34 +1,41 @@
 #!/usr/bin/env python3
-"""Regenerate config/controls.yml.
+"""Regenerate config/<cloud>/controls.yml from a benchmark catalog + mapping.
 
 Two inputs are combined:
 
-1. benchmarks/tencent/catalog.json - facts extracted from the CIS PDF (id,
+1. benchmarks/<cloud>/catalog.json - facts extracted from the CIS PDF (id,
    title, assessment, profile). Produced by tools/extract_benchmark.py.
    Never hand-edited.
-2. MAPPING below       - how each control maps onto the tencentcloud Terraform
-   provider. Derived from `terraform providers schema -json` of
-   tencentcloudstack/tencentcloud ~> 1.81 and hand-verified.
+2. <CLOUD>_MAPPING below       - how each control maps onto the cloud's
+   Terraform provider. Derived from `terraform providers schema -json` and
+   hand-verified.
 
 `remediate` / `detect` values:
     terraform  - a provider resource / data source really exists for this
     none       - the provider has no support; the control is reported as MANUAL
 
-Run:  python3 tools/generate_controls.py
+`remediate` is terraform only when apply can produce a real hardening action
+without deleting user-owned resources or forcing a destructive replacement
+(importing an existing resource is an operator prerequisite, documented in the
+stack variables). `detect` is terraform only when an enumerable data source
+exists - a data source you must already know the name/arn of does not count.
+
+Run:  python3 tools/generate_controls.py            # tencent
+      python3 tools/generate_controls.py --cloud aws
 """
+import argparse
 import json
 import os
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-CATALOG = os.path.join(ROOT, "benchmarks", "tencent", "catalog.json")
-OUT = os.path.join(ROOT, "config", "controls.yml")
 
 T, N = "terraform", "none"
 
-# id: (remediate, detect, stack, tags)
-MAPPING = {
+# ---- tencentcloudstack/tencentcloud ~> 1.81 ---------------------------------
+
+TENCENT_MAPPING = {
     # ---- 1 Identity and Access Management -------------------------------
     # No CAM password-policy resource or data source exists in the provider
     # (searched: password / account_setting / security_polic / login_policy).
@@ -150,10 +157,145 @@ MAPPING = {
     "9.12": (N, N, None, ["tcss", "log-analysis"]),
 }
 
-SECTION_STACK_NOTE = {
-    1: "CAM password policy (1.7-1.11, 1.13) has no Terraform resource - reported as MANUAL.\n  # 1.12 (prevent password reuse) and 1.14 (account lockout) are classified as Automated.",
-    7: "Cloud Security Center has no Terraform resources - whole section is MANUAL.",
-    9: "TCSS exposes only cluster_access / image_registry - whole section is MANUAL.",
+# ---- hashicorp/aws ~> 5.0 ---------------------------------------------------
+# detect = an enumerable data source exists (aws_instances, aws_db_instances,
+# aws_security_groups, aws_vpc_security_group_rules, aws_ebs_encryption_by_default).
+# remediate = a resource exists and apply does not delete user resources or
+# force a destructive replacement (importing existing resources is a documented
+# operator prerequisite).
+AWS_MAPPING = {
+    # ---- 2 Identity and Access Management -------------------------------
+    # Organizations governance (2.1.x) is a human judgement - Terraform can
+    # read structure but not decide if it is "correct".
+    "2.1.1": (N, N, None, ["orgs", "governance"]),
+    "2.1.2": (N, N, None, ["orgs", "guardrails"]),
+    "2.1.3": (N, N, None, ["orgs", "root-usage"]),
+    "2.1.4": (N, N, None, ["orgs", "ou-structure"]),
+    "2.1.5": (N, N, None, ["orgs", "delegated-admin"]),
+    "2.1.6": (N, N, None, ["orgs", "delegated-admin"]),
+    "2.2":   (N, N, None, ["account", "contact"]),
+    "2.3":   (N, N, None, ["account", "security-contact"]),
+    # No data source exposes root-user access keys or MFA state.
+    "2.4":   (N, N, None, ["root", "access-key"]),
+    "2.5":   (N, N, None, ["root", "mfa"]),
+    "2.6":   (N, N, None, ["root", "mfa", "hardware"]),
+    "2.7":   (N, N, None, ["root", "usage"]),
+    # aws_iam_account_password_policy resource writes the account policy; the
+    # provider has no data source for it, so detect stays none.
+    "2.8":   (T, N, "iam", ["password-policy", "length"]),
+    "2.9":   (T, N, "iam", ["password-policy", "reuse"]),
+    # No data source exposes per-user MFA or login-profile state.
+    "2.10":  (N, N, None, ["mfa", "console-password"]),
+    # aws_iam_access_keys returns ids only - no create/last-used dates.
+    "2.11":  (N, N, None, ["access-key", "unused"]),
+    "2.12":  (N, N, None, ["access-key", "rotation"]),
+    # No way to enumerate direct (non-group) user policy attachments.
+    "2.13":  (N, N, None, ["iam", "groups-only"]),
+    # aws_iam_policy reads one known policy; there is no aws_iam_policies list.
+    "2.14":  (N, N, None, ["iam", "admin-policy"]),
+    "2.15":  (N, N, None, ["iam", "support-role"]),
+    # aws_instances + aws_instance.iam_instance_profile: every instance must
+    # carry a role. Remediation would mean attaching roles to existing
+    # instances - destructive, reported instead.
+    "2.16":  (N, T, "iam", ["iam", "instance-role"]),
+    # aws_iam_server_certificate reads one named cert; no list source.
+    "2.17":  (N, N, None, ["iam", "certificate"]),
+    # aws_accessanalyzer_analyzer resource creates the analyzer; no data source
+    # to detect it (existing analyzers need import).
+    "2.18":  (T, N, "iam", ["analyzer", "iam"]),
+    "2.19":  (N, N, None, ["iam", "federation"]),
+    "2.20":  (N, N, None, ["iam", "cloudshell"]),
+
+    # ---- 3 Storage ---------------------------------------------------------
+    # aws_s3_bucket_policy resource can enforce the deny-HTTP statement on
+    # operator-listed buckets; there is no aws_s3_buckets list to scan from.
+    "3.1.1": (T, N, "storage", ["s3", "tls", "bucket-policy"]),
+    "3.1.2": (N, N, None, ["s3", "mfa-delete"]),
+    "3.1.3": (N, N, None, ["s3", "discovery"]),
+    # aws_db_instances + aws_db_instance: encryption is settable but flipping
+    # storage_encrypted on an existing instance forces replacement - report.
+    "3.2.1": (N, T, "database", ["rds", "encryption"]),
+    "3.2.2": (T, T, "database", ["rds", "minor-upgrade"]),
+    "3.2.3": (T, T, "database", ["rds", "public-access"]),
+
+    # ---- 4 Logging ---------------------------------------------------------
+    # No aws_cloudtrail data source; multi-region judgement is manual.
+    "4.1":   (N, N, None, ["cloudtrail", "multi-region"]),
+    # aws_cloudtrail resource updates enable_log_file_validation in place;
+    # an existing trail must be imported first.
+    "4.2":   (T, N, "logging", ["cloudtrail", "validation"]),
+    # No data source for the recorder; standing it up needs role + delivery
+    # channel - out of scope for this tool.
+    "4.3":   (N, N, None, ["config", "recorder"]),
+    "4.4":   (N, N, None, ["cloudtrail", "s3-logging"]),
+    "4.5":   (N, N, None, ["cloudtrail", "kms"]),
+    # aws_kms_key rotation needs the operator to hand over every CMK arn;
+    # no aws_kms_keys list source exists to detect against.
+    "4.6":   (N, N, None, ["kms", "rotation"]),
+    # No flow-log data source; creating flow logs needs VPC + role wiring.
+    "4.7":   (N, N, None, ["flow-log", "vpc"]),
+    "4.8":   (N, N, None, ["cloudtrail", "object-write"]),
+    "4.9":   (N, N, None, ["cloudtrail", "object-read"]),
+
+    # ---- 5 Monitoring ------------------------------------------------------
+    # All 5.x are CloudWatch alarm policies - Terraform could create alarms,
+    # but "is monitored" is an operational decision, not a resource state.
+    "5.1":   (N, N, None, ["monitoring", "unauthorized-api"]),
+    "5.2":   (N, N, None, ["monitoring", "console-mfa"]),
+    "5.3":   (N, N, None, ["monitoring", "root-usage"]),
+    "5.4":   (N, N, None, ["monitoring", "iam-changes"]),
+    "5.5":   (N, N, None, ["monitoring", "cloudtrail-changes"]),
+    "5.6":   (N, N, None, ["monitoring", "console-auth-failures"]),
+    "5.7":   (N, N, None, ["monitoring", "cmk-deletion"]),
+    "5.8":   (N, N, None, ["monitoring", "s3-policy-changes"]),
+    "5.9":   (N, N, None, ["monitoring", "config-changes"]),
+    "5.10":  (N, N, None, ["monitoring", "security-group-changes"]),
+    "5.11":  (N, N, None, ["monitoring", "nacl-changes"]),
+    "5.12":  (N, N, None, ["monitoring", "network-gateway-changes"]),
+    "5.13":  (N, N, None, ["monitoring", "route-table-changes"]),
+    "5.14":  (N, N, None, ["monitoring", "vpc-changes"]),
+    "5.15":  (N, N, None, ["monitoring", "orgs-changes"]),
+
+    # ---- 6 Networking ------------------------------------------------------
+    # Account-level default: aws_ebs_encryption_by_default is both readable
+    # and writable, no import needed.
+    "6.1.1": (T, T, "storage", ["ebs", "encryption"]),
+    "6.1.2": (N, N, None, ["ec2", "cifs"]),
+    # aws_network_acls lists ids but there is no single-ACL data source to read
+    # rules from.
+    "6.2":   (N, N, None, ["nacl", "admin-ports"]),
+    # aws_security_groups + aws_vpc_security_group_rules + ..._rule can read
+    # every rule; revoking one from an existing group is an import-first
+    # operation - detected, not enforced.
+    "6.3":   (N, T, "network", ["security-group", "admin-ports", "ipv4"]),
+    "6.4":   (N, T, "network", ["security-group", "admin-ports", "ipv6"]),
+    "6.5":   (N, T, "network", ["security-group", "default"]),
+    "6.6":   (N, N, None, ["vpc", "peering"]),
+    # aws_instance.metadata_options.http_tokens readable; changing it on a
+    # running instance restarts it - detected, not enforced.
+    "6.7":   (N, T, "network", ["ec2", "imdsv2"]),
+    "6.8":   (N, N, None, ["vpc", "endpoints"]),
+}
+
+CLOUD_CONFIG = {
+    "tencent": {
+        "mapping": TENCENT_MAPPING,
+        "catalog": os.path.join(ROOT, "benchmarks", "tencent", "catalog.json"),
+        "out": os.path.join(ROOT, "config", "controls.yml"),
+        "section_notes": {
+            1: "CAM password policy (1.7-1.11, 1.13) has no Terraform resource - reported as MANUAL.\n  # 1.12 (prevent password reuse) and 1.14 (account lockout) are classified as Automated.",
+            7: "Cloud Security Center has no Terraform resources - whole section is MANUAL.",
+            9: "TCSS exposes only cluster_access / image_registry - whole section is MANUAL.",
+        },
+    },
+    "aws": {
+        "mapping": AWS_MAPPING,
+        "catalog": os.path.join(ROOT, "benchmarks", "aws", "catalog.json"),
+        "out": os.path.join(ROOT, "config", "aws", "controls.yml"),
+        "section_notes": {
+            5: "CloudWatch monitoring recommendations are operational decisions, not resource state - whole section is MANUAL.",
+        },
+    },
 }
 
 
@@ -161,23 +303,31 @@ def yaml_escape(s: str) -> str:
     return s.replace("\\", "\\\\").replace('"', '\\"')
 
 
-def main() -> int:
-    with open(CATALOG, encoding="utf-8") as fh:
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--cloud", choices=sorted(CLOUD_CONFIG), default="tencent")
+    args = ap.parse_args(argv)
+
+    cfg = CLOUD_CONFIG[args.cloud]
+    with open(cfg["catalog"], encoding="utf-8") as fh:
         catalog = json.load(fh)
 
     controls = catalog["controls"]
     ids = {c["id"] for c in controls}
-    mapped = set(MAPPING)
+    mapped = set(cfg["mapping"])
     if ids != mapped:
-        print(f"ERROR: catalog/mapping mismatch", file=sys.stderr)
+        print(f"ERROR: {args.cloud} catalog/mapping mismatch", file=sys.stderr)
         print(f"  missing from MAPPING: {sorted(ids - mapped)}", file=sys.stderr)
         print(f"  extra in MAPPING:     {sorted(mapped - ids)}", file=sys.stderr)
         return 1
 
+    key = lambda k: [int(p) for p in k.split(".")]
     lines = [
-        "# CIS Tencent Cloud Foundation Benchmark v1.0.0 - control registry",
+        f"# {catalog['benchmark']} {catalog['version']} - control registry",
         "#",
-        "# GENERATED by tools/generate_controls.py - do not reformat by hand.",
+        "# GENERATED by tools/generate_controls.py --cloud "
+        + args.cloud
+        + " - do not reformat by hand.",
         "# You SHOULD edit the `enabled:` flags; that is what this file is for.",
         "#",
         "# Fields",
@@ -197,21 +347,21 @@ def main() -> int:
         "",
         "sections:",
     ]
-    for sid in sorted(catalog["sections"], key=int):
+    for sid in sorted(catalog["sections"], key=key):
         lines.append(f'  "{sid}": "{yaml_escape(catalog["sections"][sid])}"')
     lines.append("")
     lines.append("controls:")
 
     current_section = None
     for c in controls:
-        remediate, detect, stack, tags = MAPPING[c["id"]]
+        remediate, detect, stack, tags = cfg["mapping"][c["id"]]
         sec = int(c["section"])
         if sec != current_section:
             current_section = sec
             lines.append("")
             lines.append(f"  # === {sec} {catalog['sections'][str(sec)]} ===")
-            if sec in SECTION_STACK_NOTE:
-                lines.append(f"  # {SECTION_STACK_NOTE[sec]}")
+            if sec in cfg["section_notes"]:
+                lines.append(f"  # {cfg['section_notes'][sec]}")
         lines.append(f'  - id: "{c["id"]}"')
         lines.append(f'    title: "{yaml_escape(c["title"])}"')
         lines.append(f'    assessment: {c["assessment"]}')
@@ -222,13 +372,14 @@ def main() -> int:
         lines.append(f'    stack: {stack if stack else "null"}')
         lines.append(f'    tags: [{", ".join(tags)}]')
 
-    with open(OUT, "w", encoding="utf-8") as fh:
+    os.makedirs(os.path.dirname(cfg["out"]), exist_ok=True)
+    with open(cfg["out"], "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines) + "\n")
 
-    n_rem = sum(1 for v in MAPPING.values() if v[0] == T)
-    n_det = sum(1 for v in MAPPING.values() if v[1] == T)
-    n_man = sum(1 for v in MAPPING.values() if v[0] == N and v[1] == N)
-    print(f"wrote {OUT}")
+    n_rem = sum(1 for v in cfg["mapping"].values() if v[0] == T)
+    n_det = sum(1 for v in cfg["mapping"].values() if v[1] == T)
+    n_man = sum(1 for v in cfg["mapping"].values() if v[0] == N and v[1] == N)
+    print(f"wrote {cfg['out']}")
     print(f"  controls        : {len(controls)}")
     print(f"  remediable (tf) : {n_rem}")
     print(f"  detectable (tf) : {n_det}")

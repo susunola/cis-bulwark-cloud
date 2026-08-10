@@ -31,7 +31,13 @@ jobs:
       - name: Terraform validate
         run: |
           set -e
-          for dir in modules/* stacks/*; do
+          for dir in modules/*; do
             echo "==> $dir"
             (cd "$dir" && terraform init -backend=false && terraform validate)
           done
+          # stacks/<name> (tencent) and stacks/<cloud>/<name> (later clouds)
+          find stacks -type f -name '*.tf' -not -path '*/.terraform/*' -exec dirname {} \; \
+            | sort -u | while read -r dir; do
+              echo "==> $dir"
+              (cd "$dir" && terraform init -backend=false && terraform validate)
+            done

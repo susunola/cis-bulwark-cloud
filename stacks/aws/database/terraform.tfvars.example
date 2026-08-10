@@ -1,0 +1,12 @@
+# bin/cis fills enabled_controls in automatically. Hand-running the stack:
+#
+#   terraform init
+#   terraform import 'aws_db_instance.cis["my-db"]' my-db
+#   terraform apply -auto-approve \
+#     -var 'enabled_controls=["3.2.2","3.2.3"]' \
+#     -var 'db_instance_identifiers=["my-db"]' \
+#     -var db_engine=mysql -var db_instance_class=db.t3.micro
+enabled_controls = []
+db_instance_identifiers = []
+db_engine               = "mysql"
+db_instance_class       = "db.t3.micro"

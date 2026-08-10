@@ -1,0 +1,9 @@
+# bin/cis fills enabled_controls in automatically. Hand-running the stack:
+#
+#   terraform init
+#   terraform apply -auto-approve \
+#     -var 'enabled_controls=["4.2"]' \
+#     -var cloudtrail_name=my-trail -var cloudtrail_s3_bucket=my-trail-bucket
+enabled_controls = []
+cloudtrail_name  = "my-trail"
+cloudtrail_s3_bucket = "my-trail-bucket"

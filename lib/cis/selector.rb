@@ -85,7 +85,7 @@ module Cis
     end
 
     def stacks_for_apply
-      Cis::HARDENING_STACKS & remediable.map(&:stack).compact.uniq
+      Cis.hardening_stacks & remediable.map(&:stack).compact.uniq
     end
 
     def summary

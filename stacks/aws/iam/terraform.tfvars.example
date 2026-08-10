@@ -1,0 +1,7 @@
+# bin/cis fills enabled_controls in automatically. Hand-running the stack:
+#
+#   terraform init
+#   terraform apply -auto-approve \
+#     -var 'enabled_controls=["2.8","2.9"]' \
+#     -var minimum_password_length=14 -var password_reuse_prevention=24
+enabled_controls = []

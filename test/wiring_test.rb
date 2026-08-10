@@ -5,7 +5,7 @@ require_relative "test_helper"
 class WiringTest < CisTestCase
   include CisTest::Hcl
 
-  ALL_STACKS = ([Cis::AUDIT_STACK] + Cis::HARDENING_STACKS).freeze
+  ALL_STACKS = ([Cis::AUDIT_STACK] + Cis.hardening_stacks).freeze
   MODULES    = %w[security_group_baseline cos_secure_bucket cls_audit_alarm].freeze
 
   def main(stack)
@@ -23,7 +23,8 @@ class WiringTest < CisTestCase
   end
 
   def test_there_are_no_stray_stacks
-    on_disk = Dir.children(File.join(Cis::ROOT, "stacks")).sort
+    cloud_dirs = (Cis::IMPLEMENTED_CLOUDS + Cis::REFERENCE_CLOUDS) - ["tencent"]
+    on_disk = Dir.children(File.join(Cis::ROOT, "stacks")).sort - cloud_dirs
     assert_equal ALL_STACKS.sort, on_disk,
                  "a stack on disk that cis does not know about will never run"
   end

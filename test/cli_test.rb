@@ -168,7 +168,7 @@ class CliTest < CisTestCase
     r = cis("apply", "--dry-run")
     assert_equal 0, r.status, r
     order = r.stdout.scan(%r{terraform -chdir=stacks/(\w+)\s+apply}).flatten
-    assert_equal Cis::HARDENING_STACKS, order,
+    assert_equal Cis.hardening_stacks, order,
                  "stack order must be deterministic so reruns are comparable"
   end
 
@@ -205,7 +205,7 @@ class CliTest < CisTestCase
     assert_includes r.stdout, "read-only"
     assert_includes r.stdout, "terraform -chdir=stacks/audit apply"
     assert_includes r.stdout, "4.1, 4.2, 4.8, 4.9"
-    Cis::HARDENING_STACKS.each { |s| refute_match(/-chdir=stacks\/#{s}\b/, r.stdout) }
+    Cis.hardening_stacks.each { |s| refute_match(/-chdir=stacks\/#{s}\b/, r.stdout) }
   end
 
   def test_scan_assesses_only_what_the_provider_can_observe
@@ -348,5 +348,44 @@ class CliTest < CisTestCase
   def test_destroy_accepts_a_hardening_stack
     r = cis("destroy", "storage", "--dry-run")
     assert_equal 0, r.status, r
+  end
+
+  # ---- multi-cloud ---------------------------------------------------------
+
+  def test_cloud_flag_selects_the_aws_registry
+    r = cis("--cloud", "aws", "list", "--no-color")
+    assert_equal 0, r.status, r
+    assert_includes r.stdout, "CIS Amazon Web Services Foundations Benchmark v7.0.0"
+    assert_includes r.stdout, "6.3"
+  end
+
+  def test_cis_cloud_environment_variable_also_selects_the_cloud
+    r = cis("list", "--only", "6.3", "--no-color", env: { "CIS_CLOUD" => "aws" })
+    assert_equal 0, r.status, r
+    assert_includes r.stdout, "CIS Amazon Web Services Foundations Benchmark"
+  end
+
+  def test_aws_scan_dry_run_uses_the_aws_stack_layout
+    r = cis("--cloud", "aws", "scan", "--section", "6", "--dry-run")
+    assert_equal 0, r.status, r
+    assert_includes r.stdout, "terraform -chdir=stacks/aws/audit apply"
+  end
+
+  def test_aws_apply_dry_run_uses_aws_hardening_stacks
+    r = cis("--cloud", "aws", "apply", "--only", "2.8", "--dry-run")
+    assert_equal 0, r.status, r
+    assert_match(%r{terraform -chdir=stacks/aws/iam\s+apply}, r.stdout)
+  end
+
+  def test_reference_only_clouds_are_refused
+    r = cis("--cloud", "azure", "list")
+    assert_equal 2, r.status
+    assert_includes r.stdout + r.stderr, "reference-only"
+  end
+
+  def test_unknown_cloud_is_refused
+    r = cis("--cloud", "oracle", "list")
+    assert_equal 2, r.status
+    assert_includes r.stdout + r.stderr, "unknown cloud"
   end
 end

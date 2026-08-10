@@ -43,8 +43,8 @@ module Cis
 
       if options[:dry_run]
         say "Will scan:"
-        say format("  terraform -chdir=stacks/%s apply -auto-approve # %s",
-                   Cis::AUDIT_STACK, Cis.controls_for_audit.join(", "))
+        say format("  terraform -chdir=%s apply -auto-approve # %s",
+                   rel_stack_dir(Cis::AUDIT_STACK), Cis.controls_for_audit.join(", "))
         return EXIT_OK
       end
 
@@ -71,9 +71,9 @@ module Cis
     end
 
     def destroy(stack)
-      unless Cis::HARDENING_STACKS.include?(stack)
+      unless Cis.hardening_stacks.include?(stack)
         return abort_with("#{stack.inspect} is not a hardening stack " \
-                          "(#{Cis::HARDENING_STACKS.join(', ')})")
+                          "(#{Cis.hardening_stacks.join(', ')})")
       end
       terraform(["destroy", "-auto-approve"], stack, action: "apply")
     end
@@ -138,8 +138,8 @@ module Cis
       say "Will #{label}:"
       stacks.each do |stack|
         ids = Cis.controls_for_stack(stack)
-        say format("  terraform -chdir=stacks/%-11s %-5s # %s",
-                   stack, label, ids.join(", "))
+        say format("  terraform -chdir=%-15s %-5s # %s",
+                   rel_stack_dir(stack), label, ids.join(", "))
       end
     end
 
@@ -233,9 +233,15 @@ module Cis
 
     # ---- terraform plumbing -----------------------------------------------
 
+    # stacks/<name> for tencent, stacks/<cloud>/<name> for later clouds -
+    # the display form of Cis.stack_dir, relative to the repo root.
+    def rel_stack_dir(stack)
+      Cis.stack_dir(stack).sub("#{Cis::ROOT}/", "")
+    end
+
     def terraform_init(stack)
       dir = Cis.stack_dir(stack)
-      say "  terraform -chdir=stacks/#{stack} init"
+      say "  terraform -chdir=#{rel_stack_dir(stack)} init"
       return EXIT_OK if options[:dry_run]
 
       _out, err, status = Open3.capture3("terraform", "init",

@@ -30,15 +30,23 @@ MODULE_ROOT="$WORK/project/modules"
 
 targets=()
 if [[ $# -gt 0 ]]; then
+  # A name may be a stack ("storage"), a cloud-qualified stack ("aws/storage")
+  # or a module ("security_group_baseline").
   for name in "$@"; do
     for d in "$STACK_ROOT/$name" "$MODULE_ROOT/$name"; do
       [[ -d "$d" ]] && targets+=("$d")
     done
   done
 else
-  for d in "$MODULE_ROOT"/* "$STACK_ROOT"/*; do
+  # Modules are one level deep; stacks are stacks/<name> (tencent) or
+  # stacks/<cloud>/<name> (later clouds). Find every directory holding .tf.
+  for d in "$MODULE_ROOT"/*; do
     [[ -d "$d" ]] && targets+=("$d")
   done
+  while IFS= read -r d; do
+    targets+=("$d")
+  done < <(find "$STACK_ROOT" -type d -name .terraform -prune -o -type f -name '*.tf' -print \
+            | xargs -n1 dirname | sort -u)
 fi
 
 failed=0
