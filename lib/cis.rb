@@ -20,10 +20,10 @@ module Cis
   ROOT = File.expand_path("..", __dir__)
 
   # Clouds with a full scan/apply implementation (registry + stacks).
-  IMPLEMENTED_CLOUDS = %w[tencent aws azure gcp].freeze
-  # Clouds whose benchmark is published under benchmarks/ but not yet mapped
-  # onto a Terraform provider; `cis` refuses to run against them.
-  REFERENCE_CLOUDS = %w[alibaba gcp].freeze
+  IMPLEMENTED_CLOUDS = %w[tencent aws azure gcp alibaba].freeze
+  # Every published benchmark now has a provider mapping; kept as an empty
+  # list so the reference-only guard stays in place for future benchmarks.
+  REFERENCE_CLOUDS = [].freeze
 
   AUDIT_STACK = "audit"
 
@@ -39,6 +39,7 @@ module Cis
     # (8.1.13 contact) and storage (9.x).
     "azure"   => %w[network security storage].freeze,
     "gcp"     => %w[logging network compute].freeze,
+    "alibaba" => %w[iam logging].freeze,
   }.freeze
 
   class Error < StandardError; end

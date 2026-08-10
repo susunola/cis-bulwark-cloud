@@ -377,10 +377,14 @@ class CliTest < CisTestCase
     assert_match(%r{terraform -chdir=stacks/aws/iam\s+apply}, r.stdout)
   end
 
-  def test_reference_only_clouds_are_refused
-    r = cis("--cloud", "alibaba", "list")
-    assert_equal 2, r.status
-    assert_includes r.stdout + r.stderr, "reference-only"
+  def test_alibaba_list_and_scan_dry_run
+    r = cis("--cloud", "alibaba", "list", "--only", "5.1", "--no-color")
+    assert_equal 0, r.status, r
+    assert_includes r.stdout, "CIS Alibaba Cloud Foundation Benchmark v2.0.0"
+
+    r2 = cis("--cloud", "alibaba", "scan", "--only", "5.1", "--dry-run")
+    assert_equal 0, r2.status, r2
+    assert_includes r2.stdout, "terraform -chdir=stacks/alibaba/audit apply"
   end
 
   def test_gcp_list_and_scan_dry_run
