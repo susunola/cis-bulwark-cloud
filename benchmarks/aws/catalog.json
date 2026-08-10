@@ -60,7 +60,7 @@
     },
     {
       "id": "2.1.6",
-      "title": "Ensure delegated admins manage AWS Organizations- integrated services",
+      "title": "Ensure delegated admins manage AWS Organizations-integrated services",
       "section": "2",
       "assessment": "Manual",
       "group": "Organizations",

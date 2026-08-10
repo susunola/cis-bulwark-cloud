@@ -104,7 +104,7 @@ export TENCENTCLOUD_REGION=ap-guangzhou
 
 ```bash
 ruby bin/cis list          # prints the control registry
-ruby test/run.rb           # 139 tests, 1526 assertions, offline
+ruby test/run.rb           # 147 tests, 5936 assertions, offline
 ```
 
 **First scan:**
@@ -384,6 +384,7 @@ runs with `--dry-run`.
 | `wiring_test.rb` | **Registry ↔ HCL alignment** |
 | `cli_test.rb` | Flags, exit codes, output formats, env-vs-flag precedence |
 | `runner_test.rb` | Exit-code contract, terraform command issuance |
+| `benchmarks_test.rb` | **Every `benchmarks/<cloud>/catalog.json`**: shape, id uniqueness/contiguity, enum values, pdftotext residue, group↔sections agreement, tencent catalog ↔ controls.yml drift |
 
 ### Wiring Test
 
