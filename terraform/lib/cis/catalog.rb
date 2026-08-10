@@ -1,1 +1,0 @@
-../../../lib/cis/catalog.rb

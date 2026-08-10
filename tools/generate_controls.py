@@ -187,7 +187,7 @@ def main() -> int:
         "#   enabled    whether this control participates in scan / apply",
         "#   remediate  terraform | none - can `cis apply` enforce it",
         "#   detect     terraform | none - can `cis scan` evaluate it",
-        "#   stack      Terraspace stack that owns it (null when unsupported)",
+        "#   stack      Terraform stack that owns it (null when unsupported)",
         "#   tags       free-form selectors for `cis --tag`",
         "#",
         f"benchmark: \"{catalog['benchmark']}\"",

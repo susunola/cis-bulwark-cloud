@@ -1,6 +1,6 @@
 name: CI
 
-# Dual-version gate: tests both Terraspace and plain Terraform variants.
+# Single-version gate: tests the plain Terraform implementation.
 # Offline suite — no cloud, no credentials, every CLI path runs with --dry-run.
 
 on:
@@ -9,7 +9,7 @@ on:
   pull_request:
 
 jobs:
-  test-terraspace:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,33 +26,12 @@ jobs:
         run: gem install minitest -v 5.26.1
 
       - name: Run suite
-        working-directory: terraspace
-        run: ruby test/run.rb
-
-  test-terraform:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "3.1"
-
-      - uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: "1.5.7"
-
-      - name: Install minitest
-        run: gem install minitest -v 5.26.1
-
-      - name: Run suite
-        working-directory: terraform
         run: ruby test/run.rb
 
       - name: Terraform validate
         run: |
           set -e
-          for dir in modules/* terraform/stacks/*; do
+          for dir in modules/* stacks/*; do
             echo "==> $dir"
             (cd "$dir" && terraform init -backend=false && terraform validate)
           done

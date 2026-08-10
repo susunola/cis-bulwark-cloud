@@ -1,6 +1,8 @@
+# Terraform local state and caches
 *.tfstate
 *.tfstate.*
 .terraform/
 .terraform.lock.hcl
-.terraspace-cache/
-.terraspace/
+
+# Ruby
+Gemfile.lock
