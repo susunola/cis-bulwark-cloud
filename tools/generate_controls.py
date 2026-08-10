@@ -524,6 +524,125 @@ GCP_MAPPING = {
     "8.1":   (N, N, None, ["dataproc", "cmek"]),
 }
 
+
+# ---- aliyun/alicloud ~> 1.0 ----------------------------------------------------
+# alicloud exposes list data sources for users / actiontrails / oss buckets /
+# security group rules / disks / db instances / threat detection, but no
+# per-resource data sources for password policy or access keys.
+ALIBABA_MAPPING = {
+    # ---- 1 Identity and Access Management -------------------------------
+    "1.1":   (N, N, None, ["root", "governance"]),
+    "1.2":   (N, N, None, ["root", "access-key"]),
+    "1.3":   (N, N, None, ["root", "mfa"]),
+    # No data source exposes per-user MFA state.
+    "1.4":   (N, N, None, ["mfa", "ram-user"]),
+    # alicloud_ram_users exposes last_login_date.
+    "1.5":   (N, T, "iam", ["ram-user", "unused"]),
+    # No access-key list data source.
+    "1.6":   (N, N, None, ["access-key", "rotation"]),
+    # alicloud_ram_account_password_policy resource writes all eight flags.
+    "1.7":   (T, N, "iam", ["password-policy", "uppercase"]),
+    "1.8":   (T, N, "iam", ["password-policy", "lowercase"]),
+    "1.9":   (T, N, "iam", ["password-policy", "symbol"]),
+    "1.10":  (T, N, "iam", ["password-policy", "number"]),
+    "1.11":  (T, N, "iam", ["password-policy", "length"]),
+    "1.12":  (T, N, "iam", ["password-policy", "reuse"]),
+    "1.13":  (T, N, "iam", ["password-policy", "expiry"]),
+    "1.14":  (T, N, "iam", ["password-policy", "lockout"]),
+    # No policy-document enumeration to judge "*:*".
+    "1.15":  (N, N, None, ["ram-policy", "admin"]),
+
+    # ---- 2 Logging and Monitoring ---------------------------------------
+    # alicloud_actiontrails lists trails; the resource writes them.
+    "2.1":   (T, T, "logging", ["actiontrail"]),
+    # Bucket ACL of the trail bucket is readable via alicloud_oss_buckets.
+    "2.2":   (N, T, "logging", ["actiontrail", "oss-public"]),
+    "2.3":   (N, N, None, ["log-service", "integration"]),
+    "2.4":   (N, N, None, ["log-service", "ack"]),
+    "2.5":   (N, N, None, ["flow-log", "vpc"]),
+    "2.6":   (N, N, None, ["antiddos", "logging"]),
+    "2.7":   (N, N, None, ["waf", "logging"]),
+    "2.8":   (N, N, None, ["cloud-firewall", "logging"]),
+    "2.9":   (N, N, None, ["security-center", "logging"]),
+    # Alarm / monitoring controls (2.10-2.22) need log-service alert wiring.
+    "2.10":  (N, N, None, ["monitoring", "ram-role"]),
+    "2.11":  (N, N, None, ["monitoring", "cloud-firewall"]),
+    "2.12":  (N, N, None, ["monitoring", "route"]),
+    "2.13":  (N, N, None, ["monitoring", "vpc"]),
+    "2.14":  (N, N, None, ["monitoring", "oss-policy"]),
+    "2.15":  (N, N, None, ["monitoring", "rds-config"]),
+    "2.16":  (N, N, None, ["monitoring", "unauthorized-api"]),
+    "2.17":  (N, N, None, ["monitoring", "console-mfa"]),
+    "2.18":  (N, N, None, ["monitoring", "root-usage"]),
+    "2.19":  (N, N, None, ["monitoring", "auth-failures"]),
+    "2.20":  (N, N, None, ["monitoring", "cmk-deletion"]),
+    "2.21":  (N, N, None, ["monitoring", "oss-policy-changes"]),
+    "2.22":  (N, N, None, ["monitoring", "security-group-changes"]),
+
+    # ---- 3 Networking -----------------------------------------------------
+    "3.1":   (N, N, None, ["vpc", "legacy-network"]),
+    "3.2":   (N, N, None, ["security-group", "ssh"]),
+    "3.3":   (N, N, None, ["flow-log", "vpc"]),
+    "3.4":   (N, N, None, ["route", "peering"]),
+
+    # ---- 4 Virtual Machines -------------------------------------------------
+    # alicloud_disks exposes encrypted + attachment state.
+    "4.1":   (N, T, "storage", ["disk", "encryption", "unattached"]),
+    "4.2":   (N, T, "storage", ["disk", "encryption", "attached"]),
+    # alicloud_security_group_rules exposes source_cidr_ip / port_range.
+    "4.3":   (N, T, "network", ["security-group", "ssh", "ingress"]),
+    "4.4":   (N, T, "network", ["security-group", "rdp", "ingress"]),
+    "4.5":   (N, N, None, ["ecs", "patches"]),
+
+    # ---- 5 Storage --------------------------------------------------------
+    # alicloud_oss_buckets exposes acl / logging / server_side_encryption_rule.
+    "5.1":   (N, T, "storage", ["oss", "public"]),
+    "5.2":   (N, N, None, ["oss", "public-object"]),
+    "5.3":   (N, T, "storage", ["oss", "logging"]),
+    # No secure-transfer / URL-signature fields on the bucket list source.
+    "5.4":   (N, N, None, ["oss", "secure-transfer"]),
+    "5.5":   (N, N, None, ["oss", "url-expiry"]),
+    "5.6":   (N, N, None, ["oss", "url-https"]),
+    "5.7":   (N, N, None, ["oss", "network-rule"]),
+    "5.8":   (N, T, "storage", ["oss", "server-side-encryption"]),
+
+    # ---- 6 Relational Database Services -------------------------------------
+    # alicloud_db_instances exposes ssl_enabled.
+    "6.1":   (N, T, "database", ["rds", "ssl"]),
+    # No whitelist / audit fields on the list source.
+    "6.2":   (N, N, None, ["rds", "public-access"]),
+    "6.3":   (N, N, None, ["rds", "auditing"]),
+    "6.4":   (N, N, None, ["rds", "audit-retention"]),
+    # db list exposes encryption_key for TDE; PG parameter checks need the
+    # parameters map (not in the list source).
+    "6.5":   (N, T, "database", ["rds", "tde"]),
+    "6.6":   (N, N, None, ["rds", "tde-byok"]),
+    "6.7":   (N, N, None, ["rds", "pg-log-connections"]),
+    "6.8":   (N, N, None, ["rds", "pg-log-disconnections"]),
+
+    # ---- 7 Kubernetes Engine --------------------------------------------------
+    "7.1":   (N, N, None, ["ack", "log-service"]),
+    "7.2":   (N, N, None, ["ack", "cloud-monitor"]),
+    # The managed-k8s list source exposes no rbac / dashboard / auth flags.
+    "7.3":   (N, N, None, ["ack", "rbac"]),
+    "7.4":   (N, N, None, ["ack", "cluster-check"]),
+    "7.5":   (N, N, None, ["ack", "dashboard"]),
+    "7.6":   (N, N, None, ["ack", "basic-auth"]),
+    "7.7":   (N, N, None, ["ack", "network-policy"]),
+    "7.8":   (N, N, None, ["ack", "eni-multi-ip"]),
+
+    # ---- 8 Security Center ----------------------------------------------------
+    # alicloud_threat_detection_instances lists the active edition.
+    "8.1":   (N, T, "security", ["threat-detection", "edition"]),
+    "8.2":   (N, N, None, ["threat-detection", "agent"]),
+    "8.3":   (N, N, None, ["threat-detection", "quarantine"]),
+    "8.4":   (N, N, None, ["threat-detection", "webshell"]),
+    "8.5":   (N, N, None, ["threat-detection", "notification"]),
+    "8.6":   (N, N, None, ["threat-detection", "config-assessment"]),
+    "8.7":   (N, N, None, ["threat-detection", "vuln-scan"]),
+    "8.8":   (N, N, None, ["threat-detection", "asset-fingerprint"]),
+}
+
 CLOUD_CONFIG = {
     "tencent": {
         "mapping": TENCENT_MAPPING,
@@ -558,6 +677,16 @@ CLOUD_CONFIG = {
         "section_notes": {
             1: "Super-admin, folder-structure and service-account checks are policy judgements or need enumeration the provider lacks.",
             3: "The network data sources expose no dnssec / flow-log / firewall fields - most of section 3 is MANUAL.",
+        },
+    },
+    "alibaba": {
+        "mapping": ALIBABA_MAPPING,
+        "catalog": os.path.join(ROOT, "benchmarks", "alibaba", "catalog.json"),
+        "out": os.path.join(ROOT, "config", "alibaba", "controls.yml"),
+        "section_notes": {
+            2: "Alarm / monitoring controls (2.10-2.22) need log-service alert wiring - MANUAL.",
+            3: "The VPC / flow-log / route data sources expose no usable fields - whole section is MANUAL.",
+            7: "The managed-Kubernetes list source exposes no rbac / dashboard / auth flags - whole section is MANUAL.",
         },
     },
 }

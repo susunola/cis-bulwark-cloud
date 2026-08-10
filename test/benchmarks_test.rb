@@ -137,4 +137,11 @@ class BenchmarksTest < CisTestCase
     assert_equal cat["controls"].map { |c| c["id"] }.sort, registry.controls.map(&:id).sort,
                  "gcp catalog and config/gcp/controls.yml drifted apart"
   end
+
+  def test_alibaba_catalog_matches_the_alibaba_controls_yml_registry
+    cat = load_catalog("alibaba")
+    registry = Cis::Catalog.load(File.join(Cis::ROOT, "config", "alibaba", "controls.yml"))
+    assert_equal cat["controls"].map { |c| c["id"] }.sort, registry.controls.map(&:id).sort,
+                 "alibaba catalog and config/alibaba/controls.yml drifted apart"
+  end
 end

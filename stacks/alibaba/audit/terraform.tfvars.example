@@ -1,0 +1,4 @@
+#   terraform init
+#   terraform apply -auto-approve \
+#     -var 'enabled_controls=["4.3","4.4","5.1"]'
+enabled_controls = []

@@ -43,7 +43,7 @@ parser = OptionParser.new do |o|
 
   o.separator ""
   o.separator "Cloud:"
-  o.on("--cloud NAME", "Cloud to operate on (tencent, aws; default tencent)") { |v| ENV["CIS_CLOUD"] = v }
+  o.on("--cloud NAME", "Cloud to operate on (tencent, aws, azure, gcp, alibaba; default tencent)") { |v| ENV["CIS_CLOUD"] = v }
 
   o.separator ""
   o.separator "Filtering:"

@@ -1,0 +1,6 @@
+#   terraform init
+#   terraform apply -auto-approve \
+#     -var 'enabled_controls=["2.1"]' \
+#     -var oss_bucket_name=my-audit-logs
+enabled_controls = []
+oss_bucket_name  = ""
