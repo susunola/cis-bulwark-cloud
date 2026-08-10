@@ -232,6 +232,6 @@ class CisTestCase < Minitest::Test
   end
 
   def hardening_stacks
-    Cis::HARDENING_STACKS
+    Cis.hardening_stacks
   end
 end

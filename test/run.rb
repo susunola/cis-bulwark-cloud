@@ -16,4 +16,5 @@ require_relative "test_helper"
   cli_test
   runner_test
   benchmarks_test
+  aws_wiring_test
 ].each { |name| require_relative name }

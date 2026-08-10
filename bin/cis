@@ -1,13 +1,16 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# cis - CIS Tencent Cloud Foundation Benchmark v1.0.0 (plain Terraform)
+# cis - CIS cloud foundation benchmark (plain Terraform)
 #
-#   cis list                        show the control registry and what is selected
-#   cis scan                        read-only assessment of the selected controls
-#   cis plan                        show what `cis apply` would change
-#   cis apply                       enforce the selected controls
-#   cis destroy STACK               roll back one hardening stack
+#   cis --cloud aws list                show the control registry for a cloud
+#   cis scan                            read-only assessment of the selected controls
+#   cis plan                            show what `cis apply` would change
+#   cis apply                           enforce the selected controls
+#   cis destroy STACK                   roll back one hardening stack
+#
+# Cloud: defaults to tencent; override per run with --cloud, or persistently
+# with CIS_CLOUD=aws.
 #
 # Filtering (composable; all of them also work as CIS_* environment variables):
 #
@@ -36,7 +39,11 @@ options = { format: "table" }
 filters = {}
 
 parser = OptionParser.new do |o|
-  o.banner = "Usage: cis {#{COMMANDS.join('|')}} [options]"
+  o.banner = "Usage: cis [--cloud NAME] {#{COMMANDS.join('|')}} [options]"
+
+  o.separator ""
+  o.separator "Cloud:"
+  o.on("--cloud NAME", "Cloud to operate on (tencent, aws; default tencent)") { |v| ENV["CIS_CLOUD"] = v }
 
   o.separator ""
   o.separator "Filtering:"
@@ -109,7 +116,7 @@ exit_code =
   when "destroy"
     stack = ARGV.shift
     if stack.nil?
-      warn "error: `cis destroy` needs a stack name (#{Cis::HARDENING_STACKS.join(', ')})"
+      warn "error: `cis destroy` needs a stack name (#{Cis.hardening_stacks.join(', ')})"
       exit 2
     end
     runner.destroy(stack)

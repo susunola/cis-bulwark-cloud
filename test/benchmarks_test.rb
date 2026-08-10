@@ -114,4 +114,13 @@ class BenchmarksTest < CisTestCase
     assert_equal reg_ids, cat_ids,
                  "tencent catalog and config/controls.yml drifted apart"
   end
+
+  def test_aws_catalog_matches_the_aws_controls_yml_registry
+    cat = load_catalog("aws")
+    registry = Cis::Catalog.load(File.join(Cis::ROOT, "config", "aws", "controls.yml"))
+    cat_ids = cat["controls"].map { |c| c["id"] }.sort
+    reg_ids = registry.controls.map(&:id).sort
+    assert_equal reg_ids, cat_ids,
+                 "aws catalog and config/aws/controls.yml drifted apart"
+  end
 end

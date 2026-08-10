@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
-# CIS Tencent Cloud Foundation Benchmark v1.0.0 — plain Terraform implementation.
+# CIS cloud foundation benchmarks — plain Terraform implementation.
 #
-# The Ruby layer (catalog, selector, reporter) reads config/controls.yml and the
-# shared modules; the runner shells out to `terraform` directly against the
-# self-contained stacks under stacks/.
+# The Ruby layer (catalog, selector, reporter) reads the per-cloud control
+# registry; the runner shells out to `terraform` directly against the
+# self-contained stacks. The active cloud is selected with CIS_CLOUD
+# (default: tencent); `bin/cis --cloud aws ...` sets it for one run.
 
 require "yaml"
 require "json"
@@ -18,16 +19,51 @@ require_relative "cis/runner"
 module Cis
   ROOT = File.expand_path("..", __dir__)
 
+  # Clouds with a full scan/apply implementation (registry + stacks).
+  IMPLEMENTED_CLOUDS = %w[tencent aws].freeze
+  # Clouds whose benchmark is published under benchmarks/ but not yet mapped
+  # onto a Terraform provider; `cis` refuses to run against them.
+  REFERENCE_CLOUDS = %w[alibaba gcp azure].freeze
+
   AUDIT_STACK = "audit"
 
-  # Stacks that write. Order is stable so runs are reproducible.
-  HARDENING_STACKS = %w[iam logging network storage database kubernetes].freeze
+  # Stacks that write, per cloud. Order is stable so runs are reproducible.
+  # tencent keeps its legacy layout (stacks/<name>); later clouds live under
+  # stacks/<cloud>/<name>.
+  HARDENING_STACKS = {
+    "tencent" => %w[iam logging network storage database kubernetes].freeze,
+    # network has no remediable control in AWS v7.0.0 (6.3/6.4/6.5/6.7 are
+    # detect-only), so it is not a hardening stack.
+    "aws"     => %w[iam logging storage database].freeze,
+  }.freeze
 
   class Error < StandardError; end
 
   class << self
+    # Active cloud, from CIS_CLOUD. Raises for reference-only clouds.
+    def cloud
+      name = ENV["CIS_CLOUD"] || "tencent"
+      raise Error, "#{name.inspect} is a reference-only benchmark (catalog published, " \
+                   "no Terraform mapping yet); supported: #{IMPLEMENTED_CLOUDS.join(', ')}" \
+        if REFERENCE_CLOUDS.include?(name)
+      unless IMPLEMENTED_CLOUDS.include?(name)
+        raise Error, "unknown cloud #{name.inspect}; expected one of " \
+                     "#{(IMPLEMENTED_CLOUDS + REFERENCE_CLOUDS).join(', ')}"
+      end
+      name
+    end
+
+    def hardening_stacks
+      HARDENING_STACKS.fetch(cloud)
+    end
+
     def catalog
-      @catalog ||= Catalog.load(File.join(ROOT, "config", "controls.yml"))
+      @catalog ||= Catalog.load(catalog_path)
+    end
+
+    def catalog_path
+      cloud == "tencent" ? File.join(ROOT, "config", "controls.yml")
+                         : File.join(ROOT, "config", cloud, "controls.yml")
     end
 
     # Selection is derived from the environment.
@@ -51,7 +87,8 @@ module Cis
 
     # Directory for a stack's .tf files.
     def stack_dir(stack)
-      File.join(ROOT, "stacks", stack)
+      base = cloud == "tencent" ? "stacks" : File.join("stacks", cloud)
+      File.join(ROOT, base, stack)
     end
   end
 end

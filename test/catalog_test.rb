@@ -143,11 +143,13 @@ class CatalogTest < CisTestCase
     assert_match(/requires a stack/, err.message)
   end
 
-  def test_an_unknown_stack_is_rejected
+  def test_a_malformed_stack_name_is_rejected
+    # Stack attribution is validated structurally here; whether the stack
+    # actually exists is enforced by the wiring tests against the registry.
     err = assert_raises(Cis::Error) do
-      Cis::Control.new("id" => "1.1", "title" => "a", "stack" => "compute")
+      Cis::Control.new("id" => "1.1", "title" => "a", "stack" => "Bad Stack!")
     end
-    assert_match(/unknown stack/, err.message)
+    assert_match(/malformed stack name/, err.message)
   end
 
   def test_a_malformed_id_is_rejected

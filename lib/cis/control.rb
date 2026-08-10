@@ -57,8 +57,9 @@ module Cis
     private
 
     def validate!
-      unless id =~ /\A\d+\.\d+\z/
-        raise Error, "control id must look like '<section>.<n>', got #{id.inspect}"
+      # 1.1 (tencent) and 1.1.1 (AWS/Alibaba/GCP/Azure) ids are both valid.
+      unless id =~ /\A\d+(\.\d+){1,2}\z/
+        raise Error, "control id must look like '<section>.<n>' or '<section>.<group>.<n>', got #{id.inspect}"
       end
       unless %w[terraform none].include?(remediate)
         raise Error, "#{id}: remediate must be terraform|none, got #{remediate.inspect}"
@@ -72,13 +73,16 @@ module Cis
       if detectable? && stack.nil?
         raise Error, "#{id}: detect=terraform requires a stack"
       end
-      if stack && !known_stack?
-        raise Error, "#{id}: unknown stack #{stack.inspect}"
+      if stack && !(stack =~ /\A[a-z][a-z0-9_-]*\z/)
+        raise Error, "#{id}: malformed stack name #{stack.inspect}"
       end
     end
 
+    # Stack attribution is validated structurally here; whether a stack really
+    # exists on disk is enforced by the wiring tests, which cross-check every
+    # registry stack against the stacks a cloud ships.
     def known_stack?
-      Cis::HARDENING_STACKS.include?(stack) || stack == Cis::AUDIT_STACK
+      stack =~ /\A[a-z][a-z0-9_-]*\z/
     end
   end
 end

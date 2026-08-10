@@ -1,0 +1,8 @@
+# bin/cis fills this in automatically from the selected filters. Hand-running
+# the stack directly would look like:
+#
+#   terraform init
+#   terraform apply -auto-approve \
+#     -var 'enabled_controls=["3.2.1","3.2.2","3.2.3","6.1.1","6.3"]'
+#   terraform output -json cis_findings
+enabled_controls = []

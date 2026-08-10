@@ -1,0 +1,8 @@
+# bin/cis fills enabled_controls in automatically. Hand-running the stack:
+#
+#   terraform init
+#   terraform apply -auto-approve \
+#     -var 'enabled_controls=["3.1.1","6.1.1"]' \
+#     -var 'buckets=["my-logs-123456789012"]'
+enabled_controls = []
+buckets          = []

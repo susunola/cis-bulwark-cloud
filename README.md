@@ -21,8 +21,9 @@ extra orchestrator — just the Terraform CLI and a thin Ruby wrapper.
 
 The repository also ships the official CIS benchmark PDFs and extracted control
 catalogs for **AWS, Alibaba Cloud, GCP and Azure** under
-[`benchmarks/`](benchmarks/) — Tencent is fully implemented, the other four are
-published as reference catalogs for upcoming provider mappings.
+[`benchmarks/`](benchmarks/). Tencent and AWS are fully implemented with
+`scan` + `apply`; Alibaba, GCP and Azure are published as reference catalogs
+for upcoming provider mappings.
 
 ## Table of Contents
 
@@ -74,16 +75,17 @@ Summary Table + profile applicability of each PDF by
 | Cloud | Benchmark | Version | Controls | Status |
 |---|---|---|---|---|
 | Tencent Cloud | CIS Tencent Cloud Enterprise Foundation Benchmark | v1.0.0 | 91 | `scan` + `apply` |
-| Amazon Web Services | CIS Amazon Web Services Foundations Benchmark | v7.0.0 | 64 | catalog only |
+| Amazon Web Services | CIS Amazon Web Services Foundations Benchmark | v7.0.0 | 64 | `scan` + `apply` |
 | Alibaba Cloud | CIS Alibaba Cloud Foundation Benchmark | v2.0.0 | 78 | catalog only |
 | Google Cloud Platform | CIS Google Cloud Platform Foundation Benchmark | v5.0.0 | 84 | catalog only |
 | Microsoft Azure | CIS Microsoft Azure Foundations Benchmark | v6.0.0 | 70 | catalog only |
 
-Only the Tencent catalog feeds `config/controls.yml` (via
-`tools/generate_controls.py`); the other four are reference catalogs until a
-provider mapping is written. The `aws`, `alibaba`, `gcp` and `azure` catalogs
-carry an extra `group` field on three-level controls (e.g. `2.1.1` →
-`"Organizations"`). Benchmark PDFs are © The Center for Internet Security, Inc.
+Tencent's registry feeds `config/controls.yml`, AWS's feeds
+`config/aws/controls.yml` (both via `tools/generate_controls.py --cloud NAME`);
+the other three are reference catalogs until a provider mapping is written. The
+`aws`, `alibaba`, `gcp` and `azure` catalogs carry an extra `group` field on
+three-level controls (e.g. `2.1.1` → `"Organizations"`). Benchmark PDFs are ©
+The Center for Internet Security, Inc.
 
 ---
 
@@ -104,7 +106,7 @@ export TENCENTCLOUD_REGION=ap-guangzhou
 
 ```bash
 ruby bin/cis list          # prints the control registry
-ruby test/run.rb           # 147 tests, 5936 assertions, offline
+ruby test/run.rb           # 167 tests, 6179 assertions, offline
 ```
 
 **First scan:**
@@ -121,16 +123,33 @@ ruby bin/cis apply --tag cos --dry-run               # preview
 ruby bin/cis apply --tag cos --report                # enforce + HTML record
 ```
 
+**AWS (pick the cloud with `--cloud` or `CIS_CLOUD`):**
+
+```bash
+export AWS_ACCESS_KEY_ID=<your-access-key>
+export AWS_SECRET_ACCESS_KEY=<your-secret-key>
+export AWS_DEFAULT_REGION=us-east-1
+
+ruby bin/cis --cloud aws list                        # 64 AWS controls
+ruby bin/cis --cloud aws scan --section 6 --format html -o aws-scan.html
+ruby bin/cis --cloud aws apply --only 2.8,2.9,6.1.1 --dry-run   # preview
+```
+
+AWS covers 8 remediable / 9 detectable controls; the rest are reported as
+`MANUAL` because the provider has no enumerable data source or no non-destructive
+resource for them. See `stacks/aws/` for per-stack import instructions.
+
 ---
 
 ## Project Layout
 
 ```
-bin/cis                     CLI entry point
-config/controls.yml         Control registry — 91 entries, source of truth
+bin/cis                     CLI entry point (--cloud tencent|aws)
+config/controls.yml         Tencent registry — 91 entries, source of truth
+config/aws/controls.yml     AWS registry — 64 entries
 benchmarks/                 CIS benchmark PDFs + extracted catalogs, per cloud
   tencent/catalog.json      Tencent Cloud (91 controls) - feeds controls.yml
-  aws/catalog.json          AWS v7.0.0 (64 controls) - reference
+  aws/catalog.json          AWS v7.0.0 (64 controls) - feeds config/aws/controls.yml
   alibaba/catalog.json      Alibaba Cloud v2.0.0 (78 controls) - reference
   gcp/catalog.json          GCP v5.0.0 (84 controls) - reference
   azure/catalog.json        Azure v6.0.0 (70 controls) - reference
@@ -162,18 +181,19 @@ docs/
 Each stack under `stacks/` is a **self-contained root module**: it carries its
 own `provider.tf` and `backend.tf`, so `terraform -chdir=stacks/<name> ...`
 works standalone. State defaults to a per-stack `terraform.tfstate`; see
-`stacks/<name>/backend.tf` for the COS remote-backend guidance.
+`stacks/<name>/backend.tf` for the COS (tencent) / S3 (aws) remote-backend
+guidance. Later clouds nest under `stacks/<cloud>/<name>`.
 
 ---
 
 ## Commands
 
 ```
-cis list                 Show the registry and what the current filter selects
-cis scan                 Read-only assessment of selected controls
-cis plan                 Show what cis apply would change
-cis apply                Enforce selected controls
-cis destroy STACK        Roll back one hardening stack
+cis --cloud aws list       Show the registry for a cloud (default: tencent)
+cis scan                   Read-only assessment of selected controls
+cis plan                   Show what cis apply would change
+cis apply                  Enforce selected controls
+cis destroy STACK          Roll back one hardening stack
 ```
 
 ### Exit Codes
@@ -370,7 +390,7 @@ official CIS benchmark PDF.
 ## Tests
 
 ```bash
-ruby test/run.rb                 # 139 runs, 1526 assertions
+ruby test/run.rb                 # 167 runs, 6179 assertions
 ruby test/selector_test.rb       # single file
 ```
 
@@ -381,10 +401,11 @@ runs with `--dry-run`.
 |---|---|
 | `catalog_test.rb` | Registry well-formedness: 91 ids, section sizes, profile split, capability counts |
 | `selector_test.rb` | Filter semantics and precedence, `to_env`/`from_env` round-trip |
-| `wiring_test.rb` | **Registry ↔ HCL alignment** |
-| `cli_test.rb` | Flags, exit codes, output formats, env-vs-flag precedence |
+| `wiring_test.rb` | **Registry ↔ HCL alignment (tencent)** |
+| `aws_wiring_test.rb` | **Registry ↔ HCL alignment (AWS)** |
+| `cli_test.rb` | Flags, exit codes, output formats, env-vs-flag precedence, `--cloud` |
 | `runner_test.rb` | Exit-code contract, terraform command issuance |
-| `benchmarks_test.rb` | **Every `benchmarks/<cloud>/catalog.json`**: shape, id uniqueness/contiguity, enum values, pdftotext residue, group↔sections agreement, tencent catalog ↔ controls.yml drift |
+| `benchmarks_test.rb` | **Every `benchmarks/<cloud>/catalog.json`**: shape, id uniqueness/contiguity, enum values, pdftotext residue, group↔sections agreement, catalog ↔ controls.yml drift |
 
 ### Wiring Test
 
