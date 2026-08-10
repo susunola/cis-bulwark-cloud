@@ -19,6 +19,11 @@ Networking, Storage, Database and Kubernetes. Two modes, one codebase: `scan`
 for read-only compliance assessment, `apply` for enforcement. No Terraspace, no
 extra orchestrator — just the Terraform CLI and a thin Ruby wrapper.
 
+The repository also ships the official CIS benchmark PDFs and extracted control
+catalogs for **AWS, Alibaba Cloud, GCP and Azure** under
+[`benchmarks/`](benchmarks/) — Tencent is fully implemented, the other four are
+published as reference catalogs for upcoming provider mappings.
+
 ## Table of Contents
 
 - [Capabilities](#capabilities)
@@ -56,6 +61,29 @@ no business deleting a policy it didn't create).
 Every selected control appears in the scan report — including the 43 unassessable
 ones as `MANUAL`. A green table that silently drops half the benchmark is worse
 than no report.
+
+---
+
+## Supported Benchmarks
+
+The benchmark PDFs and their machine-readable control catalogs (`catalog.json`)
+live under [`benchmarks/<cloud>/`](benchmarks/). Catalogs are extracted from the
+Summary Table + profile applicability of each PDF by
+`tools/extract_benchmark.py`.
+
+| Cloud | Benchmark | Version | Controls | Status |
+|---|---|---|---|---|
+| Tencent Cloud | CIS Tencent Cloud Enterprise Foundation Benchmark | v1.0.0 | 91 | `scan` + `apply` |
+| Amazon Web Services | CIS Amazon Web Services Foundations Benchmark | v7.0.0 | 64 | catalog only |
+| Alibaba Cloud | CIS Alibaba Cloud Foundation Benchmark | v2.0.0 | 78 | catalog only |
+| Google Cloud Platform | CIS Google Cloud Platform Foundation Benchmark | v5.0.0 | 84 | catalog only |
+| Microsoft Azure | CIS Microsoft Azure Foundations Benchmark | v6.0.0 | 70 | catalog only |
+
+Only the Tencent catalog feeds `config/controls.yml` (via
+`tools/generate_controls.py`); the other four are reference catalogs until a
+provider mapping is written. The `aws`, `alibaba`, `gcp` and `azure` catalogs
+carry an extra `group` field on three-level controls (e.g. `2.1.1` →
+`"Organizations"`). Benchmark PDFs are © The Center for Internet Security, Inc.
 
 ---
 
@@ -100,6 +128,12 @@ ruby bin/cis apply --tag cos --report                # enforce + HTML record
 ```
 bin/cis                     CLI entry point
 config/controls.yml         Control registry — 91 entries, source of truth
+benchmarks/                 CIS benchmark PDFs + extracted catalogs, per cloud
+  tencent/catalog.json      Tencent Cloud (91 controls) - feeds controls.yml
+  aws/catalog.json          AWS v7.0.0 (64 controls) - reference
+  alibaba/catalog.json      Alibaba Cloud v2.0.0 (78 controls) - reference
+  gcp/catalog.json          GCP v5.0.0 (84 controls) - reference
+  azure/catalog.json        Azure v6.0.0 (70 controls) - reference
 lib/cis.rb                  Shared Ruby layer: catalog, selector, reporter
 lib/cis/runner.rb           Runner: shells out to `terraform`
 lib/cis/catalog.rb, selector.rb, reporter.rb, control.rb
@@ -117,9 +151,8 @@ stacks/
   kubernetes/               /
 test/                       139 tests — no cloud, no credentials
 tools/
-  generate_controls.py      Generate controls.yml from the CIS benchmark PDF
-  extract_catalog.py        Build tools/catalog.json from the benchmark
-  extract_profiles.py       Profile split used by generate_controls.py
+  extract_benchmark.py      Extract <cloud>/catalog.json from a CIS benchmark PDF text
+  generate_controls.py      Generate config/controls.yml from the Tencent catalog
   validate.sh               terraform init+validate every stack/module offline
 docs/
   sample-scan.html          Example scan report (static)

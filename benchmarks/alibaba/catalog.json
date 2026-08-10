@@ -1,0 +1,563 @@
+{
+  "benchmark": "CIS Alibaba Cloud Foundation Benchmark",
+  "version": "v2.0.0",
+  "date": "06-23-2025",
+  "sections": {
+    "1": "Identity and Access Management",
+    "2": "Logging and Monitoring",
+    "3": "Networking",
+    "4": "Virtual Machines",
+    "5": "Storage",
+    "6": "Relational Database Services",
+    "7": "Kubernetes Engine",
+    "8": "Security Center"
+  },
+  "controls": [
+    {
+      "id": "1.1",
+      "title": "Avoid the use of the \"root\" account",
+      "section": "1",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "1.2",
+      "title": "Ensure no root account access key exists",
+      "section": "1",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "1.3",
+      "title": "Ensure MFA is enabled for the \"root\" account",
+      "section": "1",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "1.4",
+      "title": "Ensure that multi-factor authentication is enabled for all RAM users that have a console password",
+      "section": "1",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "1.5",
+      "title": "Ensure users not logged on for 90 days or longer are disabled for console logon",
+      "section": "1",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "1.6",
+      "title": "Ensure access keys are rotated every 90 days or less",
+      "section": "1",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "1.7",
+      "title": "Ensure RAM password policy requires at least one uppercase letter",
+      "section": "1",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "1.8",
+      "title": "Ensure RAM password policy requires at least one lowercase letter",
+      "section": "1",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "1.9",
+      "title": "Ensure RAM password policy require at least one symbol",
+      "section": "1",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "1.10",
+      "title": "Ensure RAM password policy require at least one number",
+      "section": "1",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "1.11",
+      "title": "Ensure RAM password policy requires minimum length of 14 or greater",
+      "section": "1",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "1.12",
+      "title": "Ensure RAM password policy prevents password reuse",
+      "section": "1",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "1.13",
+      "title": "Ensure RAM password policy expires passwords in 365 days or greater",
+      "section": "1",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "1.14",
+      "title": "Ensure RAM password policy temporarily blocks logon after 5 incorrect logon attempts within an hour",
+      "section": "1",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "1.15",
+      "title": "Ensure RAM policies that allow full \"*:*\" administrative privileges are not created",
+      "section": "1",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.1",
+      "title": "Ensure that ActionTrail are configured to export copies of all Log entries",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.2",
+      "title": "Ensure the OSS used to store ActionTrail logs is not publicly accessible",
+      "section": "2",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.3",
+      "title": "Ensure audit logs for multiple cloud resources are integrated with Log Service",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.4",
+      "title": "Ensure Log Service is enabled for Container Service for Kubernetes",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.5",
+      "title": "Ensure virtual network flow log service is enabled",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.6",
+      "title": "Ensure Anti-DDoS access and security log service is enabled",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "2.7",
+      "title": "Ensure Web Application Firewall access and security log service is enabled",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "2.8",
+      "title": "Ensure Cloud Firewall access and security log analysis is enabled",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "2.9",
+      "title": "Ensure Security Center Network, Host and Security log analysis is enabled",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "2.10",
+      "title": "Ensure log monitoring and alerts are set up for RAM Role changes",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.11",
+      "title": "Ensure log monitoring and alerts are set up for Cloud Firewall changes",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "2.12",
+      "title": "Ensure log monitoring and alerts are set up for VPC network route changes",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.13",
+      "title": "Ensure log monitoring and alerts are set up for VPC changes",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.14",
+      "title": "Ensure log monitoring and alerts are set up for OSS permission changes",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.15",
+      "title": "Ensure log monitoring and alerts are set up for RDS instance configuration changes",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.16",
+      "title": "Ensure a log monitoring and alerts are set up for unauthorized API calls",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.17",
+      "title": "Ensure a log monitoring and alerts are set up for Management Console sign-in without MFA",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.18",
+      "title": "Ensure a log monitoring and alerts are set up for usage of \"root\" account",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.19",
+      "title": "Ensure a log monitoring and alerts are set up for Management Console authentication failures",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "2.20",
+      "title": "Ensure a log monitoring and alerts are set up for disabling or deletion of customer created CMKs",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "2.21",
+      "title": "Ensure a log monitoring and alerts are set up for OSS bucket policy changes",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "2.22",
+      "title": "Ensure a log monitoring and alerts are set up for security group changes",
+      "section": "2",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "3.1",
+      "title": "Ensure legacy networks does not exist",
+      "section": "3",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "3.2",
+      "title": "Ensure that SSH access is restricted from the internet",
+      "section": "3",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "3.3",
+      "title": "Ensure VPC flow logging is enabled in all VPCs",
+      "section": "3",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "3.4",
+      "title": "Ensure routing tables for VPC peering are \"least access\"",
+      "section": "3",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "4.1",
+      "title": "Ensure that 'Unattached disks' are encrypted",
+      "section": "4",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "4.2",
+      "title": "Ensure that ‘Virtual Machine’s disk’ are encrypted",
+      "section": "4",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "4.3",
+      "title": "Ensure no security groups allow ingress from 0.0.0.0/0 to port 22",
+      "section": "4",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "4.4",
+      "title": "Ensure no security groups allow ingress from 0.0.0.0/0 to port 3389",
+      "section": "4",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "4.5",
+      "title": "Ensure that the latest OS Patches for all Virtual Machines are applied",
+      "section": "4",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "5.1",
+      "title": "Ensure that OSS bucket is not anonymously or publicly accessible",
+      "section": "5",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "5.2",
+      "title": "Ensure that there are no publicly accessible objects in storage buckets",
+      "section": "5",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "5.3",
+      "title": "Ensure that logging is enabled for OSS buckets",
+      "section": "5",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "5.4",
+      "title": "Ensure that 'Secure transfer required' is set to 'Enabled'",
+      "section": "5",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "5.5",
+      "title": "Ensure that the shared URL signature expires within an hour",
+      "section": "5",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "5.6",
+      "title": "Ensure that URL signature is allowed only over https",
+      "section": "5",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "5.7",
+      "title": "Ensure network access rule for storage bucket is not set to publicly accessible",
+      "section": "5",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "5.8",
+      "title": "Ensure server-side encryption is set to ‘Encrypt with Service Key’",
+      "section": "5",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "6.1",
+      "title": "Ensure that RDS instance requires all incoming connections to use SSL",
+      "section": "6",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.2",
+      "title": "Ensure that RDS Instances are not open to the world",
+      "section": "6",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.3",
+      "title": "Ensure that 'Auditing' is set to 'On' for applicable database instances",
+      "section": "6",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "6.4",
+      "title": "Ensure that 'Auditing' Retention is 'greater than 6 months'",
+      "section": "6",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.5",
+      "title": "Ensure that 'TDE' is set to 'Enabled' on for applicable database instance",
+      "section": "6",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.6",
+      "title": "Ensure RDS instance TDE protector is encrypted with BYOK (Use your own key)",
+      "section": "6",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "6.7",
+      "title": "Ensure parameter 'log_connections' is set to 'ON' for PostgreSQL Database",
+      "section": "6",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "6.8",
+      "title": "Ensure server parameter 'log_disconnections' is set to 'ON' for PostgreSQL Database Server",
+      "section": "6",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "7.1",
+      "title": "Ensure Log Service is set to ‘Enabled’ on Kubernetes Engine Clusters",
+      "section": "7",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "7.2",
+      "title": "Ensure CloudMonitor is set to Enabled on Kubernetes Engine Clusters",
+      "section": "7",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "7.3",
+      "title": "Ensure role-based access control (RBAC) authorization is Enabled on Kubernetes Engine Clusters",
+      "section": "7",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "7.4",
+      "title": "Ensure Cluster Check triggered at least once per week for Kubernetes Clusters",
+      "section": "7",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "7.5",
+      "title": "Ensure Kubernetes web UI / Dashboard is not enabled",
+      "section": "7",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "7.6",
+      "title": "Ensure Basic Authentication is not enabled on Kubernetes Engine Clusters",
+      "section": "7",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "7.7",
+      "title": "Ensure Network policy is enabled on Kubernetes Engine Clusters",
+      "section": "7",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "7.8",
+      "title": "Ensure ENI multiple IP mode support for Kubernetes Cluster",
+      "section": "7",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "8.1",
+      "title": "Ensure that Security Center is Advanced or Enterprise Edition",
+      "section": "8",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "8.2",
+      "title": "Ensure that all assets are installed with security agent",
+      "section": "8",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "8.3",
+      "title": "Ensure that Automatic Quarantine is enabled",
+      "section": "8",
+      "assessment": "Manual",
+      "profile": "Level 2"
+    },
+    {
+      "id": "8.4",
+      "title": "Ensure that Webshell detection is enabled on all web servers",
+      "section": "8",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "8.5",
+      "title": "Ensure that notification is enabled on all high risk items",
+      "section": "8",
+      "assessment": "Automated",
+      "profile": "Level 2"
+    },
+    {
+      "id": "8.6",
+      "title": "Ensure that Config Assessment is granted with privilege",
+      "section": "8",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    },
+    {
+      "id": "8.7",
+      "title": "Ensure that scheduled vulnerability scan is enabled on all servers",
+      "section": "8",
+      "assessment": "Automated",
+      "profile": "Level 1"
+    },
+    {
+      "id": "8.8",
+      "title": "Ensure that Asset Fingerprint automatically collects asset fingerprint data",
+      "section": "8",
+      "assessment": "Manual",
+      "profile": "Level 1"
+    }
+  ]
+}

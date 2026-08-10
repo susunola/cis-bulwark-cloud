@@ -3,8 +3,9 @@
 
 Two inputs are combined:
 
-1. tools/catalog.json  - facts extracted from the CIS PDF (id, title, assessment,
-   profile). Produced by tools/extract_catalog.py. Never hand-edited.
+1. benchmarks/tencent/catalog.json - facts extracted from the CIS PDF (id,
+   title, assessment, profile). Produced by tools/extract_benchmark.py.
+   Never hand-edited.
 2. MAPPING below       - how each control maps onto the tencentcloud Terraform
    provider. Derived from `terraform providers schema -json` of
    tencentcloudstack/tencentcloud ~> 1.81 and hand-verified.
@@ -21,7 +22,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-CATALOG = os.path.join(HERE, "catalog.json")
+CATALOG = os.path.join(ROOT, "benchmarks", "tencent", "catalog.json")
 OUT = os.path.join(ROOT, "config", "controls.yml")
 
 T, N = "terraform", "none"
@@ -150,7 +151,7 @@ MAPPING = {
 }
 
 SECTION_STACK_NOTE = {
-    1: "CAM password policy (1.7-1.14) has no Terraform resource - reported as MANUAL.",
+    1: "CAM password policy (1.7-1.11, 1.13) has no Terraform resource - reported as MANUAL.\n  # 1.12 (prevent password reuse) and 1.14 (account lockout) are classified as Automated.",
     7: "Cloud Security Center has no Terraform resources - whole section is MANUAL.",
     9: "TCSS exposes only cluster_access / image_registry - whole section is MANUAL.",
 }
