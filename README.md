@@ -13,16 +13,24 @@
 
 # cis-bulwark-cloud
 
-A plain **Terraform** implementation of the **CIS Tencent Cloud Foundation
-Benchmark v1.0.0** — 91 security recommendations across Identity, Logging,
-Networking, Storage, Database and Kubernetes. Two modes, one codebase: `scan`
-for read-only compliance assessment, `apply` for enforcement. No Terraspace, no
-extra orchestrator — just the Terraform CLI and a thin Ruby wrapper.
+A plain **Terraform** implementation of five **CIS Foundations Benchmarks**
+across Tencent Cloud, AWS, Azure, GCP and Alibaba Cloud — 387 security
+recommendations covering Identity, Logging, Networking, Storage, Database and
+Kubernetes. Two modes, one codebase: `scan` for read-only compliance assessment,
+`apply` for enforcement. No Terraspace, no extra orchestrator — just the
+Terraform CLI and a thin Ruby wrapper.
 
-The repository also ships the official CIS benchmark PDFs and extracted control
-catalogs for **AWS, Alibaba Cloud, GCP and Azure** under
-[`benchmarks/`](benchmarks/) - all five benchmarks are fully implemented with
-`scan` + `apply` against their native Terraform providers.
+| Cloud | Benchmark | Controls |
+|---|---|---|
+| Tencent Cloud | CIS v1.0.0 | 91 |
+| AWS | CIS v7.0.0 | 64 |
+| Azure | CIS v6.0.0 | 70 |
+| GCP | CIS v5.0.0 | 84 |
+| Alibaba Cloud | CIS v2.0.0 | 78 |
+
+All five benchmarks are fully implemented with `scan` + `apply` against their
+native Terraform providers. Official CIS benchmark PDFs and extracted control
+catalogs are included under [`benchmarks/`](benchmarks/).
 
 ## Table of Contents
 
@@ -71,8 +79,6 @@ live under [`benchmarks/<cloud>/`](benchmarks/). Catalogs are extracted from the
 Summary Table + profile applicability of each PDF by
 `tools/extract_benchmark.py`.
 
-| Cloud | Benchmark | Version | Controls | Status |
-|---|---|---|---|---|
 | Cloud | Benchmark | Version | Controls | Rem. | Det. | Man. |
 |---|---|---|---|---|---|---|
 | Tencent Cloud | CIS Tencent Cloud Enterprise Foundation Benchmark | v1.0.0 | 91 | 39 | 20 | 43 |
