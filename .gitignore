@@ -4,5 +4,10 @@
 .terraform/
 .terraform.lock.hcl
 
-# Ruby
-Gemfile.lock
+# Python
+__pycache__/
+*.pyc
+build/
+dist/
+*.egg-info/
+.pytest_cache/
