@@ -154,6 +154,8 @@ class Reporter:
             body = self._scan_csv(findings)
         elif format_ == "junit":
             body = self._scan_junit(findings)
+        elif format_ == "sarif":
+            body = self._scan_sarif(findings, selector)
         else:
             body = self._scan_table(findings)
         self.io.write(body + "\n")
@@ -442,6 +444,64 @@ function applyFilter(){
             "summary": {**tally, "selected": len(selector.selected)},
             "findings": findings,
         }
+
+    def _scan_sarif(self, findings: list[dict], selector) -> str:
+        """Render findings as a SARIF 2.1.0 report (for GitHub Code Scanning).
+
+        Only FAIL (and SUPPRESSED, surfaced as suppressed alerts) findings
+        become results; PASS/MANUAL carry no alert. Rules are the selected
+        controls that produced at least one finding, so the rule index stays
+        small and references resolve.
+        """
+        catalog = _catalog_mod()
+        benchmark = str(catalog.benchmark) if catalog else "CIS benchmark"
+        version = str(catalog.version) if catalog else ""
+        tool_name = "cis-cloud"
+        sarif_version = "2.1.0"
+
+        # Severity mapping per the SARIF spec (level): error/warning/note/none.
+        sev_level = {"critical": "error", "high": "error", "medium": "warning", "low": "note"}
+
+        results = []
+        rule_by_id = {}
+        for f in findings:
+            status = str(f.get("status", "")).upper()
+            if status not in ("FAIL", "SUPPRESSED"):
+                continue
+            cid = str(f.get("id", ""))
+            if cid not in rule_by_id:
+                rule_by_id[cid] = {
+                    "id": cid,
+                    "name": str(f.get("title") or cid),
+                    "shortDescription": {"text": str(f.get("title") or cid)},
+                    "defaultConfiguration": {"level": sev_level.get(
+                        str(f.get("severity")), "warning")},
+                }
+            results.append({
+                "ruleId": cid,
+                "level": sev_level.get(str(f.get("severity")), "warning"),
+                "message": {"text": str(f.get("evidence") or "")},
+                "kind": "fail" if status == "FAIL" else "pass",
+                "properties": {"suppressed": status == "SUPPRESSED"},
+            })
+
+        report = {
+            "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+            "version": sarif_version,
+            "runs": [{
+                "tool": {
+                    "driver": {
+                        "name": tool_name,
+                        "informationUri": "https://github.com/susunola/cis-cloud",
+                        "version": version,
+                        "rules": list(rule_by_id.values()),
+                    }
+                },
+                "results": results,
+                "properties": {"benchmark": benchmark, "version": version},
+            }],
+        }
+        return json.dumps(report, indent=2, ensure_ascii=False)
 
     def _scan_table(self, findings: list[dict]) -> str:
         out = io.StringIO()

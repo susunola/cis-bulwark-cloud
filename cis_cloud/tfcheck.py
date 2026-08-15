@@ -16,6 +16,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
 
+import yaml
+
 from . import get_catalog as _catalog_mod
 from . import cloud as _cloud
 from . import severity as _severity
@@ -59,6 +61,42 @@ RULES: dict[str, dict[str, dict]] = {
 }
 
 
+def load_checks(path: str | Path) -> dict[str, dict]:
+    """Load user-defined checks from a YAML file into a rules dict.
+
+    The file mirrors the built-in RULES shape, optionally keyed by cloud::
+
+        aws:
+          "3.2.4":
+            resource: aws_db_instance
+            args:
+              multi_az: true
+        tencent:
+          "5.7":
+            resource: tencentcloud_mysql_instance
+            args:
+              security_groups: []
+
+    Returns a flat ``{cloud: {control_id: rule}}`` dict. A missing file or a
+    malformed shape raises a clear error so the operator notices immediately.
+    """
+    p = Path(path)
+    if not p.exists():
+        raise FileNotFoundError(f"checks file not found: {p}")
+    data = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+    if not isinstance(data, dict):
+        raise ValueError(f"checks file {p} must be a mapping of cloud -> controls")
+    out: dict[str, dict] = {}
+    for cloud, controls in data.items():
+        if not isinstance(controls, dict):
+            raise ValueError(f"checks file {p}: {cloud!r} must map control ids to rules")
+        for cid, rule in controls.items():
+            if not isinstance(rule, dict) or "resource" not in rule:
+                raise ValueError(f"checks file {p}: rule {cid!r} under {cloud!r} must have a 'resource'")
+            out.setdefault(str(cloud), {})[str(cid)] = rule
+    return out
+
+
 @dataclass
 class Finding:
     id: str
@@ -66,19 +104,26 @@ class Finding:
     severity: str
     title: str
     evidence: str
+    detail: Optional[list] = field(default_factory=list)
 
     def to_dict(self) -> dict:
-        return {
+        d = {
             "id": self.id,
             "status": self.status,
             "severity": self.severity,
             "title": self.title,
             "evidence": self.evidence,
         }
+        if self.detail:
+            d["evidence_detail"] = self.detail
+        return d
 
 
-def scan(dir_: str | Path, cloud: str, catalog=None) -> list[Finding]:
-    rules = RULES.get(cloud, {})
+def scan(dir_: str | Path, cloud: str, catalog=None, extra_rules: Optional[dict] = None) -> list[Finding]:
+    # Merge user-supplied checks over the built-ins (user rules win on clash).
+    rules = dict(RULES.get(cloud, {}))
+    if extra_rules:
+        rules.update({k: v for k, v in extra_rules.items() if isinstance(v, dict)})
     if not rules:
         return []
 
@@ -100,9 +145,11 @@ def scan(dir_: str | Path, cloud: str, catalog=None) -> list[Finding]:
         ctl = next((c for c in (cat.controls if cat else []) if c.id == cid), None)
         if violations:
             evidence = f"{rule['resource']}: " + "; ".join(_missing(b, rule["args"]) for b in violations)
+            detail = [d for b in violations for d in _block_detail(b, rule["args"])]
             status = "FAIL"
         else:
             evidence = f"{rule['resource']}: {len(matching)} block(s) comply"
+            detail = []
             status = "PASS"
         out.append(Finding(
             id=cid,
@@ -110,6 +157,7 @@ def scan(dir_: str | Path, cloud: str, catalog=None) -> list[Finding]:
             title=ctl.title if ctl else cid,
             status=status,
             evidence=evidence,
+            detail=detail,
         ))
     return out
 
@@ -198,3 +246,34 @@ def _nested_block(body: str, arg: str) -> Optional[str]:
 def _missing(block: dict, args: dict) -> str:
     bad = [arg for arg, expected in args.items() if not _arg_ok(arg, expected, block["body"])]
     return f"{block['type']}.{block['name']} ({Path(block['file']).name}) missing/weak: {', '.join(bad)}"
+
+
+def _block_detail(block: dict, args: dict) -> list[dict]:
+    """Structured, machine-readable evidence for one violating resource.
+
+    Returns a list of {resource, attribute, expected, actual}. `expected` is
+    normalised to a comparable scalar/string; `actual` is whatever the source
+    file actually declares (or None when the attribute is absent).
+    """
+    bad = []
+    for arg, expected in args.items():
+        if _arg_ok(arg, expected, block["body"]):
+            continue
+        actual = _extract_arg(block["body"], arg)
+        if isinstance(expected, list):
+            exp = "any of " + ", ".join(str(e) for e in expected if e is not None) or "absent"
+        elif isinstance(expected, dict):
+            exp = "nested block present"
+        elif isinstance(expected, re.Pattern):
+            exp = f"matches {expected.pattern}"
+        elif expected is None:
+            exp = "attribute present"
+        else:
+            exp = expected
+        bad.append({
+            "resource": f"{block['type']}.{block['name']}",
+            "attribute": arg,
+            "expected": exp,
+            "actual": actual,
+        })
+    return bad

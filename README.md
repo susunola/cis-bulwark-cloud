@@ -220,6 +220,8 @@ cis apply                  Enforce selected controls
 cis destroy STACK          Roll back one hardening stack
 cis compliance --dir scans Aggregate per-cloud scan JSONs into one posture
 cis check --tf DIR         Pre-deploy CIS checks on Terraform definitions
+cis diff BASE CUR          Compare two scan JSONs (new/still/fixed/dropped)
+cis batch --accounts a,b   Scan several accounts and aggregate
 ```
 
 ### Beyond scan / apply (industry borrowings)
@@ -234,19 +236,30 @@ cis check --tf DIR         Pre-deploy CIS checks on Terraform definitions
 - **Suppression** (`config/suppress.yml`, CloudSploit-style): declare known
   exceptions per cloud+control+resource; suppressed findings render as
   SUPPRESSED and never trip the scan gate.
-- **CI formats**: `--format csv` / `--format junit` for pipelines; `scan` exits
+- **CI formats**: `--format csv` / `--format junit` for pipelines; `--format
+  sarif` uploads to GitHub Code Scanning (see the CI workflow). `scan` exits
   1 when any assessed control FAILs (suppressed findings excluded).
 - **IaC pre-deploy checks** (`cis check --tf DIR`, Steampipe-style): parse .tf
   files (no credentials, no terraform run) and verify the arguments CIS
   requires are present, per cloud. Catches the missing `enable_log_file_validation`
   before you apply - `cis scan` still covers what runs on the live cloud.
+  Extra rules can be merged in with `--checks FILE` (custom checks), and
+  `plan --plan-check` runs the static gate before any apply.
+- **Baseline drift** (`cis diff BASE CUR`): compare two scan JSONs and see what
+  regressed, what stayed failing, and what you fixed - a lightweight foundation
+  for continuous monitoring.
+- **Multi-framework view** (`--framework nist|pci|djcp`): view the control set
+  through another compliance lens (NIST SP 800-53, PCI DSS v4.0, 等保 2.0).
+- **Multi-account batch** (`cis batch --accounts a,b,c`): scan each account and
+  roll them up into one cross-account posture; `scan --push DIR` writes a
+  timestamped JSON copy for the same purpose.
 
 ### Exit Codes
 
 | Code | Meaning |
 |---|---|
 | `0` | Clean, or nothing to do |
-| `1` | Scan found at least one failing control |
+| `1` | Scan/diff/batch found at least one failing or new control |
 | `2` | Run broke — bad flags, empty selection, terraform failed |
 
 `1` is reserved for findings so CI can gate on it. `MANUAL` rows never produce a
@@ -256,8 +269,9 @@ cis check --tf DIR         Pre-deploy CIS checks on Terraform definitions
 
 | Flag | Meaning |
 |---|---|
-| `--format table\|json\|markdown\|html` | Default `table` |
+| `--format table\|json\|markdown\|html` | Default `table`; also `csv`, `junit`, `sarif` |
 | `-o, --output PATH` | Write `list`/`scan` report to file |
+| `--push DIR` | Also write a timestamped JSON scan result into DIR |
 | `--report [PATH]` | After `apply`, write HTML hardening report |
 | `--dry-run` | Print terraform commands, execute nothing |
 | `--verbose` | Echo each terraform invocation |
@@ -278,6 +292,7 @@ Every filter is available both as a flag and as an environment variable. They co
 | `--section 3,4` | `CIS_SECTIONS` | Restrict to these benchmark sections |
 | `--tag cos,mfa` | `CIS_TAGS` | Keep controls carrying any of these tags |
 | `--profile level1` | `CIS_PROFILE` | `level1` (67 controls) or `level2` (all 91) |
+| `--framework pci` | `CIS_FRAMEWORK` | Keep controls mapped to nist, pci or djcp |
 
 **Precedence:** `--only` replaces the baseline; `--section`, `--tag` and
 `--profile` narrow whatever baseline is in play; `--exclude` is applied last and
@@ -477,7 +492,9 @@ clean-looking report.
 
 `.github/workflows/ci.yml` runs `pytest test_py -q` on every push and pull
 request, then `terraform init -backend=false && terraform validate` on every
-module and stack. Python + pytest + Terraform CLI only — no cloud account.
+module and stack. Python + pytest + Terraform CLI only — no cloud account. It
+also runs the offline `check` on the test fixture and uploads the SARIF to
+**GitHub Code Scanning**, so IaC findings appear as PR/commit alerts.
 
 ### Offline Terraform Validation
 

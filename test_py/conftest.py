@@ -12,7 +12,7 @@ import pytest
 import cis_cloud as C
 
 ROOT = Path(C.get_root()).parent.parent  # repo root (data root is <repo>/cis_cloud/data)
-FILTER_ENV = ["CIS_ONLY", "CIS_EXCLUDE", "CIS_SECTIONS", "CIS_TAGS", "CIS_PROFILE"]
+FILTER_ENV = ["CIS_ONLY", "CIS_EXCLUDE", "CIS_SECTIONS", "CIS_TAGS", "CIS_PROFILE", "CIS_FRAMEWORK"]
 
 
 @pytest.fixture(autouse=True)

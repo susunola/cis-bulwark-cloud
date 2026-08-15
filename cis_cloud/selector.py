@@ -26,13 +26,14 @@ from .control import Control
 
 class Selector:
     def __init__(self, catalog: Catalog, only=None, exclude=None, sections=None,
-                 tags=None, profile: Optional[str] = None):
+                 tags=None, profile: Optional[str] = None, framework: Optional[str] = None):
         self.catalog = catalog
         self.only = list(only or [])
         self.exclude = list(exclude or [])
         self.sections = [str(s) for s in (sections or [])]
         self.tags = list(tags or [])
         self.profile = self._normalize_profile(profile)
+        self.framework = self._normalize_framework(framework)
         self._selected: Optional[list[Control]] = None
         self._validate()
 
@@ -48,6 +49,7 @@ class Selector:
             sections=cls.split(env.get("CIS_SECTIONS")),
             tags=cls.split(env.get("CIS_TAGS")),
             profile=env.get("CIS_PROFILE"),
+            framework=env.get("CIS_FRAMEWORK"),
         )
 
     @staticmethod
@@ -69,6 +71,9 @@ class Selector:
                 base = [c for c in base if set(c.tags) & set(self.tags)]
             if self.profile is not None:
                 base = [c for c in base if c.level <= self.profile]
+            if self.framework:
+                from .frameworks import is_in as _fw_in
+                base = [c for c in base if _fw_in(self.catalog, c, self.framework)]
             if self.exclude:
                 base = [c for c in base if not self._glob_any(c.id, self.exclude)]
             base.sort(key=lambda c: c.sort_key())
@@ -123,6 +128,7 @@ class Selector:
             "CIS_SECTIONS": ",".join(self.sections),
             "CIS_TAGS": ",".join(self.tags),
             "CIS_PROFILE": f"level{self.profile}" if self.profile else "",
+            "CIS_FRAMEWORK": self.framework or "",
         }
 
     # ---- helpers ----------------------------------------------------------
@@ -141,6 +147,17 @@ class Selector:
         if v in ("2", "l2", "level2", "level 2", "level-2"):
             return 2
         raise Error(f"unknown profile {value!r}; expected level1 or level2")
+
+    @staticmethod
+    def _normalize_framework(value) -> Optional[str]:
+        if value is None or str(value).strip() == "":
+            return None
+        from .frameworks import normalize as fw_normalize
+        key = fw_normalize(value)
+        if key is None:
+            from .frameworks import FRAMEWORKS
+            raise Error(f"unknown framework {value!r}; choose from {', '.join(sorted(FRAMEWORKS))}")
+        return key
 
     def _validate(self) -> None:
         known = self.catalog.ids

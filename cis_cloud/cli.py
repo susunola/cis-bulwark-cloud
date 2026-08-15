@@ -40,7 +40,7 @@ from .compliance import Compliance
 from .runner import Runner
 from .tfcheck import scan as tfcheck_scan
 
-COMMANDS = ["list", "scan", "plan", "apply", "destroy", "compliance", "check"]
+COMMANDS = ["list", "scan", "plan", "apply", "destroy", "compliance", "check", "diff", "batch"]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -55,11 +55,17 @@ def build_parser() -> argparse.ArgumentParser:
             "  cis-cloud scan --section 4 --format html --output report.html\n"
             "  cis-cloud plan --only 4.*\n"
             "  cis-cloud apply --tag cos --exclude 4.6 --report\n"
+            "  cis-cloud check --tf DIR --checks checks.yml\n"
+            "  cis-cloud diff scans/baseline.json scans/current.json\n"
+            "  cis-cloud batch --accounts a1,a2 --cloud aws --out scans\n"
         ),
     )
     p.add_argument("command", nargs="?", choices=COMMANDS,
                    help="command to run: " + ", ".join(COMMANDS))
     p.add_argument("stack", nargs="?", help="stack name for `destroy`")
+    # `diff` takes two scan JSON files: cis-cloud diff baseline.json current.json
+    p.add_argument("args", nargs="*", metavar="PATH",
+                   help="scan JSON paths for `diff` (baseline then current)")
 
     p.add_argument("--cloud", metavar="NAME",
                    help="cloud to operate on (tencent, aws, azure, gcp, alibaba; default tencent)")
@@ -70,15 +76,27 @@ def build_parser() -> argparse.ArgumentParser:
     g.add_argument("--section", metavar="NUMS", help="comma separated benchmark sections (e.g. 3,4)")
     g.add_argument("--tag", metavar="TAGS", help="comma separated tags; matches ANY")
     g.add_argument("--profile", metavar="LEVEL", help="level1 or level2")
+    g.add_argument("--framework", metavar="NAME",
+                   help="view controls mapped to another framework: nist, pci, djcp")
 
     o = p.add_argument_group("Output")
-    o.add_argument("--format", choices=["table", "json", "markdown", "html", "csv", "junit"],
-                   default="table", help="table (default), json, markdown, html, csv, junit")
+    o.add_argument("--format", choices=["table", "json", "markdown", "html", "csv", "junit", "sarif"],
+                   default="table", help="table (default), json, markdown, html, csv, junit, sarif")
     o.add_argument("-o", "--output", metavar="PATH", help="write the list/scan report to a file (any format)")
+    o.add_argument("--push", metavar="DIR",
+                   help="also write a timestamped JSON scan result into DIR")
     o.add_argument("--report", nargs="?", const=True, metavar="PATH",
                    help="after `apply`, write an HTML hardening report (default: cis-hardening-<ts>.html)")
     o.add_argument("--dir", metavar="PATH", help="scan results directory for `compliance` (default: $CIS_SCAN_DIR or ./scans)")
+    o.add_argument("--accounts", metavar="A,B,C",
+                   help="for `batch`: comma separated account names to scan and aggregate")
+    o.add_argument("--out", metavar="DIR",
+                   help="for `batch`: directory to write per-account scan JSON (default: ./scans)")
     o.add_argument("--tf", dest="tf_dir", metavar="DIR", help="directory of Terraform files for `check`")
+    o.add_argument("--checks", metavar="FILE",
+                   help="YAML file of extra user-defined checks, merged into `check` rules")
+    o.add_argument("--plan-check", action="store_true",
+                   help="with `plan`, run a static tfcheck on --tf and block if any control FAILs")
     o.add_argument("--dry-run", action="store_true", help="print what would run, execute nothing")
     o.add_argument("--verbose", action="store_true", help="echo each terraform invocation")
     o.add_argument("--no-color", action="store_true", help="disable ANSI colour")
@@ -98,7 +116,7 @@ def main(argv: list[str] | None = None) -> int:
         os.environ["CIS_CLOUD"] = args.cloud
     for flag, key in [("only", "CIS_ONLY"), ("exclude", "CIS_EXCLUDE"),
                       ("section", "CIS_SECTIONS"), ("tag", "CIS_TAGS"),
-                      ("profile", "CIS_PROFILE")]:
+                      ("profile", "CIS_PROFILE"), ("framework", "CIS_FRAMEWORK")]:
         val = getattr(args, flag)
         if val:
             os.environ[key] = val
@@ -108,13 +126,30 @@ def main(argv: list[str] | None = None) -> int:
     options = {
         "format": args.format,
         "output": args.output,
+        "push": args.push,
         "report": args.report,
         "dir": args.dir,
         "tf_dir": args.tf_dir,
+        "plan_check": args.plan_check,
         "dry_run": args.dry_run,
         "verbose": args.verbose,
         "color": not args.no_color,
     }
+
+    if args.command == "diff":
+        paths = ([args.stack] if args.stack else []) + args.args
+        if len(paths) != 2:
+            print("error: `cis-cloud diff` needs two scan JSON paths: baseline then current", file=sys.stderr)
+            return 2
+        return Runner(None, options=options).diff(paths[0], paths[1])
+
+    if args.command == "batch":
+        accounts = [a.strip() for a in (args.accounts or "").split(",") if a.strip()]
+        if not accounts:
+            print("error: `cis-cloud batch` needs --accounts a,b,c", file=sys.stderr)
+            return 2
+        out_dir = args.out or os.environ.get("CIS_SCAN_DIR") or str(Path.cwd() / "scans")
+        return Runner(_selector(), options=options).batch(accounts, out_dir)
 
     try:
         sel = _selector()
@@ -145,7 +180,15 @@ def main(argv: list[str] | None = None) -> int:
         if not Path(dir_).is_dir():
             print(f"error: no such directory: {dir_}", file=sys.stderr)
             return 2
-        findings = [f.to_dict() for f in tfcheck_scan(dir_, _cloud())]
+        extra = None
+        if args.checks:
+            from .tfcheck import load_checks
+            try:
+                extra = load_checks(args.checks).get(_cloud())
+            except (FileNotFoundError, ValueError) as e:
+                print(f"error: {e}", file=sys.stderr)
+                return 2
+        findings = [f.to_dict() for f in tfcheck_scan(dir_, _cloud(), extra_rules=extra)]
         return runner.check(findings)
 
     if args.command == "compliance":
