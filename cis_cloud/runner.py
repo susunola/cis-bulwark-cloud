@@ -133,6 +133,66 @@ class Runner:
         self._write_output(body)
         return EXIT_FINDING if d["summary"]["new"] else EXIT_OK
 
+    def check_drift(self, base_path: str, current_path: Optional[str] = None) -> int:
+        """Compare a baseline scan against a fresh scan and flag regressions.
+
+        With `current_path` set, compare two files (offline). Otherwise run a
+        live `scan` (format json), capture it, and compare against the baseline.
+        Exits `EXIT_FINDING` when there are new regressions, else OK.
+        """
+        from .drift import drift as compute_drift, load_scan, render_drift
+
+        try:
+            base = load_scan(base_path)
+        except (FileNotFoundError, ValueError) as e:
+            return self._abort_with(str(e))
+        base["_path"] = base_path
+
+        if current_path:
+            try:
+                cur = load_scan(current_path)
+            except (FileNotFoundError, ValueError) as e:
+                return self._abort_with(str(e))
+            cur["_path"] = current_path
+        else:
+            cur = self._scan_to_json()
+            if cur is None:
+                return EXIT_ERROR
+
+        d = compute_drift(base, cur)
+        body = render_drift(d, format_=self.options.get("format", "table"))
+        self.io.write(body + "\n")
+        self._write_output(body)
+        return EXIT_FINDING if d["summary"]["regressions"] else EXIT_OK
+
+    def _scan_to_json(self) -> Optional[dict]:
+        """Run a live scan and return its JSON payload, or None on failure."""
+        import io as _io
+        saved_io = self.io
+        saved_reporter_io = self.reporter.io
+        saved_fmt = self.options.get("format")
+        self.options["format"] = "json"
+        buf = _io.StringIO()
+        self.io = buf
+        self.reporter.io = buf
+        try:
+            code = self.scan()
+        finally:
+            self.options["format"] = saved_fmt
+            self.io = saved_io
+            self.reporter.io = saved_reporter_io
+        if code == EXIT_ERROR:
+            return None
+        try:
+            payload = json.loads(buf.getvalue())
+        except json.JSONDecodeError:
+            return None
+        if not isinstance(payload, dict):
+            return None
+        # Give the current payload a stable path label for display.
+        payload["_path"] = "live scan"
+        return payload
+
     def batch(self, accounts: list[str], out_dir: str) -> int:
         """Scan a list of accounts and aggregate the results.
 
