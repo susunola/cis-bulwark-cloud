@@ -29,6 +29,9 @@ jobs:
       - name: Run suite
         run: pytest test_py -q
 
+      - name: Check README stays in sync with code
+        run: python3 scripts/check_readme.py
+
       - name: Generate SARIF (offline tfcheck, no credentials)
         run: |
           cis-cloud --cloud aws check --tf test_py/fixtures/tf --format sarif \
