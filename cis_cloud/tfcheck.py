@@ -126,10 +126,11 @@ class Finding:
     evidence: str
     detail: Optional[list] = field(default_factory=list)
     remediation: str = ""
+    framework: str = ""
 
     def to_dict(self) -> dict:
         from .schema import normalize_finding as _normalize
-        return _normalize({
+        d = _normalize({
             "id": self.id,
             "status": self.status,
             "severity": self.severity,
@@ -138,6 +139,9 @@ class Finding:
             "evidence_detail": self.detail,
             "remediation": self.remediation,
         })
+        if self.framework:
+            d["framework"] = self.framework
+        return d
 
 
 def scan(dir_: str | Path, cloud: str, catalog=None, extra_rules: Optional[dict] = None) -> list[Finding]:
@@ -182,6 +186,7 @@ def scan(dir_: str | Path, cloud: str, catalog=None, extra_rules: Optional[dict]
             evidence=evidence,
             detail=detail,
             remediation=rule.get("remediation", ""),
+            framework=rule.get("framework", ""),
         ))
     return out
 

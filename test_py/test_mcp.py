@@ -55,3 +55,18 @@ def test_run_stdio_handles_malformed_line():
     lines = [json.loads(l) for l in out.getvalue().strip().splitlines()]
     assert lines[0]["error"]["code"] == -32700
     assert lines[1]["result"]
+
+
+def test_initialize_handshake():
+    resp = _respond({"id": 0, "method": "initialize"})
+    assert resp["id"] == 0
+    assert resp["result"]["protocolVersion"]
+    assert isinstance(resp["result"]["capabilities"]["tools"], dict)
+    assert resp["result"]["serverInfo"]["name"] == "cis-cloud"
+
+
+def test_tools_call_diff_missing_file_surfaces_error():
+    resp = _respond({"id": 5, "method": "tools/call",
+                     "params": {"name": "diff", "arguments": {"base": "/nope/base.json", "cur": "/nope/cur.json"}}})
+    assert resp["error"]["code"] == -32603
+    assert "FileNotFoundError" in resp["error"]["message"]

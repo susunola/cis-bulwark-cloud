@@ -51,6 +51,27 @@ def test_render_drift_table_lists_regressions():
     assert "REGRESSIONS" in out and "2.8" in out
 
 
+def test_render_drift_json_is_parseable():
+    d = drift(_scan("aws", ("2.8", "PASS")), _scan("aws", ("2.8", "FAIL")))
+    payload = json.loads(render_drift(d, "json"))
+    assert payload["summary"]["regressions"] == 1
+    assert payload["regressions"][0]["id"] == "2.8"
+
+
+def test_check_drift_missing_baseline_exits_two(tmp_path):
+    r = run_cli("check-drift", str(tmp_path / "nope.json"), str(tmp_path / "cur.json"))
+    assert r.returncode == 2
+    assert "not found" in (r.stdout + r.stderr)
+
+
+def test_check_drift_baseline_flag_parses_and_errors_cleanly(tmp_path):
+    # --baseline triggers a live scan, which can't run offline; a missing
+    # baseline must error (exit 2) before any scan is attempted.
+    r = run_cli("check-drift", "--baseline", str(tmp_path / "missing-base.json"))
+    assert r.returncode == 2
+    assert "not found" in (r.stdout + r.stderr)
+
+
 def test_check_drift_offline_cli():
     base = FIXTURES / "drift_base.json"
     cur = FIXTURES / "drift_cur.json"
