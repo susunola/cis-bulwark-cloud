@@ -12,6 +12,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write   # upload SARIF to Code Scanning
     steps:
       - uses: actions/checkout@v4
 
