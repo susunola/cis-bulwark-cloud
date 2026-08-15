@@ -128,18 +128,16 @@ class Finding:
     remediation: str = ""
 
     def to_dict(self) -> dict:
-        d = {
+        from .schema import normalize_finding as _normalize
+        return _normalize({
             "id": self.id,
             "status": self.status,
             "severity": self.severity,
             "title": self.title,
             "evidence": self.evidence,
-        }
-        if self.detail:
-            d["evidence_detail"] = self.detail
-        if self.remediation:
-            d["remediation"] = self.remediation
-        return d
+            "evidence_detail": self.detail,
+            "remediation": self.remediation,
+        })
 
 
 def scan(dir_: str | Path, cloud: str, catalog=None, extra_rules: Optional[dict] = None) -> list[Finding]:
