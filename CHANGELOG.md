@@ -22,6 +22,8 @@
   `check` 规则。
 - **多框架视图**（`--framework nist|pci|djcp` / `CIS_FRAMEWORK`）：把控制项
   映射到 NIST SP 800-53、PCI DSS v4.0、等保 2.0 等其它合规框架。
+  - 框架视角现会标注在 `list` 输出中：table / markdown / html 表头追加
+    `— <框架正式标题> view`，JSON 输出新增 `framework` 字段。
 - **多账户批量**（`batch --accounts a,b,c --out DIR`）：逐账户扫描并聚合为
   跨账户合规视图；`scan` 新增 `--push DIR` 落盘时间戳 JSON 结果。
 

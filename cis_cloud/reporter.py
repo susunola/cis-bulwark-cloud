@@ -13,6 +13,7 @@ from typing import Any, Optional, TextIO
 from . import get_catalog as _catalog_mod
 from .compliance import SEVERITY_ORDER as COMPLIANCE_SEVERITY_ORDER
 from .compliance import Compliance
+from .frameworks import FRAMEWORK_TITLES as _FRAMEWORK_TITLES
 
 STATUS_ORDER = ["FAIL", "PASS", "MANUAL", "SKIPPED", "SUPPRESSED"]
 
@@ -363,19 +364,29 @@ function applyFilter(){
             caps.append("detect")
         return "+".join(caps)
 
+    @staticmethod
+    def _framework_suffix(selector) -> str:
+        """Human-readable suffix naming the active framework view, or '' when none."""
+        key = getattr(selector, "framework", None)
+        if not key:
+            return ""
+        return f"  — {_FRAMEWORK_TITLES.get(key, key)} view"
+
     # ---- list payloads ------------------------------------------------------
 
     def _list_payload(self, catalog, selector) -> dict:
+        key = getattr(selector, "framework", None)
         return {
             "benchmark": catalog.benchmark,
             "version": catalog.version,
+            "framework": _FRAMEWORK_TITLES.get(key, key) if key else "",
             "summary": selector.summary,
             "controls": [{**c.to_dict(), "capability": self._capability(c)} for c in selector.selected],
         }
 
     def _list_table(self, catalog, selector) -> str:
         out = io.StringIO()
-        out.write(f"{catalog.benchmark} {catalog.version}\n\n")
+        out.write(f"{catalog.benchmark} {catalog.version}{self._framework_suffix(selector)}\n\n")
         widths = [len(c.title) for c in selector.selected] or [40]
         width = max(min(max(widths), 74), 46)
         header = f"  {'ID':<6} {'PROFILE':<8} {'ASSESS':<9} {'TITLE':<{width}} {'CAPABILITY':<15} STACK"
@@ -396,7 +407,7 @@ function applyFilter(){
 
     def _list_markdown(self, catalog, selector) -> str:
         out = io.StringIO()
-        out.write(f"# {catalog.benchmark} {catalog.version}\n\n")
+        out.write(f"# {catalog.benchmark} {catalog.version}{self._framework_suffix(selector)}\n\n")
         out.write("| ID | Profile | Assessment | Title | Capability | Stack |\n|---|---|---|---|---|---|\n")
         for c in selector.selected:
             out.write(f"| {c.id} | L{c.level} | {c.assessment} | {c.title} "
@@ -411,7 +422,7 @@ function applyFilter(){
         html = self._doctype() + self._head("CIS Tencent Cloud — Control List")
         html += "<header class=\"hero\"><h1>Control List</h1>\n"
         html += f"<p class=\"meta\">{self._h(catalog.benchmark)} {self._h(catalog.version)} · " \
-                f"generated {self._h(_now_utc('%Y-%m-%d %H:%M UTC'))}</p></header>\n"
+                f"generated {self._h(_now_utc('%Y-%m-%d %H:%M UTC'))}{self._h(self._framework_suffix(selector))}</p></header>\n"
         html += "<main>\n<div class=\"card\"><table>\n<thead><tr><th>ID</th><th>Profile</th>" \
                 "<th>Assessment</th><th>Title</th><th>Capability</th><th>Stack</th></tr></thead>\n"
         current = None
