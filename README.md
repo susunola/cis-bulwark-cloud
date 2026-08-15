@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://cdn.jsdelivr.net/gh/susunola/cis-cloud@2c345c2/docs/logo-full.png" alt="cis-cloud — SecX Series" width="640">
+  <img src="https://cdn.jsdelivr.net/gh/susunola/cis-cloud@main/docs/logo-full.png" alt="cis-cloud" width="640">
 </p>
 
 <p align="center">
@@ -12,10 +12,10 @@
 </p>
 
 <p align="center">
-  <b>金汤·巡城 (Watch)</b> — 固若金汤 · part of the <b>cis-*</b> family:
-  <a href="https://github.com/susunola/cis-image">cis-image</a> (镜像源头) ·
-  <a href="https://github.com/susunola/cis-host">cis-host</a> (主机加固) ·
-  <a href="https://github.com/susunola/cis-cloud">cis-cloud</a> (云上合规)
+  part of the <b>cis-*</b> family:
+  <a href="https://github.com/susunola/cis-image">cis-image</a> ·
+  <a href="https://github.com/susunola/cis-host">cis-host</a> ·
+  <a href="https://github.com/susunola/cis-cloud">cis-cloud</a>
 </p>
 
 # cis-cloud
