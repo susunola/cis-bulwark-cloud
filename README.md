@@ -284,6 +284,14 @@ aggregate — carries the same stable set of keys (`cis_cloud/schema.py`):
 `resource`, `remediation`. Downstream consumers can rely on the shape without
 special-casing each command.
 
+### MCP / agent extension surface
+
+`cis-cloud mcp` exposes the read-only tools over a stdio JSON-RPC exchange so
+an agent / LLM host can drive assessments (Prowler-style MCP surface). It
+understands `tools/list` (the registry) and `tools/call` for `list`, `scan`
+(dry-run), `plan` (dry-run), `diff` and `check_drift`. Requests are
+newline-delimited JSON, responses are JSON-RPC 2.0:
+
 ### Exit Codes
 
 | Code | Meaning |
