@@ -1,58 +1,27 @@
-<svg viewBox="0 0 640 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="fg1" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#006EFF"/>
-      <stop offset="100%" stop-color="#00B4D8"/>
-    </linearGradient>
-    <linearGradient id="fg2" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#006EFF"/>
-      <stop offset="100%" stop-color="#00B4D8"/>
-    </linearGradient>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <!-- Honey badger (平头哥) — flat mark, front view -->
+  <!-- ears -->
+  <circle cx="56" cy="56" r="13" fill="#16273A"/>
+  <circle cx="244" cy="56" r="13" fill="#16273A"/>
 
-  <!-- === ICON (transparent background) === -->
-  <g transform="translate(8, 10)">
-    <!-- IaC module boundary -->
-    <rect x="16" y="18" width="68" height="64" rx="4"
-          stroke="url(#fg1)" stroke-width="0.8" stroke-dasharray="4 4" opacity="0.25"/>
+  <!-- light cap: flat head + dorsal cape (the signature stripe) -->
+  <path d="M50 62 Q50 26 88 24 L212 24 Q250 26 250 62 L250 112 L240 144 L224 176 L200 196 L150 204 L100 196 L76 176 L60 144 L50 112 Z"
+        fill="#E9EEF5"/>
 
-    <!-- Arc 1: source 1 → target -->
-    <path d="M28 32 Q52 22 70 46"
-          stroke="url(#fg2)" stroke-width="2.8" stroke-linecap="round" opacity="0.35"/>
-    <!-- Arc 2: source 2 → target -->
-    <path d="M28 50 Q56 50 70 46"
-          stroke="url(#fg2)" stroke-width="2.8" stroke-linecap="round" opacity="0.6"/>
-    <!-- Arc 3: source 3 → target -->
-    <path d="M28 68 Q52 78 70 46"
-          stroke="url(#fg2)" stroke-width="3.2" stroke-linecap="round" opacity="0.95"/>
+  <!-- dark face (lower head, on cape's lower-front) -->
+  <path d="M50 98 L250 98 L250 120 Q250 142 226 144 L74 144 Q50 142 50 120 Z"
+        fill="#16273A"/>
 
-    <!-- Source node 1 (COS) — rounded square -->
-    <rect x="22" y="27" width="12" height="12" rx="3" fill="url(#fg1)" opacity="0.35"/>
-    <!-- Source node 2 (Network/SG) — diamond -->
-    <rect x="22" y="45" width="12" height="12" rx="3"
-          fill="url(#fg1)" opacity="0.6"
-          transform="rotate(45 28 51)"/>
-    <!-- Source node 3 (Database) — circle -->
-    <circle cx="28" cy="68" r="6" fill="url(#fg1)" opacity="0.95"/>
+  <!-- dark lower body (chest/belly/paws, under cape) -->
+  <path d="M70 148 L230 148 L230 226 Q230 256 204 262 L96 262 Q70 256 70 226 Z"
+        fill="#16273A"/>
 
-    <!-- Target node -->
-    <circle cx="73" cy="44" r="10" fill="url(#fg1)" opacity="0.85"/>
-    <circle cx="73" cy="44" r="7.5" fill="white" opacity="0.15"/>
-    <path d="M69 44 L72 47 L77 40"
-          stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-          fill="none"/>
-  </g>
+  <!-- eyes (deadpan stare on dark face) -->
+  <circle cx="112" cy="120" r="8.5" fill="#F4F6F9"/>
+  <circle cx="188" cy="120" r="8.5" fill="#F4F6F9"/>
+  <circle cx="112" cy="121" r="3.2" fill="#16273A"/>
+  <circle cx="188" cy="121" r="3.2" fill="#16273A"/>
 
-  <!-- === WORDMARK === -->
-  <text x="108" y="56"
-        font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
-        font-size="30" font-weight="300" letter-spacing="1">
-    <tspan fill="#006EFF">cis</tspan><tspan fill="#1A1A1A">-cloud</tspan>
-  </text>
-
-  <text x="110" y="80"
-        font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
-        font-size="11" font-weight="400" letter-spacing="3" fill="#8A9BB5">
-    CIS FOUNDATION BENCHMARK
-  </text>
+  <!-- nose -->
+  <ellipse cx="150" cy="132" rx="10" ry="6" fill="#0C1722"/>
 </svg>
