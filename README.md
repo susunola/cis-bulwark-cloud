@@ -237,6 +237,10 @@ cis batch --accounts a,b   Scan several accounts and aggregate
   numeric `score` (critical=100…low=10) and every scan/compliance report shows
   a weighted `risk_score` total for FAIL findings, so posture can be tracked as
   a single number over time.
+- **Structured resource** (Cartography/Steampipe-style): each finding carries a
+  `resource` field (the specific bucket/instance/policy that failed) when the
+  source emits one, shown in scan reports and used as a cleaner suppression
+  target.
 - **Suppression** (`config/suppress.yml`, CloudSploit-style): declare known
   exceptions per cloud+control+resource; suppressed findings render as
   SUPPRESSED and never trip the scan gate.

@@ -516,14 +516,17 @@ function applyFilter(){
 
     def _scan_table(self, findings: list[dict]) -> str:
         out = io.StringIO()
+        show_res = any(f.get("resource") for f in findings)
+        res_col = " RESOURCE" if show_res else ""
         out.write("\n")
-        out.write(f"  {'STATUS':<10} {'ID':<8} {'SEV':<7} {'SCORE':>5}  {'TITLE':<44} EVIDENCE\n")
-        out.write("  " + "-" * 118 + "\n")
+        out.write(f"  {'STATUS':<10} {'ID':<8} {'SEV':<7} {'SCORE':>5}  {'TITLE':<44}{res_col} EVIDENCE\n")
+        out.write("  " + "-" * (118 + (18 if show_res else 0)) + "\n")
         for f in self._sorted(findings):
+            res = f" {self._truncate(str(f.get('resource', '')), 17):<17}" if show_res else ""
             out.write(f"  {self._paint(str(f.get('status')), str(f.get('status'))):<10} "
                       f"{str(f.get('id')):<8} {str(f.get('severity')):<7} "
                       f"{str(f.get('score') or ''):>5}  "
-                      f"{self._truncate(str(f.get('title', '')), 44):<44} "
+                      f"{self._truncate(str(f.get('title', '')), 44):<44}{res} "
                       f"{self._truncate(str(f.get('evidence', '')), 38)}\n")
         out.write("\n")
         t = self._tally(findings)
@@ -533,10 +536,11 @@ function applyFilter(){
 
     def _scan_markdown(self, findings: list[dict]) -> str:
         out = io.StringIO()
-        out.write("| Status | Severity | ID | Title | Evidence | Remediation |\n|---|---|---|---|---|---|\n")
+        out.write("| Status | Severity | ID | Title | Resource | Evidence | Remediation |\n|---|---|---|---|---|---|---|\n")
         for f in self._sorted(findings):
-            out.write(f"| {f.get('status')} | {f.get('severity')} | {f.get('id')} | {f.get('title')} | "
-                      f"{self._md_escape(f.get('evidence'))} | {self._md_escape(f.get('remediation') or '')} |\n")
+            out.write(f"| {f.get('status')} | {f.get('severity')} | {f.get('id')} | {self._md_escape(f.get('title'))} | "
+                      f"{self._md_escape(f.get('resource'))} | {self._md_escape(f.get('evidence'))} | "
+                      f"{self._md_escape(f.get('remediation') or '')} |\n")
         out.write("\n")
         t = self._tally(findings)
         out.write(" / ".join(f"**{s}** {t[s]}" for s in STATUS_ORDER) + "\n")
@@ -549,10 +553,10 @@ function applyFilter(){
     def _scan_csv(self, findings: list[dict]) -> str:
         buf = io.StringIO()
         writer = csv.writer(buf)
-        writer.writerow(["status", "severity", "id", "title", "evidence"])
+        writer.writerow(["status", "severity", "id", "title", "resource", "evidence"])
         for f in self._sorted(findings):
             writer.writerow([f.get("status"), f.get("severity"), f.get("id"),
-                             f.get("title"), f.get("evidence")])
+                             f.get("title"), f.get("resource"), f.get("evidence")])
         return buf.getvalue()
 
     def _scan_junit(self, findings: list[dict]) -> str:
@@ -590,7 +594,7 @@ function applyFilter(){
             rows = sections[sec]
             html += f"<section class=\"card\"><h2>{self._h(sec)} {self._h(catalog.section_title(sec))}</h2>\n"
             html += "<table><thead><tr><th>Status</th><th>Severity</th><th>ID</th><th>Title</th>" \
-                    "<th>Evidence</th></tr></thead><tbody>\n"
+                    "<th>Resource</th><th>Evidence</th></tr></thead><tbody>\n"
             for f in self._sorted(rows):
                 s = self._h(str(f.get("status")))
                 search = self._h(f"{f.get('id')} {f.get('title')}").lower()
@@ -600,6 +604,7 @@ function applyFilter(){
                          f"<td><span class=\"badge sev-{f.get('severity')}\">{self._h(str(f.get('severity')))}</span></td>"
                          f"<td><span class=\"mono\">{self._h(str(f.get('id')))}</span></td>"
                          f"<td>{self._h(str(f.get('title')))}</td>"
+                         f"<td><span class=\"mono\">{self._h(str(f.get('resource') or ''))}</span></td>"
                          f"<td>{self._h(str(f.get('evidence')))}"
                          f"{('<br><span class=\"mono\">fix:</span> ' + self._h(rem)) if rem else ''}</td></tr>\n")
             html += "</tbody></table></section>\n"

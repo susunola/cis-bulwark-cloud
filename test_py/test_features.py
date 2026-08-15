@@ -130,6 +130,12 @@ def test_suppression_control_glob():
     assert s.apply([other], "gcp")[0]["status"] == "FAIL"
 
 
+def test_suppression_matches_structured_resource_field():
+    s = Suppressions([{"cloud": "aws", "control": "6.3", "resource": "sg-123", "reason": "legacy"}])
+    f = {"id": "6.3", "status": "FAIL", "evidence": "no sg text", "resource": "aws_security_group.sg-123"}
+    assert s.apply([f], "aws")[0]["status"] == "SUPPRESSED"
+
+
 def test_compliance_loads_scan_jsons_and_aggregates():
     c = Compliance.load_dir(FIXTURES / "scans")
     assert not c.is_empty()
