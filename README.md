@@ -248,6 +248,10 @@ cis batch --accounts a,b   Scan several accounts and aggregate
 - **Baseline drift** (`cis diff BASE CUR`): compare two scan JSONs and see what
   regressed, what stayed failing, and what you fixed - a lightweight foundation
   for continuous monitoring.
+- **Remediation guidance**: every scan finding carries a `remediation` hint
+  (derived from `config/remediation.yml`, keyed by cloud + control id or glob,
+  with a generic capability fallback). Shown in `--format json` / `markdown`
+  and in the HTML scan report; see `cis_cloud/remediation.py`.
 - **Multi-framework view** (`--framework nist|pci|djcp`): view the control set
   through another compliance lens (NIST SP 800-53, PCI DSS v4.0, 等保 2.0).
 - **Multi-account batch** (`cis batch --accounts a,b,c`): scan each account and

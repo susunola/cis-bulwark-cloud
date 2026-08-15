@@ -361,14 +361,20 @@ class Runner:
         return out
 
     def _with_severity(self, findings: list[dict]) -> list[dict]:
+        from . import remediation as _remediation
         by_id = {c.id: c for c in self.selector.catalog.controls}
+        cloud = _cloud()
         out = []
         for f in findings:
             if "severity" in f:
                 out.append(f)
                 continue
             ctl = by_id.get(str(f.get("id")))
-            out.append({**f, "severity": severity_of(ctl.tags if ctl else [])})
+            out.append({
+                **f,
+                "severity": severity_of(ctl.tags if ctl else []),
+                "remediation": _remediation.for_control(cloud, ctl) if ctl else "",
+            })
         return out
 
     # ---- terraform plumbing -----------------------------------------------------

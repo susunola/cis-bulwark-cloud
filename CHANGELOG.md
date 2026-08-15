@@ -24,6 +24,9 @@
   映射到 NIST SP 800-53、PCI DSS v4.0、等保 2.0 等其它合规框架。
   - 框架视角现会标注在 `list` 输出中：table / markdown / html 表头追加
     `— <框架正式标题> view`，JSON 输出新增 `framework` 字段。
+- **修复指引**（remediation）：每个 scan 结果都携带 `remediation` 修复建议，
+  来自 `config/remediation.yml`（按云 + 控制项 id/glob 派生，含兜底文案），
+  在 `--format json`/`markdown` 与 HTML 报告中展示。
 - **多账户批量**（`batch --accounts a,b,c --out DIR`）：逐账户扫描并聚合为
   跨账户合规视图；`scan` 新增 `--push DIR` 落盘时间戳 JSON 结果。
 

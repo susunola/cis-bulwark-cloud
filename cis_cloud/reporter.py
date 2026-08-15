@@ -532,13 +532,18 @@ function applyFilter(){
 
     def _scan_markdown(self, findings: list[dict]) -> str:
         out = io.StringIO()
-        out.write("| Status | Severity | ID | Title | Evidence |\n|---|---|---|---|---|\n")
+        out.write("| Status | Severity | ID | Title | Evidence | Remediation |\n|---|---|---|---|---|---|\n")
         for f in self._sorted(findings):
-            out.write(f"| {f.get('status')} | {f.get('severity')} | {f.get('id')} | {f.get('title')} | {f.get('evidence')} |\n")
+            out.write(f"| {f.get('status')} | {f.get('severity')} | {f.get('id')} | {f.get('title')} | "
+                      f"{self._md_escape(f.get('evidence'))} | {self._md_escape(f.get('remediation') or '')} |\n")
         out.write("\n")
         t = self._tally(findings)
         out.write(" / ".join(f"**{s}** {t[s]}" for s in STATUS_ORDER) + "\n")
         return out.getvalue()
+
+    @staticmethod
+    def _md_escape(value) -> str:
+        return str(value or "").replace("|", "\\|")
 
     def _scan_csv(self, findings: list[dict]) -> str:
         buf = io.StringIO()
@@ -588,11 +593,14 @@ function applyFilter(){
             for f in self._sorted(rows):
                 s = self._h(str(f.get("status")))
                 search = self._h(f"{f.get('id')} {f.get('title')}").lower()
+                rem = f.get("remediation") or ""
                 html += (f"<tr data-status=\"{s}\" data-search=\"{search}\">"
                          f"<td>{self._badge(f.get('status'))}</td>"
                          f"<td><span class=\"badge sev-{f.get('severity')}\">{self._h(str(f.get('severity')))}</span></td>"
                          f"<td><span class=\"mono\">{self._h(str(f.get('id')))}</span></td>"
-                         f"<td>{self._h(str(f.get('title')))}</td><td>{self._h(str(f.get('evidence')))}</td></tr>\n")
+                         f"<td>{self._h(str(f.get('title')))}</td>"
+                         f"<td>{self._h(str(f.get('evidence')))}"
+                         f"{('<br><span class=\"mono\">fix:</span> ' + self._h(rem)) if rem else ''}</td></tr>\n")
             html += "</tbody></table></section>\n"
         html += "</main>\n"
         html += self._filter_script()
