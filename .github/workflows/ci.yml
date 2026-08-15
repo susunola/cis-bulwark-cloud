@@ -29,6 +29,9 @@ jobs:
       - name: Run suite
         run: pytest test_py -q
 
+      - name: Offline E2E (real CLI, no credentials)
+        run: python3 scripts/e2e_test.py --mode offline
+
       - name: Check README stays in sync with code
         run: python3 scripts/check_readme.py
 
