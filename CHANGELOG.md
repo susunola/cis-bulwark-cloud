@@ -42,6 +42,9 @@
 - **统一结果 schema**：新增 `schema.py`，所有 finding（scan/check/compliance）
   都携带一致的键集 `id,title,status,severity,score,evidence,evidence_detail,
   resource,remediation`，供下游稳定解析。
+- **MCP 扩展面**（`cis-cloud mcp`）：基于 stdio JSON-RPC 暴露只读工具
+  `list`/`scan`(dry-run)/`plan`(dry-run)/`diff`/`check_drift`，供 agent /
+  LLM 宿主驱动评估。
 - **多账户批量**（`batch --accounts a,b,c --out DIR`）：逐账户扫描并聚合为
   跨账户合规视图；`scan` 新增 `--push DIR` 落盘时间戳 JSON 结果。
 

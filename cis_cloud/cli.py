@@ -40,7 +40,7 @@ from .compliance import Compliance
 from .runner import Runner
 from .tfcheck import scan as tfcheck_scan
 
-COMMANDS = ["list", "scan", "plan", "apply", "destroy", "compliance", "check", "diff", "check-drift", "batch"]
+COMMANDS = ["list", "scan", "plan", "apply", "destroy", "compliance", "check", "diff", "check-drift", "batch", "mcp"]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -164,6 +164,10 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         out_dir = args.out or os.environ.get("CIS_SCAN_DIR") or str(Path.cwd() / "scans")
         return Runner(_selector(), options=options).batch(accounts, out_dir)
+
+    if args.command == "mcp":
+        from .mcp import run_stdio
+        return run_stdio()
 
     try:
         sel = _selector()
