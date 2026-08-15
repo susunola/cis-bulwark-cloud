@@ -13,7 +13,8 @@ from cis_cloud.compliance import Compliance
 from cis_cloud.remediation import for_control as remediation_for, reference_for as remediation_ref
 from cis_cloud.severity import of as severity_of, score as severity_score, weighted as severity_weighted
 from cis_cloud.suppress import Suppressions
-from cis_cloud.tfcheck import scan as tfcheck_scan
+from cis_cloud.tfcheck import Finding as TfFinding
+from cis_cloud.tfcheck import load_checks, scan as tfcheck_scan
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -193,3 +194,61 @@ def test_check_finding_has_full_shape():
     assert f.severity in ("critical", "high", "medium", "low")
     assert f.title
     assert f.evidence
+
+
+# ---- richer custom ruleset -------------------------------------------------
+
+
+def test_load_checks_accepts_metadata(tmp_path):
+    p = tmp_path / "checks.yml"
+    p.write_text("""
+aws:
+  "3.2.4":
+    resource: aws_db_instance
+    title: "Custom RDS check"
+    severity: high
+    remediation: "Enable multi-az."
+    framework: pci
+    args:
+      multi_az: true
+""", encoding="utf-8")
+    rules = load_checks(p)
+    rule = rules["aws"]["3.2.4"]
+    assert rule["title"] == "Custom RDS check"
+    assert rule["severity"] == "high"
+    assert rule["remediation"] == "Enable multi-az."
+    assert rule["framework"] == "pci"
+
+
+def test_load_checks_rejects_bad_severity(tmp_path):
+    p = tmp_path / "checks.yml"
+    p.write_text("aws:\n  \"3.2.4\":\n    resource: aws_db_instance\n    severity: urgent\n    args: {}\n", encoding="utf-8")
+    import pytest as _pytest
+    with _pytest.raises(ValueError):
+        load_checks(p)
+
+
+def test_scan_uses_custom_rule_metadata(tmp_path):
+    tf = tmp_path / "tf"
+    tf.mkdir()
+    (tf / "main.tf").write_text(
+        'resource "aws_db_instance" "x" {\n  multi_az = false\n}\n', encoding="utf-8")
+    extra = {
+        "aws": {
+            "9.9.9": {
+                "resource": "aws_db_instance",
+                "title": "Custom DB check",
+                "severity": "critical",
+                "remediation": "Set multi_az = true",
+                "args": {"multi_az": True},
+            }
+        }
+    }
+    findings = tfcheck_scan(tf, "aws", extra_rules=extra["aws"])
+    f = [x for x in findings if x.id == "9.9.9"][0]
+    assert f.status == "FAIL"
+    assert f.title == "Custom DB check"
+    assert f.severity == "critical"
+    assert f.remediation == "Set multi_az = true"
+    d = f.to_dict()
+    assert d["remediation"] == "Set multi_az = true"
