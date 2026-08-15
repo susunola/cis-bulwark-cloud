@@ -362,6 +362,7 @@ class Runner:
 
     def _with_severity(self, findings: list[dict]) -> list[dict]:
         from . import remediation as _remediation
+        from .severity import score as _score
         by_id = {c.id: c for c in self.selector.catalog.controls}
         cloud = _cloud()
         out = []
@@ -370,9 +371,11 @@ class Runner:
                 out.append(f)
                 continue
             ctl = by_id.get(str(f.get("id")))
+            sev = severity_of(ctl.tags if ctl else [])
             out.append({
                 **f,
-                "severity": severity_of(ctl.tags if ctl else []),
+                "severity": sev,
+                "score": _score(sev),
                 "remediation": _remediation.for_control(cloud, ctl) if ctl else "",
             })
         return out

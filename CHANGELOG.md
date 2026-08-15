@@ -27,6 +27,9 @@
 - **修复指引**（remediation）：每个 scan 结果都携带 `remediation` 修复建议，
   来自 `config/remediation.yml`（按云 + 控制项 id/glob 派生，含兜底文案），
   在 `--format json`/`markdown` 与 HTML 报告中展示。
+- **风险分**（risk score）：每个 finding 带数值 `score`（critical=100…low=10），
+  scan 表新增 SCORE 列；compliance 报告按云与全局给出加权 `risk_score` 总量，
+  便于把安全态势收敛为单一数字长期跟踪。
 - **多账户批量**（`batch --accounts a,b,c --out DIR`）：逐账户扫描并聚合为
   跨账户合规视图；`scan` 新增 `--push DIR` 落盘时间戳 JSON 结果。
 
