@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://cdn.jsdelivr.net/gh/susunola/cis-bulwark-cloud@2c345c2/docs/logo-full.png" alt="cis-bulwark-cloud — SecX Series" width="640">
+  <img src="https://cdn.jsdelivr.net/gh/susunola/cis-cloud@2c345c2/docs/logo-full.png" alt="cis-cloud — SecX Series" width="640">
 </p>
 
 <p align="center">
@@ -8,10 +8,17 @@
   <img src="https://img.shields.io/badge/ruby-3.1%2B-CC342D?logo=ruby&logoColor=white" alt="Ruby 3.1+">
   <img src="https://img.shields.io/badge/terraform-1.5%2B-7B42BC?logo=terraform&logoColor=white" alt="Terraform 1.5+">
   <img src="https://img.shields.io/badge/provider-tencentcloud-0052D9" alt="Tencent Cloud Provider">
-  <a href="https://github.com/susunola/cis-bulwark-cloud/actions/workflows/ci.yml"><img src="https://github.com/susunola/cis-bulwark-cloud/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/susunola/cis-cloud/actions/workflows/ci.yml"><img src="https://github.com/susunola/cis-cloud/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
 </p>
 
-# cis-bulwark-cloud
+<p align="center">
+  <b>金汤·巡城 (Watch)</b> — 固若金汤 · part of the <b>cis-*</b> family:
+  <a href="https://github.com/susunola/cis-image">cis-image</a> (镜像源头) ·
+  <a href="https://github.com/susunola/cis-host">cis-host</a> (主机加固) ·
+  <a href="https://github.com/susunola/cis-cloud">cis-cloud</a> (云上合规)
+</p>
+
+# cis-cloud
 
 A plain **Terraform** implementation of five **CIS Foundations Benchmarks**
 across Tencent Cloud, AWS, Azure, GCP and Alibaba Cloud — 387 security
@@ -99,8 +106,8 @@ catalogs carry an extra `group` field on three-level controls. Benchmark PDFs ar
 ## Quick Start
 
 ```bash
-git clone https://github.com/susunola/cis-bulwark-cloud.git
-cd cis-bulwark-cloud
+git clone https://github.com/susunola/cis-cloud.git
+cd cis-cloud
 
 gem install minitest -v 5.26.1        # only dependency of the offline suite
 
@@ -513,6 +520,10 @@ root (so `../../modules/` source paths keep resolving), then runs
 
 Credentials are read from the environment only — nothing about an account
 belongs in this repository.
+
+## CIS Benchmarks Disclaimer
+
+**Independent project** — cis-cloud is not affiliated with, sponsored by, or endorsed by the Center for Internet Security (CIS). CIS Benchmark content is copyright &copy; Center for Internet Security, Inc. and used under their terms of use.
 
 ## License
 
