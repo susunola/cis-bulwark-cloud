@@ -225,8 +225,11 @@ def test_hcl_is_canonically_formatted():
     dirs = [module_path(m) for m in MODULES] + [stack_path(s) for s in ALL_STACKS]
     offenders = []
     for d in dirs:
-        proc = subprocess.run(["terraform", "fmt", "-check", "-list=false", str(d)],
-                              capture_output=True, text=True)
+        # `terraform fmt` (1.5.x) resolves a directory argument relative to a
+        # fixed `../..` offset, so absolute paths fail with "No file or
+        # directory". chdir into each dir and pass "." instead.
+        proc = subprocess.run(["terraform", "fmt", "-check", "-list=false", "."],
+                              capture_output=True, text=True, cwd=str(d))
         if proc.returncode != 0:
             offenders.append(str(d))
     assert not offenders, f"run `terraform fmt` on these directories: {offenders}"

@@ -21,8 +21,9 @@ import os
 from pathlib import Path
 
 # Data root: package-bundled data by default, overridable at runtime for
-# development against a checkout (CIS_CLOUD_ROOT=<repo> keeps the classic
-# layout with config/ stacks/ modules/ at the repo root).
+# development against a checkout. The root is the directory that holds
+# config/ stacks/ modules/ directly - i.e. cis_cloud/data in a checkout, NOT
+# the repository root (the repo root has no such directories).
 _ROOT = Path(os.environ.get("CIS_CLOUD_ROOT") or (Path(__file__).parent / "data"))
 
 # Clouds with a full scan/apply implementation (registry + stacks).
