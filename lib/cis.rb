@@ -5,7 +5,7 @@
 # The Ruby layer (catalog, selector, reporter) reads the per-cloud control
 # registry; the runner shells out to `terraform` directly against the
 # self-contained stacks. The active cloud is selected with CIS_CLOUD
-# (default: tencent); `bin/cis --cloud aws ...` sets it for one run.
+# (default: tencent); `bin/cis-cloud --cloud aws ...` sets it for one run.
 
 require "yaml"
 require "json"

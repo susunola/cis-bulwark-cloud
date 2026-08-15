@@ -5,7 +5,7 @@ require "shellwords"
 require "json"
 
 module Cis
-  # Drives `terraform` on behalf of bin/cis.
+  # Drives `terraform` on behalf of bin/cis-cloud.
   #
   # Stacks live under stacks/<name>/ as self-contained Terraform root modules.
   # Each is invoked individually so output streams in order and failures are

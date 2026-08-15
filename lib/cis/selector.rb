@@ -3,8 +3,8 @@
 module Cis
   # Turns filter expressions into a concrete set of controls.
   #
-  # Filters are read from the environment so that bin/cis and the terraform
-  # stacks resolve to the same selection. bin/cis translates its flags into
+  # Filters are read from the environment so that bin/cis-cloud and the terraform
+  # stacks resolve to the same selection. bin/cis-cloud translates its flags into
   # these variables before exec'ing terraform.
   #
   #   CIS_ONLY      comma separated id globs, e.g. "3.5,4.*"   (authoritative)
