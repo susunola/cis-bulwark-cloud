@@ -1,7 +1,8 @@
 name: CI
 
-# Single-version gate: tests the plain Terraform implementation.
 # Offline suite — no cloud, no credentials, every CLI path runs with --dry-run.
+# The Python layer (cis_cloud) drives the plain Terraform stacks; the wiring
+# tests pin the registry <-> HCL contract.
 
 on:
   push:
@@ -14,29 +15,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: ruby/setup-ruby@v1
+      - uses: actions/setup-python@v5
         with:
-          ruby-version: "3.1"
+          python-version: "3.11"
 
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.5.7"
 
-      - name: Install minitest
-        run: gem install minitest -v 5.26.1
+      - name: Install dependencies
+        run: pip install -e . pytest
 
       - name: Run suite
-        run: ruby test/run.rb
+        run: pytest test_py -q
 
       - name: Terraform validate
         run: |
           set -e
-          for dir in modules/*; do
+          for dir in cis_cloud/data/modules/*; do
             echo "==> $dir"
             (cd "$dir" && terraform init -backend=false && terraform validate)
           done
-          # stacks/<name> (tencent) and stacks/<cloud>/<name> (later clouds)
-          find stacks -type f -name '*.tf' -not -path '*/.terraform/*' -exec dirname {} \; \
+          find cis_cloud/data/stacks -type f -name '*.tf' -not -path '*/.terraform/*' -exec dirname {} \; \
             | sort -u | while read -r dir; do
               echo "==> $dir"
               (cd "$dir" && terraform init -backend=false && terraform validate)

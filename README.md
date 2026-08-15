@@ -5,7 +5,7 @@
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/benchmark-v1.0.0-006EFF" alt="Benchmark v1.0.0">
-  <img src="https://img.shields.io/badge/ruby-3.1%2B-CC342D?logo=ruby&logoColor=white" alt="Ruby 3.1+">
+  <img src="https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white" alt="Python 3.10+">
   <img src="https://img.shields.io/badge/terraform-1.5%2B-7B42BC?logo=terraform&logoColor=white" alt="Terraform 1.5+">
   <img src="https://img.shields.io/badge/provider-tencentcloud-0052D9" alt="Tencent Cloud Provider">
   <a href="https://github.com/susunola/cis-cloud/actions/workflows/ci.yml"><img src="https://github.com/susunola/cis-cloud/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
@@ -25,7 +25,7 @@ across Tencent Cloud, AWS, Azure, GCP and Alibaba Cloud — 387 security
 recommendations covering Identity, Logging, Networking, Storage, Database and
 Kubernetes. Two modes, one codebase: `scan` for read-only compliance assessment,
 `apply` for enforcement. No Terraspace, no extra orchestrator — just the
-Terraform CLI and a thin Ruby wrapper.
+Terraform CLI wrapped in a thin Python layer (`cis-cloud`).
 
 | Cloud | Benchmark | Controls |
 |---|---|---|
@@ -110,10 +110,7 @@ catalogs carry an extra `group` field on three-level controls. Benchmark PDFs ar
 ## Quick Start
 
 ```bash
-git clone https://github.com/susunola/cis-cloud.git
-cd cis-cloud
-
-gem install minitest -v 5.26.1        # only dependency of the offline suite
+pip install cis-cloud                # CLI + all five control registries + Terraform stacks
 
 export TENCENTCLOUD_SECRET_ID=<your-secret-id>
 export TENCENTCLOUD_SECRET_KEY=<your-secret-key>
@@ -123,40 +120,40 @@ export TENCENTCLOUD_REGION=ap-guangzhou
 **Sanity check** (no cloud, no credentials):
 
 ```bash
-ruby bin/cis-cloud list          # prints the control registry
-ruby test/run.rb           # 226 tests, 6792 assertions, offline
+cis-cloud list                  # prints the control registry
+pytest test_py -q          # 231 tests, offline, no cloud/credentials
 ```
 
 **First scan:**
 
 ```bash
-ruby bin/cis-cloud scan --profile level1                   # table to stdout
-ruby bin/cis-cloud scan --section 4 --format html -o rpt.html  # self-contained HTML
+cis-cloud scan --profile level1                   # table to stdout
+cis-cloud scan --section 4 --format html -o rpt.html  # self-contained HTML
 ```
 
 **First enforcement (dry-run first):**
 
 ```bash
-ruby bin/cis-cloud apply --tag cos --dry-run               # preview
-ruby bin/cis-cloud apply --tag cos --report                # enforce + HTML record
+cis-cloud apply --tag cos --dry-run               # preview
+cis-cloud apply --tag cos --report                # enforce + HTML record
 ```
 
 **Other clouds (pick with `--cloud` or `CIS_CLOUD`):**
 
 ```bash
 export AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=... AWS_DEFAULT_REGION=us-east-1
-ruby bin/cis-cloud --cloud aws list                        # 64 AWS controls
-ruby bin/cis-cloud --cloud aws scan --section 6 --format html -o aws-scan.html
-ruby bin/cis-cloud --cloud aws apply --only 2.8,2.9,6.1.1 --dry-run   # preview
+cis-cloud --cloud aws list                        # 64 AWS controls
+cis-cloud --cloud aws scan --section 6 --format html -o aws-scan.html
+cis-cloud --cloud aws apply --only 2.8,2.9,6.1.1 --dry-run   # preview
 
 export ARM_SUBSCRIPTION_ID=... ARM_TENANT_ID=...      # azure: + az login
-ruby bin/cis-cloud --cloud azure scan --only 9.3.6 --format html -o azure-scan.html
+cis-cloud --cloud azure scan --only 9.3.6 --format html -o azure-scan.html
 
 export GOOGLE_APPLICATION_CREDENTIALS=sa.json         # gcp
-ruby bin/cis-cloud --cloud gcp scan --section 6 --format html -o gcp-scan.html
+cis-cloud --cloud gcp scan --section 6 --format html -o gcp-scan.html
 
 export ALICLOUD_ACCESS_KEY=... ALICLOUD_SECRET_KEY=... ALICLOUD_REGION=cn-hangzhou
-ruby bin/cis-cloud --cloud alibaba scan --only 5.1 --format html -o alibaba-scan.html
+cis-cloud --cloud alibaba scan --only 5.1 --format html -o alibaba-scan.html
 ```
 
 What a cloud can assess is limited by its provider's data sources: azure is
@@ -169,31 +166,33 @@ Per-stack import / inventory instructions live in each `stacks/<cloud>/` stack.
 ## Project Layout
 
 ```
-bin/cis-cloud                     CLI entry point (--cloud tencent|aws|azure|gcp|alibaba)
-config/controls.yml         Tencent registry — 91 entries
-config/<cloud>/controls.yml Per-cloud registries (aws 64, azure 70, gcp 84, alibaba 78)
+cis_cloud/                  Python package (pip install cis-cloud)
+  cli.py                    CLI entry point (--cloud tencent|aws|azure|gcp|alibaba)
+  runner.py                 Runner: shells out to `terraform`
+  catalog.py, selector.py, reporter.py, control.py, severity.py,
+  suppress.py, compliance.py, tfcheck.py
+  data/
+    config/controls.yml         Tencent registry — 91 entries
+    config/<cloud>/controls.yml Per-cloud registries (aws 64, azure 70, gcp 84, alibaba 78)
+    modules/                    Reusable Terraform modules
+      security_group_baseline/
+      cos_secure_bucket/
+      cls_audit_alarm/
+    stacks/
+      audit/                    Read-only: data sources + check blocks, zero resources
+      iam/                      \
+      logging/                   |
+      network/                   | Six hardening stacks (self-contained root modules)
+      storage/                   |
+      database/                  |
+      kubernetes/               /
 benchmarks/                 Extracted control catalogs per cloud (PDFs not redistributed)
   tencent/catalog.json      Tencent Cloud (91 controls) - feeds controls.yml
   aws/catalog.json          AWS v7.0.0 (64 controls) - feeds config/aws/controls.yml
   azure/catalog.json        Azure v6.0.0 (70 controls) - feeds config/azure/controls.yml
   gcp/catalog.json          GCP v5.0.0 (84 controls) - feeds config/gcp/controls.yml
   alibaba/catalog.json      Alibaba Cloud v2.0.0 (78 controls) - feeds config/alibaba/controls.yml
-lib/cis.rb                  Shared Ruby layer: catalog, selector, reporter
-lib/cis/runner.rb           Runner: shells out to `terraform`
-lib/cis/catalog.rb, selector.rb, reporter.rb, control.rb
-modules/                    Reusable Terraform modules
-  security_group_baseline/
-  cos_secure_bucket/
-  cls_audit_alarm/
-stacks/
-  audit/                    Read-only: data sources + check blocks, zero resources
-  iam/                      \
-  logging/                   |
-  network/                   | Six hardening stacks (self-contained root modules)
-  storage/                   |
-  database/                  |
-  kubernetes/               /
-test/                       139 tests — no cloud, no credentials
+test_py/                    231 tests — no cloud, no credentials
 tools/
   extract_benchmark.py      Extract <cloud>/catalog.json from a CIS benchmark PDF text
   generate_controls.py      Generate config/controls.yml from the Tencent catalog
@@ -287,14 +286,14 @@ beats everything.
 A filter that matches nothing is a hard error:
 
 ```bash
-$ ruby bin/cis-cloud scan --only 12.7
+$ cis-cloud scan --only 12.7
 error: filter "12.7" matches no control in the benchmark
 $ echo $?
 2
 ```
 
 CLI flags overwrite pre-existing `CIS_*` variables. The resolved selection is
-exported to the terraform invocations — `bin/cis-cloud`, the stack filtering and the
+exported to the terraform invocations — `cis-cloud`, the stack filtering and the
 `enabled_controls` variable all resolve to the same answer.
 
 ---
@@ -334,7 +333,7 @@ Covers the 20 detectable controls:
 ```
 
 ```bash
-$ ruby bin/cis-cloud scan --profile level1 --dry-run
+$ cis-cloud scan --profile level1 --dry-run
 Scanning 15 control(s) via the audit stack (read-only).
 Will scan:
   terraform -chdir=stacks/audit apply -auto-approve # 1.15, 1.16, 2.1, 2.2, 2.3, 3.3, 3.4, 4.1, 4.2, 4.8, 4.9, 5.2, 6.8, 6.9, 8.1
@@ -350,7 +349,7 @@ Will scan:
 Selecting only manual controls is valid:
 
 ```bash
-$ ruby bin/cis-cloud scan --section 9 --no-color
+$ cis-cloud scan --section 9 --no-color
 No selected control is machine-assessable by the provider.
 Selected: 12. Use cis list to see why.
 
@@ -370,7 +369,7 @@ output is readable and every failure is attributable to a stack. A failing stack
 **stops the run**.
 
 ```bash
-$ ruby bin/cis-cloud apply --tag cos --exclude 4.6 --dry-run
+$ cis-cloud apply --tag cos --exclude 4.6 --dry-run
 Selection: 9/91 controls  (remediable 8, detectable 3, manual 0)
 Will apply:
   terraform -chdir=stacks/logging   apply # 2.2, 2.13, 2.18
@@ -436,8 +435,8 @@ official CIS benchmark PDF.
 ## Tests
 
 ```bash
-ruby test/run.rb                 # 226 runs, 6792 assertions
-ruby test/selector_test.rb       # single file
+pytest test_py -q                 # 231 tests, offline
+pytest test_py/test_selector.py   # single file
 ```
 
 No cloud API calls, no credentials, no `terraform` execution — every CLI test
@@ -445,16 +444,13 @@ runs with `--dry-run`.
 
 | File | Covers |
 |---|---|
-| `catalog_test.rb` | Registry well-formedness: 91 ids, section sizes, profile split, capability counts |
-| `selector_test.rb` | Filter semantics and precedence, `to_env`/`from_env` round-trip |
-| `wiring_test.rb` | **Registry ↔ HCL alignment (tencent)** |
-| `aws_wiring_test.rb` | **Registry ↔ HCL alignment (AWS)** |
-| `azure_wiring_test.rb` | **Registry ↔ HCL alignment (Azure)** |
-| `gcp_wiring_test.rb` | **Registry ↔ HCL alignment (GCP)** |
-| `alibaba_wiring_test.rb` | **Registry ↔ HCL alignment (Alibaba)** |
-| `cli_test.rb` | Flags, exit codes, output formats, env-vs-flag precedence, `--cloud` |
-| `runner_test.rb` | Exit-code contract, terraform command issuance |
-| `benchmarks_test.rb` | **Every `benchmarks/<cloud>/catalog.json`**: shape, id uniqueness/contiguity, enum values, pdftotext residue, group↔sections agreement, catalog ↔ controls.yml drift |
+| `test_catalog.py` | Registry well-formedness: 91 ids, section sizes, profile split, capability counts |
+| `test_selector.py` | Filter semantics and precedence, `to_env`/`from_env` round-trip |
+| `test_wiring.py` | **Registry ↔ HCL alignment (tencent)** |
+| `test_cloud_wiring.py` | **Registry ↔ HCL alignment (aws/azure/gcp/alibaba, parameterised)** |
+| `test_cli.py` | Flags, exit codes, output formats, env-vs-flag precedence, `--cloud` |
+| `test_runner.py` | Exit-code contract, terraform command issuance |
+| `test_features.py` | Severity mapping, suppression, cross-cloud compliance, `check` (IaC pre-deploy) |
 
 ### Wiring Test
 
@@ -479,9 +475,9 @@ clean-looking report.
 
 ### GitHub Actions
 
-`.github/workflows/ci.yml` runs `ruby test/run.rb` on every push and pull
+`.github/workflows/ci.yml` runs `pytest test_py -q` on every push and pull
 request, then `terraform init -backend=false && terraform validate` on every
-module and stack. Ruby + minitest + Terraform CLI only — no cloud account.
+module and stack. Python + pytest + Terraform CLI only — no cloud account.
 
 ### Offline Terraform Validation
 
@@ -517,7 +513,7 @@ root (so `../../modules/` source paths keep resolving), then runs
 
 ## Requirements
 
-- Ruby >= 3.1
+- Python >= 3.10 (pip install cis-cloud)
 - Terraform >= 1.5.0
 - [`tencentcloudstack/tencentcloud`](https://registry.terraform.io/providers/tencentcloudstack/tencentcloud) provider `~> 1.81`
 - Tencent Cloud API credentials (`TENCENTCLOUD_SECRET_ID`, `TENCENTCLOUD_SECRET_KEY`, `TENCENTCLOUD_REGION`)
