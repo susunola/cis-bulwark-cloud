@@ -50,7 +50,11 @@ class Suppressions:
         res = rule.get("resource")
         if res is None or res == "":
             return True
-        return res in str(finding.get("evidence", "")) or res in str(finding.get("id", ""))
+        # Prefer the structured `resource` field when present; fall back to
+        # matching against the evidence text.
+        return (res in str(finding.get("resource", "") or "")
+                or res in str(finding.get("evidence", ""))
+                or res in str(finding.get("id", "")))
 
     def reason_for(self, finding: dict, cloud: str) -> str:
         for r in self.rules:

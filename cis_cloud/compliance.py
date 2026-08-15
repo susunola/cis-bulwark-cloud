@@ -13,6 +13,8 @@ import os
 from pathlib import Path
 from typing import Optional
 
+from .severity import weighted as _weighted
+
 CLOUD_HINTS = {
     "tencent": ["tencent"],
     "aws": ["amazon"],
@@ -88,6 +90,7 @@ class Compliance:
                     lv: sum(1 for f in fails if f.get("severity") == lv)
                     for lv in SEVERITY_ORDER
                 },
+                "risk_score": _weighted(findings),
                 "assessed": len(findings),
             }
         return out
@@ -106,6 +109,7 @@ class Compliance:
                 lv: sum(1 for f in fails if f.get("severity") == lv)
                 for lv in SEVERITY_ORDER
             },
+            "risk_score": _weighted(all_),
             "failing": fails_sorted,
         }
 
