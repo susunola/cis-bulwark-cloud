@@ -33,6 +33,9 @@
 - **结构化资源**（structured resource）：finding 新增 `resource` 字段（来源
   有值时记录具体的 bucket/实例/策略），在 scan 报告中展示，并作为更精确的
   suppress 匹配目标。
+- **漂移检测**（`check-drift`）：对照基线 scan JSON 与当前 scan，仅报告
+  *回归*（基线未失败、现在失败的 control）。`--baseline PATH` 实时对比，
+  或离线 `BASE CUR` 两文件对比；有回归即退出码 1，便于 CI 门禁。
 - **多账户批量**（`batch --accounts a,b,c --out DIR`）：逐账户扫描并聚合为
   跨账户合规视图；`scan` 新增 `--push DIR` 落盘时间戳 JSON 结果。
 

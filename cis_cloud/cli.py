@@ -40,7 +40,7 @@ from .compliance import Compliance
 from .runner import Runner
 from .tfcheck import scan as tfcheck_scan
 
-COMMANDS = ["list", "scan", "plan", "apply", "destroy", "compliance", "check", "diff", "batch"]
+COMMANDS = ["list", "scan", "plan", "apply", "destroy", "compliance", "check", "diff", "check-drift", "batch"]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -57,6 +57,8 @@ def build_parser() -> argparse.ArgumentParser:
             "  cis-cloud apply --tag cos --exclude 4.6 --report\n"
             "  cis-cloud check --tf DIR --checks checks.yml\n"
             "  cis-cloud diff scans/baseline.json scans/current.json\n"
+            "  cis-cloud check-drift --baseline scans/base.json          # fresh scan vs baseline\n"
+            "  cis-cloud check-drift scans/base.json scans/current.json  # offline compare\n"
             "  cis-cloud batch --accounts a1,a2 --cloud aws --out scans\n"
         ),
     )
@@ -95,6 +97,8 @@ def build_parser() -> argparse.ArgumentParser:
     o.add_argument("--tf", dest="tf_dir", metavar="DIR", help="directory of Terraform files for `check`")
     o.add_argument("--checks", metavar="FILE",
                    help="YAML file of extra user-defined checks, merged into `check` rules")
+    o.add_argument("--baseline", metavar="PATH",
+                   help="for `check-drift`: baseline scan JSON to compare a fresh scan against")
     o.add_argument("--plan-check", action="store_true",
                    help="with `plan`, run a static tfcheck on --tf and block if any control FAILs")
     o.add_argument("--dry-run", action="store_true", help="print what would run, execute nothing")
@@ -142,6 +146,16 @@ def main(argv: list[str] | None = None) -> int:
             print("error: `cis-cloud diff` needs two scan JSON paths: baseline then current", file=sys.stderr)
             return 2
         return Runner(None, options=options).diff(paths[0], paths[1])
+
+    if args.command == "check-drift":
+        paths = ([args.stack] if args.stack else []) + args.args
+        if args.baseline:
+            return Runner(None, options=options).check_drift(args.baseline)
+        if len(paths) != 2:
+            print("error: `cis-cloud check-drift` needs --baseline PATH (live scan) "
+                  "or two scan JSON paths (offline): baseline then current", file=sys.stderr)
+            return 2
+        return Runner(None, options=options).check_drift(paths[0], paths[1])
 
     if args.command == "batch":
         accounts = [a.strip() for a in (args.accounts or "").split(",") if a.strip()]

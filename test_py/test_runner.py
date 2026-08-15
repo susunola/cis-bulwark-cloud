@@ -210,3 +210,15 @@ def test_normalize_resource_empty_when_absent(catalog):
     r, _, _ = build(select(only=["4.1"]))
     rows = r._normalize([{"id": "4.1", "status": "fail"}])
     assert rows[0]["resource"] == ""
+
+
+def test_check_drift_live_baseline_runs_a_scan_and_flags_regression(catalog, tmp_path):
+    # baseline: 4.1 PASS; live scan will report 4.1 FAIL -> regression.
+    base = tmp_path / "base.json"
+    base.write_text(json.dumps({
+        "findings": [{"id": "4.1", "title": "bucket", "status": "PASS", "evidence": ""}]
+    }), encoding="utf-8")
+    r, out, _ = build(select(only=["4.1"]), findings=[finding(catalog, "4.1", "FAIL", "public")])
+    assert r.check_drift(str(base)) == EXIT_FINDING
+    assert "REGRESSIONS" in out.getvalue()
+    assert "4.1" in out.getvalue()

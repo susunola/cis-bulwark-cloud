@@ -221,6 +221,7 @@ cis destroy STACK          Roll back one hardening stack
 cis compliance --dir scans Aggregate per-cloud scan JSONs into one posture
 cis check --tf DIR         Pre-deploy CIS checks on Terraform definitions
 cis diff BASE CUR          Compare two scan JSONs (new/still/fixed/dropped)
+cis check-drift [BASE CUR | --baseline FILE]  Flag regressions vs a baseline
 cis batch --accounts a,b   Scan several accounts and aggregate
 ```
 
@@ -256,6 +257,12 @@ cis batch --accounts a,b   Scan several accounts and aggregate
 - **Baseline drift** (`cis diff BASE CUR`): compare two scan JSONs and see what
   regressed, what stayed failing, and what you fixed - a lightweight foundation
   for continuous monitoring.
+- **Drift detection** (`cis check-drift`): continuous-monitoring check. Run
+  `cis-cloud scan --format json -o scans/base.json` once to record a baseline,
+  then `cis-cloud check-drift --baseline scans/base.json` on a schedule (cron /
+  CI) to flag only *regressions* — controls now FAILing that were not before.
+  Also works offline: `cis-cloud check-drift BASE CUR`. Exits 1 on any
+  regression so CI can gate.
 - **Remediation guidance**: every scan finding carries a `remediation` hint
   (derived from `config/remediation.yml`, keyed by cloud + control id or glob,
   with a generic capability fallback). Shown in `--format json` / `markdown`
