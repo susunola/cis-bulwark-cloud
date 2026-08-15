@@ -7,6 +7,24 @@
 
 ## [Unreleased]
 
+### Added
+
+- 新增 **SARIF 2.1.0** 输出（`--format sarif`），可接入 GitHub Code Scanning /
+  CI 内联 PR 注释。CI 工作流已添加 SARIF 生成与上传步骤。
+- 新增 **`diff`** 命令：对比两次 `scan` 的 JSON 结果，报告 新增 / 仍失败 /
+  已修复 / 已消失 的控制项，并输出机器可读的汇总。
+- **结构化证据**：`tfcheck` 与扫描结果新增 `evidence_detail` 字段
+  （`{resource, attribute, expected, actual}`），同时保留原有 `evidence`
+  字符串以向后兼容。
+- **`--plan-check`**（配合 `--tf`）：`plan` 前先跑静态 tfcheck，命中 FAIL 即
+  阻断，把安全左移到 apply 之前。
+- **自定义检查**（`--checks FILE`）：加载 YAML 定义的用户规则，合并进内置
+  `check` 规则。
+- **多框架视图**（`--framework nist|pci|djcp` / `CIS_FRAMEWORK`）：把控制项
+  映射到 NIST SP 800-53、PCI DSS v4.0、等保 2.0 等其它合规框架。
+- **多账户批量**（`batch --accounts a,b,c --out DIR`）：逐账户扫描并聚合为
+  跨账户合规视图；`scan` 新增 `--push DIR` 落盘时间戳 JSON 结果。
+
 ### Fixed
 
 - 修复 `terraform fmt` 测试在 Terraform 1.5.x 下失败的问题。

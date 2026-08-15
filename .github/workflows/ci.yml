@@ -29,6 +29,17 @@ jobs:
       - name: Run suite
         run: pytest test_py -q
 
+      - name: Generate SARIF (offline tfcheck, no credentials)
+        run: |
+          cis-cloud --cloud aws check --tf test_py/fixtures/tf --format sarif \
+            --output cis-scan.sarif || true
+          test -s cis-scan.sarif
+
+      - name: Upload SARIF to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: cis-scan.sarif
+
       - name: Terraform validate
         run: |
           set -e

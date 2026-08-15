@@ -79,7 +79,32 @@ class Runner:
         findings = self._with_severity(self._read_findings() + self._manual_findings())
         findings = Suppressions.load().apply(findings, _cloud())
         code = EXIT_FINDING if any(f.get("status") == "FAIL" for f in findings) else EXIT_OK
+        self._push(findings, account)
         return self._report(findings, code, account=account)
+
+    def _push(self, findings: list[dict], account: Optional[dict]) -> None:
+        """Write a timestamped JSON copy of the scan to options['push'] (a dir)."""
+        push = self.options.get("push")
+        if not push:
+            return
+        import json as _json
+        from pathlib import Path as _Path
+        import time as _time
+
+        d = _Path(push)
+        d.mkdir(parents=True, exist_ok=True)
+        acct = (account or {}).get("name") or os.environ.get("CIS_ACCOUNT") or _cloud()
+        safe = "".join(ch if ch.isalnum() or ch in "-_." else "_" for ch in str(acct))
+        ts = _time.strftime("%Y%m%d-%H%M%S", _time.gmtime())
+        path = d / f"{_cloud()}-{safe}-{ts}.json"
+        payload = {
+            "cloud": _cloud(),
+            "account": account or {},
+            "summary": self.selector.summary,
+            "findings": findings,
+        }
+        path.write_text(_json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+        self._say(f"Pushed scan result to {path}")
 
     def check(self, findings: list[dict]) -> int:
         body = self.reporter.scan(findings, self.selector,
@@ -92,7 +117,71 @@ class Runner:
         self._write_output(body)
         return EXIT_OK
 
+    def diff(self, base_path: str, cur_path: str) -> int:
+        from .diff import diff as compute_diff, load_scan, render_diff
+
+        try:
+            base = load_scan(base_path)
+            cur = load_scan(cur_path)
+        except (FileNotFoundError, ValueError) as e:
+            return self._abort_with(str(e))
+        base["_path"] = base_path
+        cur["_path"] = cur_path
+        d = compute_diff(base, cur)
+        body = render_diff(d, format_=self.options.get("format", "table"))
+        self.io.write(body + "\n")
+        self._write_output(body)
+        return EXIT_FINDING if d["summary"]["new"] else EXIT_OK
+
+    def batch(self, accounts: list[str], out_dir: str) -> int:
+        """Scan a list of accounts and aggregate the results.
+
+        Each account is scanned by re-invoking the CLI in a child process with
+        CIS_ACCOUNT=<name> set, so provider credentials/profile selection can
+        differ per account. Per-account JSON is written to out_dir and then
+        rolled up into a compliance view (reusing compliance.py).
+        """
+        from pathlib import Path as _Path
+        from .compliance import Compliance
+
+        d = _Path(out_dir)
+        d.mkdir(parents=True, exist_ok=True)
+        cmd = [sys.executable, "-m", "cis_cloud"]
+        # Reproduce the current cloud + filter selection in the child.
+        base_env = dict(os.environ)
+        cmd += ["--cloud", _cloud()]
+        child_argv = cmd + ["scan", "--format", "json"]
+        # TODO: forward filter env through to_env for parity with the parent.
+
+        any_fail = False
+        for acct in accounts:
+            env = dict(base_env)
+            env["CIS_ACCOUNT"] = acct
+            self._say(f"Scanning account {acct} ...")
+            proc = subprocess.run(child_argv, capture_output=True, text=True, env=env)
+            if proc.returncode != 0 and proc.returncode != EXIT_FINDING:
+                self.err.write(f"  account {acct} failed (exit {proc.returncode}): {proc.stderr.strip()}\n")
+                continue
+            path = d / f"{acct}.json"
+            path.write_text(proc.stdout, encoding="utf-8")
+            self._say(f"  wrote {path}")
+            if proc.returncode == EXIT_FINDING:
+                any_fail = True
+
+        compliance = Compliance.load_dir(out_dir)
+        body = self.reporter.compliance(compliance, format_=self.options.get("format", "table"))
+        self._write_output(body)
+        return EXIT_FINDING if any_fail else EXIT_OK
+
     def plan(self) -> int:
+        # Left-shift: when --plan-check is set (with --tf), run the static
+        # tfcheck scan first and block if any control FAILs, so violations are
+        # caught before the plan/apply cycle.
+        tf_dir = self.options.get("tf_dir")
+        if self.options.get("plan_check") and tf_dir:
+            code = self._plan_check(tf_dir)
+            if code != EXIT_OK:
+                return code
         return self._run_hardening("plan", lambda stack, ids: ["plan", "-var", f"enabled_controls={shlex.quote(json.dumps(ids))}"])
 
     def apply(self) -> int:
@@ -102,6 +191,23 @@ class Runner:
         if stack not in hardening_stacks():
             return self._abort_with(f"{stack!r} is not a hardening stack ({', '.join(hardening_stacks())})")
         return self._terraform(["destroy", "-auto-approve"], stack, action="apply")
+
+    def _plan_check(self, tf_dir: str) -> int:
+        """Static pre-plan gate: run tfcheck and block on FAIL findings."""
+        from pathlib import Path as _Path
+        from .tfcheck import scan as tfcheck_scan
+
+        if not _Path(tf_dir).is_dir():
+            return self._abort_with(f"no such directory for --plan-check: {tf_dir}")
+        self._say(f"Static check before plan: {tf_dir}")
+        findings = [f.to_dict() for f in tfcheck_scan(tf_dir, _cloud())]
+        fails = [f for f in findings if f.get("status") == "FAIL"]
+        if fails:
+            self.reporter.scan(findings, self.selector, format_="table")
+            self._say(f"Blocking plan: {len(fails)} control(s) FAIL in the Terraform source.")
+            return EXIT_FINDING
+        self._say(f"Static check clean ({len(findings)} rule(s) assessed).")
+        return EXIT_OK
 
     # ---- hardening -------------------------------------------------------------
 
@@ -333,6 +439,10 @@ class Runner:
                 "title": row.get("title") or (control.title if control else "(unknown control)"),
                 "status": str(row.get("status", "")).upper(),
                 "evidence": str(row.get("evidence", "")),
+                # Optional structured detail, passed through when the source
+                # (e.g. the audit stack or tfcheck) emits it. Backward
+                # compatible: renderers fall back to `evidence` when absent.
+                "evidence_detail": row.get("evidence_detail"),
             })
         return out
 

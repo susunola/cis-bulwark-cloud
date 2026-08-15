@@ -110,6 +110,37 @@ def test_profile_narrows_by_level():
     assert levels == {"Level 1"}
 
 
+def test_framework_narrows_the_view():
+    r = cis("list", "--framework", "pci", "--format", "json")
+    assert r.returncode == 0
+    payload = json.loads(r.stdout)
+    assert payload["controls"]  # non-empty
+    # A full selection is larger than the pci subset (pci excludes some).
+    full = json.loads(cis("list", "--format", "json").stdout)["controls"]
+    assert len(payload["controls"]) < len(full)
+
+
+def test_framework_is_cumulative_with_other_filters():
+    # pci ∩ section 1 (IAM) should be a subset of pci alone.
+    pci = json.loads(cis("list", "--framework", "pci", "--format", "json").stdout)["controls"]
+    both = json.loads(cis("list", "--framework", "pci", "--section", "1", "--format", "json").stdout)["controls"]
+    assert len(both) <= len(pci)
+    assert all(c["id"].startswith("1") for c in both)
+
+
+def test_framework_from_environment():
+    r = run_cli("list", "--format", "json", env={"CIS_FRAMEWORK": "pci"})
+    assert r.returncode == 0
+    payload = json.loads(r.stdout)
+    assert payload["controls"] and len(payload["controls"]) < 91
+
+
+def test_unknown_framework_is_rejected():
+    r = cis("list", "--framework", "notaframework")
+    assert r.returncode == 2
+    assert "unknown framework" in (r.stdout + r.stderr)
+
+
 def test_a_filter_that_matches_nothing_fails_loudly():
     r = cis("apply", "--only", "4.99")
     assert r.returncode == 2
@@ -142,6 +173,26 @@ def test_plan_and_apply_differ_only_in_the_verb():
     assert "stacks/storage" in apply.stdout
     assert "Will plan:" in plan.stdout
     assert "Will apply:" in apply.stdout
+
+
+def test_plan_check_blocks_when_tf_fixture_fails():
+    dir_ = ROOT / "test_py" / "fixtures" / "tf"
+    r = cis("--cloud", "aws", "plan", "--tf", str(dir_), "--plan-check", "--dry-run")
+    assert r.returncode == 1  # fixture FAIL (4.2) blocks the plan
+    assert "Blocking plan" in (r.stdout + r.stderr)
+    assert "FAIL" in r.stdout
+
+
+def test_plan_check_without_tf_is_a_no_op():
+    r = cis("--cloud", "aws", "plan", "--plan-check", "--dry-run", "--only", "4.2")
+    assert r.returncode == 0  # no static gate without --tf
+    assert "Will plan:" in r.stdout
+
+
+def test_plan_check_rejects_missing_directory():
+    r = cis("--cloud", "aws", "plan", "--tf", "definitely-not-a-dir", "--plan-check", "--dry-run")
+    assert r.returncode == 2
+    assert "no such directory" in (r.stdout + r.stderr)
 
 
 def test_apply_runs_stacks_in_the_declared_order():
@@ -381,6 +432,59 @@ def test_check_scans_tf_files_without_credentials():
     assert "aws_cloudtrail" in r.stdout
 
 
+def test_check_can_emit_sarif():
+    import json as _json
+    dir_ = ROOT / "test_py" / "fixtures" / "tf"
+    r = cis("--cloud", "aws", "check", "--tf", str(dir_), "--format", "sarif")
+    assert r.returncode == 1  # a FAIL finding exists
+    sarif = _json.loads(r.stdout)
+    assert sarif["version"] == "2.1.0"
+    run = sarif["runs"][0]
+    # Fixture has FAIL (4.2 cloudtrail validation) so at least one result.
+    results = [x for x in run["results"] if x["kind"] == "fail"]
+    assert results
+    assert any(x["ruleId"] == "4.2" for x in results)
+    # Every result references a declared rule.
+    rule_ids = {x["id"] for x in run["tool"]["driver"]["rules"]}
+    for x in results:
+        assert x["ruleId"] in rule_ids
+
+
+def test_check_emits_structured_evidence_detail():
+    dir_ = ROOT / "test_py" / "fixtures" / "tf"
+    r = cis("--cloud", "aws", "check", "--tf", str(dir_), "--format", "json")
+    assert r.returncode == 1
+    d = json.loads(r.stdout)
+    f = next(x for x in d["findings"] if x["id"] == "4.2")
+    assert f["status"] == "FAIL"
+    assert isinstance(f.get("evidence_detail"), list)
+    detail = f["evidence_detail"][0]
+    assert detail["resource"].startswith("aws_cloudtrail")
+    assert detail["attribute"] == "enable_log_file_validation"
+    assert detail["expected"] is True
+    # Plain evidence string is still present for backward compatibility.
+    assert isinstance(f["evidence"], str) and f["evidence"]
+
+
+def test_check_accepts_custom_checks(tmp_path):
+    dir_ = ROOT / "test_py" / "fixtures" / "tf"
+    checks = tmp_path / "checks.yml"
+    checks.write_text("aws:\n  \"3.2.4\":\n    resource: aws_db_instance\n    args:\n      multi_az: true\n")
+    r = cis("--cloud", "aws", "check", "--tf", str(dir_), "--checks", str(checks), "--format", "json")
+    assert r.returncode == 1
+    d = json.loads(r.stdout)
+    custom = next(x for x in d["findings"] if x["id"] == "3.2.4")
+    assert custom["status"] == "FAIL"
+    assert custom["evidence_detail"][0]["attribute"] == "multi_az"
+
+
+def test_check_missing_checks_file_fails_cleanly(tmp_path):
+    dir_ = ROOT / "test_py" / "fixtures" / "tf"
+    r = cis("--cloud", "aws", "check", "--tf", str(dir_), "--checks", str(tmp_path / "nope.yml"))
+    assert r.returncode == 2
+    assert "checks file not found" in (r.stdout + r.stderr)
+
+
 def test_check_needs_a_directory():
     r = cis("check")
     assert r.returncode == 2
@@ -401,3 +505,65 @@ def test_compliance_without_results_fails_cleanly():
     r = cis("compliance", "--dir", str(dir_))
     assert r.returncode == 2
     assert "no scan results" in (r.stdout + r.stderr)
+
+
+def test_diff_reports_new_still_and_fixed(tmp_path):
+    base = tmp_path / "base.json"
+    cur = tmp_path / "cur.json"
+    base.write_text(json.dumps({"version": "v1.0.0", "findings": [
+        {"id": "3.5", "title": "SSH", "status": "FAIL", "severity": "high"},
+        {"id": "4.1", "title": "COS", "status": "FAIL", "severity": "high"},
+        {"id": "2.1", "title": "Audit", "status": "PASS"},
+    ]}))
+    cur.write_text(json.dumps({"version": "v1.0.0", "findings": [
+        {"id": "3.5", "title": "SSH", "status": "PASS", "severity": "high"},
+        {"id": "4.1", "title": "COS", "status": "FAIL", "severity": "high"},
+        {"id": "6.9", "title": "TKE", "status": "FAIL", "severity": "medium"},
+    ]}))
+    r = cis("diff", "--format", "json", str(base), str(cur))
+    assert r.returncode == 1  # a NEW failing control
+    d = json.loads(r.stdout)
+    assert d["summary"] == {"new": 1, "still": 1, "fixed": 1, "dropped": 1}
+    assert [x["id"] for x in d["detail"]["new"]] == ["6.9"]
+    assert [x["id"] for x in d["detail"]["still"]] == ["4.1"]
+    assert [x["id"] for x in d["detail"]["fixed"]] == ["3.5"]
+    assert [x["id"] for x in d["detail"]["dropped"]] == ["2.1"]
+
+
+def test_diff_needs_two_paths():
+    r = cis("diff")
+    assert r.returncode == 2
+    assert "two scan JSON" in (r.stdout + r.stderr)
+
+
+def test_diff_missing_file_fails_cleanly(tmp_path):
+    r = cis("diff", "--format", "json", str(tmp_path / "nope.json"), "/tmp/none.json")
+    assert r.returncode == 2
+    assert "scan file not found" in (r.stdout + r.stderr)
+
+
+def test_batch_needs_accounts():
+    r = cis("batch")
+    assert r.returncode == 2
+    assert "--accounts" in (r.stdout + r.stderr)
+
+
+def test_batch_scans_accounts_and_aggregates(tmp_path):
+    out = tmp_path / "scans"
+    # Section 9 is all-manual for tencent, so each account scan is offline-safe.
+    r = cis("batch", "--accounts", "a1,a2", "--out", str(out), "--section", "9",
+            "--format", "json")
+    assert r.returncode == 0
+    assert (out / "a1.json").exists()
+    assert (out / "a2.json").exists()
+    payload = json.loads(r.stdout)
+    # 2 accounts × 12 manual controls each = 24 MANUAL across the view.
+    assert payload["global"]["status"]["MANUAL"] == 24
+
+
+def test_scan_accepts_push_flag(tmp_path):
+    # `--push` is exercised by a real (terraform) scan; here we only assert the
+    # flag parses and a manual-only scan still exits clean without terraform.
+    r = cis("scan", "--section", "9", "--push", str(tmp_path), "--format", "json")
+    assert r.returncode == 0
+    assert json.loads(r.stdout)["summary"]["MANUAL"] == 12
