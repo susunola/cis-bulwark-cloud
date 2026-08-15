@@ -121,7 +121,7 @@ export TENCENTCLOUD_REGION=ap-guangzhou
 
 ```bash
 cis-cloud list                  # prints the control registry
-pytest test_py -q          # 231 tests, offline, no cloud/credentials
+pytest test_py -q          # 300 tests, offline, no cloud/credentials
 ```
 
 **First scan:**
@@ -170,10 +170,12 @@ cis_cloud/                  Python package (pip install cis-cloud)
   cli.py                    CLI entry point (--cloud tencent|aws|azure|gcp|alibaba)
   runner.py                 Runner: shells out to `terraform`
   catalog.py, selector.py, reporter.py, control.py, severity.py,
-  suppress.py, compliance.py, tfcheck.py
+  suppress.py, compliance.py, tfcheck.py,
+  remediation.py, drift.py, schema.py, mcp.py
   data/
     config/controls.yml         Tencent registry — 91 entries
     config/<cloud>/controls.yml Per-cloud registries (aws 64, azure 70, gcp 84, alibaba 78)
+    config/remediation.yml      Derived remediation guidance (cloud + control id/glob)
     modules/                    Reusable Terraform modules
       security_group_baseline/
       cos_secure_bucket/
@@ -192,7 +194,9 @@ benchmarks/                 Extracted control catalogs per cloud (PDFs not redis
   azure/catalog.json        Azure v6.0.0 (70 controls) - feeds config/azure/controls.yml
   gcp/catalog.json          GCP v5.0.0 (84 controls) - feeds config/gcp/controls.yml
   alibaba/catalog.json      Alibaba Cloud v2.0.0 (78 controls) - feeds config/alibaba/controls.yml
-test_py/                    231 tests — no cloud, no credentials
+test_py/                    300 tests — no cloud, no credentials
+scripts/
+  e2e_test.py               Real-command E2E (offline no-creds + optional live account)
 tools/
   extract_benchmark.py      Extract <cloud>/catalog.json from a CIS benchmark PDF text
   generate_controls.py      Generate config/controls.yml from the Tencent catalog
@@ -223,6 +227,7 @@ cis check --tf DIR         Pre-deploy CIS checks on Terraform definitions
 cis diff BASE CUR          Compare two scan JSONs (new/still/fixed/dropped)
 cis check-drift [BASE CUR | --baseline FILE]  Flag regressions vs a baseline
 cis batch --accounts a,b   Scan several accounts and aggregate
+cis mcp                    MCP JSON-RPC server over stdio (agent/LLM hosts)
 ```
 
 ### Beyond scan / apply (industry borrowings)
@@ -488,7 +493,7 @@ official CIS benchmark PDF.
 ## Tests
 
 ```bash
-pytest test_py -q                 # 231 tests, offline
+pytest test_py -q                 # 300 tests, offline
 pytest test_py/test_selector.py   # single file
 ```
 
@@ -503,7 +508,10 @@ runs with `--dry-run`.
 | `test_cloud_wiring.py` | **Registry ↔ HCL alignment (aws/azure/gcp/alibaba, parameterised)** |
 | `test_cli.py` | Flags, exit codes, output formats, env-vs-flag precedence, `--cloud` |
 | `test_runner.py` | Exit-code contract, terraform command issuance |
-| `test_features.py` | Severity mapping, suppression, cross-cloud compliance, `check` (IaC pre-deploy) |
+| `test_features.py` | Severity, risk score, remediation, suppression, resource, compliance, custom checks (tfcheck) |
+| `test_drift.py` | Baseline drift (`check-drift`): regressions, offline/live, render |
+| `test_schema.py` | Canonical finding schema: key set, defaults, cross-command parity |
+| `test_mcp.py` | MCP JSON-RPC surface: tools/list, tools/call, initialize, error paths |
 
 ### Wiring Test
 
