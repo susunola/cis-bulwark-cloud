@@ -160,6 +160,24 @@ CI (`.github/workflows/ci.yml`) runs the whole suite on Ubuntu + Python 3.11 +
 Terraform 1.5.7, then offline `terraform validate` on every module/stack, then
 uploads the `cis-cloud check` SARIF to GitHub Code Scanning.
 
+### E2E layer — `scripts/e2e_test.py`
+
+Above the fast unit suite sits a real-command end-to-end script:
+
+- **`--mode offline`** (default, no credentials): runs the actual installed CLI
+  end-to-end — `list`, `scan --dry-run`, `plan --dry-run`, `check --tf`,
+  `mcp tools/list`, `diff` and `check-drift` — and asserts exit codes + output
+  shape. Catches real-command wiring bugs the mocked unit suite misses.
+- **`--mode live`** (opt-in, needs a real account): drives a real
+  `scan` → baseline → `check-drift` → guarded `apply` → re-`scan` cycle, and
+  always `destroy`s the hardening stacks it applied (unless `--keep-on-failure`
+  and the run failed).
+
+```bash
+python3 scripts/e2e_test.py --mode offline              # fast, no creds
+python3 scripts/e2e_test.py --mode live --cloud aws --only 6.1.1   # real account
+```
+
 ## 5. Sign-off gate
 
 - `pytest test_py -q` → **300 green** (all existing + all new).

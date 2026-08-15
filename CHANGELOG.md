@@ -45,6 +45,9 @@
 - **MCP 扩展面**（`cis-cloud mcp`）：基于 stdio JSON-RPC 暴露只读工具
   `list`/`scan`(dry-run)/`plan`(dry-run)/`diff`/`check_drift`，供 agent /
   LLM 宿主驱动评估。
+- **端到端测试脚本**（`scripts/e2e_test.py`）：`--mode offline` 无凭据跑通真实
+  CLI 全命令面（list/scan-dry/plan-dry/check/mcp/diff/check-drift）；`--mode live`
+  可选跑真实 scan→baseline→check-drift→apply→re-scan 循环并自动销毁加固栈。
 - **多账户批量**（`batch --accounts a,b,c --out DIR`）：逐账户扫描并聚合为
   跨账户合规视图；`scan` 新增 `--push DIR` 落盘时间戳 JSON 结果。
 
