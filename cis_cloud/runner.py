@@ -443,6 +443,9 @@ class Runner:
         out = []
         for row in rows:
             control = _catalog_mod()[str(row.get("id", ""))]
+            detail = row.get("evidence_detail")
+            resource = row.get("resource") or (
+                detail[0].get("resource") if isinstance(detail, list) and detail else "") or ""
             out.append({
                 "id": str(row.get("id", "")),
                 "title": row.get("title") or (control.title if control else "(unknown control)"),
@@ -451,7 +454,9 @@ class Runner:
                 # Optional structured detail, passed through when the source
                 # (e.g. the audit stack or tfcheck) emits it. Backward
                 # compatible: renderers fall back to `evidence` when absent.
-                "evidence_detail": row.get("evidence_detail"),
+                "evidence_detail": detail,
+                # The specific resource that failed, when known.
+                "resource": resource,
             })
         return out
 

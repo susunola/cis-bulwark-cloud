@@ -30,6 +30,9 @@
 - **风险分**（risk score）：每个 finding 带数值 `score`（critical=100…low=10），
   scan 表新增 SCORE 列；compliance 报告按云与全局给出加权 `risk_score` 总量，
   便于把安全态势收敛为单一数字长期跟踪。
+- **结构化资源**（structured resource）：finding 新增 `resource` 字段（来源
+  有值时记录具体的 bucket/实例/策略），在 scan 报告中展示，并作为更精确的
+  suppress 匹配目标。
 - **多账户批量**（`batch --accounts a,b,c --out DIR`）：逐账户扫描并聚合为
   跨账户合规视图；`scan` 新增 `--push DIR` 落盘时间戳 JSON 结果。
 
