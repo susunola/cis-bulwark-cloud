@@ -253,7 +253,10 @@ cis batch --accounts a,b   Scan several accounts and aggregate
   requires are present, per cloud. Catches the missing `enable_log_file_validation`
   before you apply - `cis scan` still covers what runs on the live cloud.
   Extra rules can be merged in with `--checks FILE` (custom checks), and
-  `plan --plan-check` runs the static gate before any apply.
+  `plan --plan-check` runs the static gate before any apply. A custom rule may
+  also carry `title` / `severity` / `remediation` / `framework` metadata so
+  your own policies read as first-class controls (policy-as-code), not just
+  resource/arg checks.
 - **Baseline drift** (`cis diff BASE CUR`): compare two scan JSONs and see what
   regressed, what stayed failing, and what you fixed - a lightweight foundation
   for continuous monitoring.
