@@ -123,40 +123,40 @@ export TENCENTCLOUD_REGION=ap-guangzhou
 **Sanity check** (no cloud, no credentials):
 
 ```bash
-ruby bin/cis list          # prints the control registry
+ruby bin/cis-cloud list          # prints the control registry
 ruby test/run.rb           # 226 tests, 6792 assertions, offline
 ```
 
 **First scan:**
 
 ```bash
-ruby bin/cis scan --profile level1                   # table to stdout
-ruby bin/cis scan --section 4 --format html -o rpt.html  # self-contained HTML
+ruby bin/cis-cloud scan --profile level1                   # table to stdout
+ruby bin/cis-cloud scan --section 4 --format html -o rpt.html  # self-contained HTML
 ```
 
 **First enforcement (dry-run first):**
 
 ```bash
-ruby bin/cis apply --tag cos --dry-run               # preview
-ruby bin/cis apply --tag cos --report                # enforce + HTML record
+ruby bin/cis-cloud apply --tag cos --dry-run               # preview
+ruby bin/cis-cloud apply --tag cos --report                # enforce + HTML record
 ```
 
 **Other clouds (pick with `--cloud` or `CIS_CLOUD`):**
 
 ```bash
 export AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=... AWS_DEFAULT_REGION=us-east-1
-ruby bin/cis --cloud aws list                        # 64 AWS controls
-ruby bin/cis --cloud aws scan --section 6 --format html -o aws-scan.html
-ruby bin/cis --cloud aws apply --only 2.8,2.9,6.1.1 --dry-run   # preview
+ruby bin/cis-cloud --cloud aws list                        # 64 AWS controls
+ruby bin/cis-cloud --cloud aws scan --section 6 --format html -o aws-scan.html
+ruby bin/cis-cloud --cloud aws apply --only 2.8,2.9,6.1.1 --dry-run   # preview
 
 export ARM_SUBSCRIPTION_ID=... ARM_TENANT_ID=...      # azure: + az login
-ruby bin/cis --cloud azure scan --only 9.3.6 --format html -o azure-scan.html
+ruby bin/cis-cloud --cloud azure scan --only 9.3.6 --format html -o azure-scan.html
 
 export GOOGLE_APPLICATION_CREDENTIALS=sa.json         # gcp
-ruby bin/cis --cloud gcp scan --section 6 --format html -o gcp-scan.html
+ruby bin/cis-cloud --cloud gcp scan --section 6 --format html -o gcp-scan.html
 
 export ALICLOUD_ACCESS_KEY=... ALICLOUD_SECRET_KEY=... ALICLOUD_REGION=cn-hangzhou
-ruby bin/cis --cloud alibaba scan --only 5.1 --format html -o alibaba-scan.html
+ruby bin/cis-cloud --cloud alibaba scan --only 5.1 --format html -o alibaba-scan.html
 ```
 
 What a cloud can assess is limited by its provider's data sources: azure is
@@ -169,7 +169,7 @@ Per-stack import / inventory instructions live in each `stacks/<cloud>/` stack.
 ## Project Layout
 
 ```
-bin/cis                     CLI entry point (--cloud tencent|aws|azure|gcp|alibaba)
+bin/cis-cloud                     CLI entry point (--cloud tencent|aws|azure|gcp|alibaba)
 config/controls.yml         Tencent registry — 91 entries
 config/<cloud>/controls.yml Per-cloud registries (aws 64, azure 70, gcp 84, alibaba 78)
 benchmarks/                 Extracted control catalogs per cloud (PDFs not redistributed)
@@ -287,14 +287,14 @@ beats everything.
 A filter that matches nothing is a hard error:
 
 ```bash
-$ ruby bin/cis scan --only 12.7
+$ ruby bin/cis-cloud scan --only 12.7
 error: filter "12.7" matches no control in the benchmark
 $ echo $?
 2
 ```
 
 CLI flags overwrite pre-existing `CIS_*` variables. The resolved selection is
-exported to the terraform invocations — `bin/cis`, the stack filtering and the
+exported to the terraform invocations — `bin/cis-cloud`, the stack filtering and the
 `enabled_controls` variable all resolve to the same answer.
 
 ---
@@ -334,7 +334,7 @@ Covers the 20 detectable controls:
 ```
 
 ```bash
-$ ruby bin/cis scan --profile level1 --dry-run
+$ ruby bin/cis-cloud scan --profile level1 --dry-run
 Scanning 15 control(s) via the audit stack (read-only).
 Will scan:
   terraform -chdir=stacks/audit apply -auto-approve # 1.15, 1.16, 2.1, 2.2, 2.3, 3.3, 3.4, 4.1, 4.2, 4.8, 4.9, 5.2, 6.8, 6.9, 8.1
@@ -350,7 +350,7 @@ Will scan:
 Selecting only manual controls is valid:
 
 ```bash
-$ ruby bin/cis scan --section 9 --no-color
+$ ruby bin/cis-cloud scan --section 9 --no-color
 No selected control is machine-assessable by the provider.
 Selected: 12. Use cis list to see why.
 
@@ -370,7 +370,7 @@ output is readable and every failure is attributable to a stack. A failing stack
 **stops the run**.
 
 ```bash
-$ ruby bin/cis apply --tag cos --exclude 4.6 --dry-run
+$ ruby bin/cis-cloud apply --tag cos --exclude 4.6 --dry-run
 Selection: 9/91 controls  (remediable 8, detectable 3, manual 0)
 Will apply:
   terraform -chdir=stacks/logging   apply # 2.2, 2.13, 2.18

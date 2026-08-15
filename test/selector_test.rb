@@ -157,7 +157,7 @@ class SelectorTest < CisTestCase
 
   def test_a_filter_combination_may_legitimately_select_nothing
     # Each filter is valid on its own, so this is not an error - but it must
-    # be visible, which is what bin/cis checks with `selector.empty?`.
+    # be visible, which is what bin/cis-cloud checks with `selector.empty?`.
     s = select(only: %w[4.1], tags: %w[mfa])
     assert_empty s.ids
     assert s.empty?

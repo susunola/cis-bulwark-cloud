@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 
-# End-to-end behaviour of bin/cis. Every test here uses --dry-run, so nothing
+# End-to-end behaviour of bin/cis-cloud. Every test here uses --dry-run, so nothing
 # reaches terraform or a cloud API - what is being asserted is the
 # contract between the flags the operator types and the commands that would be
 # issued on their behalf.
