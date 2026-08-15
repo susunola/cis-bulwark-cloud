@@ -133,6 +133,66 @@ class Runner:
         self._write_output(body)
         return EXIT_FINDING if d["summary"]["new"] else EXIT_OK
 
+    def check_drift(self, base_path: str, current_path: Optional[str] = None) -> int:
+        """Compare a baseline scan against a fresh scan and flag regressions.
+
+        With `current_path` set, compare two files (offline). Otherwise run a
+        live `scan` (format json), capture it, and compare against the baseline.
+        Exits `EXIT_FINDING` when there are new regressions, else OK.
+        """
+        from .drift import drift as compute_drift, load_scan, render_drift
+
+        try:
+            base = load_scan(base_path)
+        except (FileNotFoundError, ValueError) as e:
+            return self._abort_with(str(e))
+        base["_path"] = base_path
+
+        if current_path:
+            try:
+                cur = load_scan(current_path)
+            except (FileNotFoundError, ValueError) as e:
+                return self._abort_with(str(e))
+            cur["_path"] = current_path
+        else:
+            cur = self._scan_to_json()
+            if cur is None:
+                return EXIT_ERROR
+
+        d = compute_drift(base, cur)
+        body = render_drift(d, format_=self.options.get("format", "table"))
+        self.io.write(body + "\n")
+        self._write_output(body)
+        return EXIT_FINDING if d["summary"]["regressions"] else EXIT_OK
+
+    def _scan_to_json(self) -> Optional[dict]:
+        """Run a live scan and return its JSON payload, or None on failure."""
+        import io as _io
+        saved_io = self.io
+        saved_reporter_io = self.reporter.io
+        saved_fmt = self.options.get("format")
+        self.options["format"] = "json"
+        buf = _io.StringIO()
+        self.io = buf
+        self.reporter.io = buf
+        try:
+            code = self.scan()
+        finally:
+            self.options["format"] = saved_fmt
+            self.io = saved_io
+            self.reporter.io = saved_reporter_io
+        if code == EXIT_ERROR:
+            return None
+        try:
+            payload = json.loads(buf.getvalue())
+        except json.JSONDecodeError:
+            return None
+        if not isinstance(payload, dict):
+            return None
+        # Give the current payload a stable path label for display.
+        payload["_path"] = "live scan"
+        return payload
+
     def batch(self, accounts: list[str], out_dir: str) -> int:
         """Scan a list of accounts and aggregate the results.
 
@@ -361,14 +421,20 @@ class Runner:
         return out
 
     def _with_severity(self, findings: list[dict]) -> list[dict]:
+        from . import remediation as _remediation
+        from .severity import score as _score
         by_id = {c.id: c for c in self.selector.catalog.controls}
+        cloud = _cloud()
         out = []
         for f in findings:
-            if "severity" in f:
-                out.append(f)
-                continue
             ctl = by_id.get(str(f.get("id")))
-            out.append({**f, "severity": severity_of(ctl.tags if ctl else [])})
+            sev = severity_of(ctl.tags if ctl else [])
+            out.append({
+                **f,
+                "severity": sev,
+                "score": _score(sev),
+                "remediation": _remediation.for_control(cloud, ctl) if ctl else (f.get("remediation") or ""),
+            })
         return out
 
     # ---- terraform plumbing -----------------------------------------------------
@@ -424,6 +490,7 @@ class Runner:
         return self._normalize(node.get("value"))
 
     def _normalize(self, value) -> list[dict]:
+        from .schema import normalize_finding as _normalize_finding
         if isinstance(value, dict):
             rows = [{**(v if isinstance(v, dict) else {"status": str(v)}), "id": cid}
                     for cid, v in value.items()]
@@ -434,16 +501,17 @@ class Runner:
         out = []
         for row in rows:
             control = _catalog_mod()[str(row.get("id", ""))]
-            out.append({
+            detail = row.get("evidence_detail")
+            resource = row.get("resource") or (
+                detail[0].get("resource") if isinstance(detail, list) and detail else "") or ""
+            out.append(_normalize_finding({
                 "id": str(row.get("id", "")),
                 "title": row.get("title") or (control.title if control else "(unknown control)"),
                 "status": str(row.get("status", "")).upper(),
                 "evidence": str(row.get("evidence", "")),
-                # Optional structured detail, passed through when the source
-                # (e.g. the audit stack or tfcheck) emits it. Backward
-                # compatible: renderers fall back to `evidence` when absent.
-                "evidence_detail": row.get("evidence_detail"),
-            })
+                "evidence_detail": detail,
+                "resource": resource,
+            }, control=control))
         return out
 
     # ---- output helpers -----------------------------------------------------------

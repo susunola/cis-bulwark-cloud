@@ -24,6 +24,27 @@
   映射到 NIST SP 800-53、PCI DSS v4.0、等保 2.0 等其它合规框架。
   - 框架视角现会标注在 `list` 输出中：table / markdown / html 表头追加
     `— <框架正式标题> view`，JSON 输出新增 `framework` 字段。
+- **修复指引**（remediation）：每个 scan 结果都携带 `remediation` 修复建议，
+  来自 `config/remediation.yml`（按云 + 控制项 id/glob 派生，含兜底文案），
+  在 `--format json`/`markdown` 与 HTML 报告中展示。
+- **风险分**（risk score）：每个 finding 带数值 `score`（critical=100…low=10），
+  scan 表新增 SCORE 列；compliance 报告按云与全局给出加权 `risk_score` 总量，
+  便于把安全态势收敛为单一数字长期跟踪。
+- **结构化资源**（structured resource）：finding 新增 `resource` 字段（来源
+  有值时记录具体的 bucket/实例/策略），在 scan 报告中展示，并作为更精确的
+  suppress 匹配目标。
+- **漂移检测**（`check-drift`）：对照基线 scan JSON 与当前 scan，仅报告
+  *回归*（基线未失败、现在失败的 control）。`--baseline PATH` 实时对比，
+  或离线 `BASE CUR` 两文件对比；有回归即退出码 1，便于 CI 门禁。
+- **自定义规则元数据**（policy-as-code）：`--checks FILE` 的自定义规则现可带
+  `title`/`severity`/`remediation`/`framework` 元数据，使自有策略以一等控制项
+  呈现，而不仅是 resource/args 检查。
+- **统一结果 schema**：新增 `schema.py`，所有 finding（scan/check/compliance）
+  都携带一致的键集 `id,title,status,severity,score,evidence,evidence_detail,
+  resource,remediation`，供下游稳定解析。
+- **MCP 扩展面**（`cis-cloud mcp`）：基于 stdio JSON-RPC 暴露只读工具
+  `list`/`scan`(dry-run)/`plan`(dry-run)/`diff`/`check_drift`，供 agent /
+  LLM 宿主驱动评估。
 - **多账户批量**（`batch --accounts a,b,c --out DIR`）：逐账户扫描并聚合为
   跨账户合规视图；`scan` 新增 `--push DIR` 落盘时间戳 JSON 结果。
 

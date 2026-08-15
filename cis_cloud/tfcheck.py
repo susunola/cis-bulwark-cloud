@@ -64,11 +64,15 @@ RULES: dict[str, dict[str, dict]] = {
 def load_checks(path: str | Path) -> dict[str, dict]:
     """Load user-defined checks from a YAML file into a rules dict.
 
-    The file mirrors the built-in RULES shape, optionally keyed by cloud::
+    The file mirrors the built-in RULES shape, optionally keyed by cloud, and
+    each rule may carry optional metadata::
 
         aws:
           "3.2.4":
             resource: aws_db_instance
+            title: "Ensure RDS Multi-AZ"
+            severity: high
+            remediation: "Run cis-cloud apply to enable multi-az."
             args:
               multi_az: true
         tencent:
@@ -76,6 +80,10 @@ def load_checks(path: str | Path) -> dict[str, dict]:
             resource: tencentcloud_mysql_instance
             args:
               security_groups: []
+
+    Optional per-rule keys (besides `resource`/`args`): `title`, `severity`,
+    `remediation`, `framework`. `title`/`remediation`/`framework` must be
+    strings; `severity` must be one of critical/high/medium/low.
 
     Returns a flat ``{cloud: {control_id: rule}}`` dict. A missing file or a
     malformed shape raises a clear error so the operator notices immediately.
@@ -93,8 +101,20 @@ def load_checks(path: str | Path) -> dict[str, dict]:
         for cid, rule in controls.items():
             if not isinstance(rule, dict) or "resource" not in rule:
                 raise ValueError(f"checks file {p}: rule {cid!r} under {cloud!r} must have a 'resource'")
+            _validate_rule_meta(rule, p, cid, cloud)
             out.setdefault(str(cloud), {})[str(cid)] = rule
     return out
+
+
+def _validate_rule_meta(rule: dict, p: Path, cid, cloud) -> None:
+    """Validate optional metadata keys on a user check rule."""
+    for key in ("title", "remediation", "framework"):
+        if key in rule and not isinstance(rule[key], str):
+            raise ValueError(f"checks file {p}: rule {cid!r} under {cloud!r}: '{key}' must be a string")
+    if "severity" in rule and str(rule["severity"]).lower() not in _severity.LEVELS:
+        raise ValueError(
+            f"checks file {p}: rule {cid!r} under {cloud!r}: 'severity' must be one of "
+            f"{', '.join(_severity.LEVELS)}")
 
 
 @dataclass
@@ -105,17 +125,22 @@ class Finding:
     title: str
     evidence: str
     detail: Optional[list] = field(default_factory=list)
+    remediation: str = ""
+    framework: str = ""
 
     def to_dict(self) -> dict:
-        d = {
+        from .schema import normalize_finding as _normalize
+        d = _normalize({
             "id": self.id,
             "status": self.status,
             "severity": self.severity,
             "title": self.title,
             "evidence": self.evidence,
-        }
-        if self.detail:
-            d["evidence_detail"] = self.detail
+            "evidence_detail": self.detail,
+            "remediation": self.remediation,
+        })
+        if self.framework:
+            d["framework"] = self.framework
         return d
 
 
@@ -143,6 +168,8 @@ def scan(dir_: str | Path, cloud: str, catalog=None, extra_rules: Optional[dict]
         matching = [b for b in blocks if b["type"] == rule["resource"]]
         violations = [b for b in matching if not _args_ok(rule["args"], b["body"])]
         ctl = next((c for c in (cat.controls if cat else []) if c.id == cid), None)
+        title = rule.get("title") or (ctl.title if ctl else cid)
+        severity = (rule.get("severity") or _severity.of(ctl.tags if ctl else [])).lower()
         if violations:
             evidence = f"{rule['resource']}: " + "; ".join(_missing(b, rule["args"]) for b in violations)
             detail = [d for b in violations for d in _block_detail(b, rule["args"])]
@@ -153,11 +180,13 @@ def scan(dir_: str | Path, cloud: str, catalog=None, extra_rules: Optional[dict]
             status = "PASS"
         out.append(Finding(
             id=cid,
-            severity=_severity.of(ctl.tags if ctl else []),
-            title=ctl.title if ctl else cid,
+            severity=severity,
+            title=title,
             status=status,
             evidence=evidence,
             detail=detail,
+            remediation=rule.get("remediation", ""),
+            framework=rule.get("framework", ""),
         ))
     return out
 

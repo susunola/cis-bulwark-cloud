@@ -221,6 +221,7 @@ cis destroy STACK          Roll back one hardening stack
 cis compliance --dir scans Aggregate per-cloud scan JSONs into one posture
 cis check --tf DIR         Pre-deploy CIS checks on Terraform definitions
 cis diff BASE CUR          Compare two scan JSONs (new/still/fixed/dropped)
+cis check-drift [BASE CUR | --baseline FILE]  Flag regressions vs a baseline
 cis batch --accounts a,b   Scan several accounts and aggregate
 ```
 
@@ -233,6 +234,14 @@ cis batch --accounts a,b   Scan several accounts and aggregate
 - **Severity** (Prowler-style): every finding carries a risk level
   (critical/high/medium/low) inferred from the control's tags, shown in all
   report formats and used to order the compliance failing list.
+- **Risk score** (Prowler ThreatScore-style): each finding also carries a
+  numeric `score` (critical=100…low=10) and every scan/compliance report shows
+  a weighted `risk_score` total for FAIL findings, so posture can be tracked as
+  a single number over time.
+- **Structured resource** (Cartography/Steampipe-style): each finding carries a
+  `resource` field (the specific bucket/instance/policy that failed) when the
+  source emits one, shown in scan reports and used as a cleaner suppression
+  target.
 - **Suppression** (`config/suppress.yml`, CloudSploit-style): declare known
   exceptions per cloud+control+resource; suppressed findings render as
   SUPPRESSED and never trip the scan gate.
@@ -244,15 +253,44 @@ cis batch --accounts a,b   Scan several accounts and aggregate
   requires are present, per cloud. Catches the missing `enable_log_file_validation`
   before you apply - `cis scan` still covers what runs on the live cloud.
   Extra rules can be merged in with `--checks FILE` (custom checks), and
-  `plan --plan-check` runs the static gate before any apply.
+  `plan --plan-check` runs the static gate before any apply. A custom rule may
+  also carry `title` / `severity` / `remediation` / `framework` metadata so
+  your own policies read as first-class controls (policy-as-code), not just
+  resource/arg checks.
 - **Baseline drift** (`cis diff BASE CUR`): compare two scan JSONs and see what
   regressed, what stayed failing, and what you fixed - a lightweight foundation
   for continuous monitoring.
+- **Drift detection** (`cis check-drift`): continuous-monitoring check. Run
+  `cis-cloud scan --format json -o scans/base.json` once to record a baseline,
+  then `cis-cloud check-drift --baseline scans/base.json` on a schedule (cron /
+  CI) to flag only *regressions* — controls now FAILing that were not before.
+  Also works offline: `cis-cloud check-drift BASE CUR`. Exits 1 on any
+  regression so CI can gate.
+- **Remediation guidance**: every scan finding carries a `remediation` hint
+  (derived from `config/remediation.yml`, keyed by cloud + control id or glob,
+  with a generic capability fallback). Shown in `--format json` / `markdown`
+  and in the HTML scan report; see `cis_cloud/remediation.py`.
 - **Multi-framework view** (`--framework nist|pci|djcp`): view the control set
   through another compliance lens (NIST SP 800-53, PCI DSS v4.0, 等保 2.0).
 - **Multi-account batch** (`cis batch --accounts a,b,c`): scan each account and
   roll them up into one cross-account posture; `scan --push DIR` writes a
   timestamped JSON copy for the same purpose.
+
+### Canonical result schema
+
+Every finding — from a live `scan`, an IaC `check`, or a `compliance`
+aggregate — carries the same stable set of keys (`cis_cloud/schema.py`):
+`id`, `title`, `status`, `severity`, `score`, `evidence`, `evidence_detail`,
+`resource`, `remediation`. Downstream consumers can rely on the shape without
+special-casing each command.
+
+### MCP / agent extension surface
+
+`cis-cloud mcp` exposes the read-only tools over a stdio JSON-RPC exchange so
+an agent / LLM host can drive assessments (Prowler-style MCP surface). It
+understands `tools/list` (the registry) and `tools/call` for `list`, `scan`
+(dry-run), `plan` (dry-run), `diff` and `check_drift`. Requests are
+newline-delimited JSON, responses are JSON-RPC 2.0:
 
 ### Exit Codes
 

@@ -186,18 +186,18 @@ class Reporter:
         g = c.global_()
         out = io.StringIO()
         out.write("Cross-cloud compliance posture\n\n")
-        out.write(f"  {'CLOUD':<9} {'FAIL':>8} {'PASS':>8} {'MANUAL':>8} {'OTHER':>8}\n")
-        out.write("  " + "-" * 46 + "\n")
+        out.write(f"  {'CLOUD':<9} {'FAIL':>8} {'PASS':>8} {'MANUAL':>8} {'OTHER':>8} {'RISK':>6}\n")
+        out.write("  " + "-" * 55 + "\n")
         for cloud, v in c.per_cloud().items():
             st = v["status"]
             other = st["SKIPPED"] + st["SUPPRESSED"]
-            out.write(f"  {cloud:<9} {st['FAIL']:>8d} {st['PASS']:>8d} {st['MANUAL']:>8d} {other:>8d}\n")
-        out.write("  " + "-" * 46 + "\n")
+            out.write(f"  {cloud:<9} {st['FAIL']:>8d} {st['PASS']:>8d} {st['MANUAL']:>8d} {other:>8d} {v.get('risk_score', 0):>6d}\n")
+        out.write("  " + "-" * 55 + "\n")
         gst = g["status"]
-        out.write(f"  {'TOTAL':<9} {gst['FAIL']:>8d} {gst['PASS']:>8d} {gst['MANUAL']:>8d} {gst['SKIPPED'] + gst['SUPPRESSED']:>8d}\n\n")
+        out.write(f"  {'TOTAL':<9} {gst['FAIL']:>8d} {gst['PASS']:>8d} {gst['MANUAL']:>8d} {gst['SKIPPED'] + gst['SUPPRESSED']:>8d} {g.get('risk_score', 0):>6d}\n\n")
         sev_line = "  Failing by severity: " + "  ".join(
             f"{lv} {g['fail_by_severity'][lv]}" for lv in COMPLIANCE_SEVERITY_ORDER)
-        out.write(sev_line + "\n")
+        out.write(sev_line + f"   (weighted risk score {g.get('risk_score', 0)})\n")
         if g["failing"]:
             out.write("\n  Failing controls:\n")
             for f in g["failing"]:
@@ -211,12 +211,12 @@ class Reporter:
         g = c.global_()
         out = io.StringIO()
         out.write("# Cross-cloud Compliance\n\n")
-        out.write("| Cloud | FAIL | PASS | MANUAL | SKIPPED | SUPPRESSED |\n|---|---|---|---|---|---|\n")
+        out.write("| Cloud | FAIL | PASS | MANUAL | SKIPPED | SUPPRESSED | Risk |\n|---|---|---|---|---|---|---|\n")
         for cloud, v in c.per_cloud().items():
             st = v["status"]
-            out.write(f"| {cloud} | {st['FAIL']} | {st['PASS']} | {st['MANUAL']} | {st['SKIPPED']} | {st['SUPPRESSED']} |\n")
+            out.write(f"| {cloud} | {st['FAIL']} | {st['PASS']} | {st['MANUAL']} | {st['SKIPPED']} | {st['SUPPRESSED']} | {v.get('risk_score', 0)} |\n")
         gst = g["status"]
-        out.write(f"| **Total** | **{gst['FAIL']}** | **{gst['PASS']}** | **{gst['MANUAL']}** | **{gst['SKIPPED']}** | **{gst['SUPPRESSED']}** |\n\n")
+        out.write(f"| **Total** | **{gst['FAIL']}** | **{gst['PASS']}** | **{gst['MANUAL']}** | **{gst['SKIPPED']}** | **{gst['SUPPRESSED']}** | **{g.get('risk_score', 0)}** |\n\n")
         out.write("Failing by severity: " + " / ".join(
             f"{lv} {g['fail_by_severity'][lv]}" for lv in COMPLIANCE_SEVERITY_ORDER) + "\n\n")
         if g["failing"]:
@@ -233,16 +233,16 @@ class Reporter:
         html += f"<p class=\"meta\">generated {self._h(_now_utc('%Y-%m-%d %H:%M UTC'))}</p></header>\n"
         html += "<main>\n"
         html += "<section class=\"card\"><h2>Per cloud</h2>\n<table><thead><tr><th>Cloud</th><th>FAIL</th>" \
-                "<th>PASS</th><th>MANUAL</th><th>SKIPPED</th><th>SUPPRESSED</th><th>Critical fails</th></tr></thead><tbody>\n"
+                "<th>PASS</th><th>MANUAL</th><th>SKIPPED</th><th>SUPPRESSED</th><th>Critical fails</th><th>Risk</th></tr></thead><tbody>\n"
         for cloud, v in c.per_cloud().items():
             st = v["status"]
             html += f"<tr><td><span class=\"mono\">{self._h(cloud)}</span></td><td>{st['FAIL']}</td><td>{st['PASS']}</td>" \
                     f"<td>{st['MANUAL']}</td><td>{st['SKIPPED']}</td><td>{st['SUPPRESSED']}</td>" \
-                    f"<td>{v['fail_by_severity']['critical']}</td></tr>\n"
+                    f"<td>{v['fail_by_severity']['critical']}</td><td>{v.get('risk_score', 0)}</td></tr>\n"
         gst = g["status"]
         html += f"<tr><td><strong>Total</strong></td><td><strong>{gst['FAIL']}</strong></td><td><strong>{gst['PASS']}</strong></td>" \
                 f"<td><strong>{gst['MANUAL']}</strong></td><td><strong>{gst['SKIPPED']}</strong></td>" \
-                f"<td><strong>{gst['SUPPRESSED']}</strong></td><td></td></tr>\n"
+                f"<td><strong>{gst['SUPPRESSED']}</strong></td><td></td><td><strong>{g.get('risk_score', 0)}</strong></td></tr>\n"
         html += "</tbody></table></section>\n"
         if g["failing"]:
             html += f"<section class=\"card\"><h2>Failing controls ({len(g['failing'])})</h2>\n" \
@@ -516,13 +516,17 @@ function applyFilter(){
 
     def _scan_table(self, findings: list[dict]) -> str:
         out = io.StringIO()
+        show_res = any(f.get("resource") for f in findings)
+        res_col = " RESOURCE" if show_res else ""
         out.write("\n")
-        out.write(f"  {'STATUS':<10} {'ID':<8} {'SEV':<7} {'TITLE':<44} EVIDENCE\n")
-        out.write("  " + "-" * 110 + "\n")
+        out.write(f"  {'STATUS':<10} {'ID':<8} {'SEV':<7} {'SCORE':>5}  {'TITLE':<44}{res_col} EVIDENCE\n")
+        out.write("  " + "-" * (118 + (18 if show_res else 0)) + "\n")
         for f in self._sorted(findings):
+            res = f" {self._truncate(str(f.get('resource', '')), 17):<17}" if show_res else ""
             out.write(f"  {self._paint(str(f.get('status')), str(f.get('status'))):<10} "
                       f"{str(f.get('id')):<8} {str(f.get('severity')):<7} "
-                      f"{self._truncate(str(f.get('title', '')), 44):<44} "
+                      f"{str(f.get('score') or ''):>5}  "
+                      f"{self._truncate(str(f.get('title', '')), 44):<44}{res} "
                       f"{self._truncate(str(f.get('evidence', '')), 38)}\n")
         out.write("\n")
         t = self._tally(findings)
@@ -532,21 +536,27 @@ function applyFilter(){
 
     def _scan_markdown(self, findings: list[dict]) -> str:
         out = io.StringIO()
-        out.write("| Status | Severity | ID | Title | Evidence |\n|---|---|---|---|---|\n")
+        out.write("| Status | Severity | ID | Title | Resource | Evidence | Remediation |\n|---|---|---|---|---|---|---|\n")
         for f in self._sorted(findings):
-            out.write(f"| {f.get('status')} | {f.get('severity')} | {f.get('id')} | {f.get('title')} | {f.get('evidence')} |\n")
+            out.write(f"| {f.get('status')} | {f.get('severity')} | {f.get('id')} | {self._md_escape(f.get('title'))} | "
+                      f"{self._md_escape(f.get('resource'))} | {self._md_escape(f.get('evidence'))} | "
+                      f"{self._md_escape(f.get('remediation') or '')} |\n")
         out.write("\n")
         t = self._tally(findings)
         out.write(" / ".join(f"**{s}** {t[s]}" for s in STATUS_ORDER) + "\n")
         return out.getvalue()
 
+    @staticmethod
+    def _md_escape(value) -> str:
+        return str(value or "").replace("|", "\\|")
+
     def _scan_csv(self, findings: list[dict]) -> str:
         buf = io.StringIO()
         writer = csv.writer(buf)
-        writer.writerow(["status", "severity", "id", "title", "evidence"])
+        writer.writerow(["status", "severity", "id", "title", "resource", "evidence"])
         for f in self._sorted(findings):
             writer.writerow([f.get("status"), f.get("severity"), f.get("id"),
-                             f.get("title"), f.get("evidence")])
+                             f.get("title"), f.get("resource"), f.get("evidence")])
         return buf.getvalue()
 
     def _scan_junit(self, findings: list[dict]) -> str:
@@ -584,15 +594,19 @@ function applyFilter(){
             rows = sections[sec]
             html += f"<section class=\"card\"><h2>{self._h(sec)} {self._h(catalog.section_title(sec))}</h2>\n"
             html += "<table><thead><tr><th>Status</th><th>Severity</th><th>ID</th><th>Title</th>" \
-                    "<th>Evidence</th></tr></thead><tbody>\n"
+                    "<th>Resource</th><th>Evidence</th></tr></thead><tbody>\n"
             for f in self._sorted(rows):
                 s = self._h(str(f.get("status")))
                 search = self._h(f"{f.get('id')} {f.get('title')}").lower()
+                rem = f.get("remediation") or ""
                 html += (f"<tr data-status=\"{s}\" data-search=\"{search}\">"
                          f"<td>{self._badge(f.get('status'))}</td>"
                          f"<td><span class=\"badge sev-{f.get('severity')}\">{self._h(str(f.get('severity')))}</span></td>"
                          f"<td><span class=\"mono\">{self._h(str(f.get('id')))}</span></td>"
-                         f"<td>{self._h(str(f.get('title')))}</td><td>{self._h(str(f.get('evidence')))}</td></tr>\n")
+                         f"<td>{self._h(str(f.get('title')))}</td>"
+                         f"<td><span class=\"mono\">{self._h(str(f.get('resource') or ''))}</span></td>"
+                         f"<td>{self._h(str(f.get('evidence')))}"
+                         f"{('<br><span class=\"mono\">fix:</span> ' + self._h(rem)) if rem else ''}</td></tr>\n")
             html += "</tbody></table></section>\n"
         html += "</main>\n"
         html += self._filter_script()
