@@ -120,6 +120,25 @@ def test_framework_narrows_the_view():
     assert len(payload["controls"]) < len(full)
 
 
+def test_framework_title_in_table_header():
+    r = cis("list", "--framework", "pci")
+    assert r.returncode == 0
+    assert "PCI DSS v4.0 view" in r.stdout
+
+
+def test_framework_title_in_json_payload():
+    r = cis("list", "--framework", "nist", "--format", "json")
+    assert r.returncode == 0
+    payload = json.loads(r.stdout)
+    assert payload["framework"] == "NIST SP 800-53 Rev 5"
+
+
+def test_no_framework_suffix_when_unset():
+    r = cis("list", "--format", "json")
+    assert r.returncode == 0
+    assert json.loads(r.stdout)["framework"] == ""
+
+
 def test_framework_is_cumulative_with_other_filters():
     # pci ∩ section 1 (IAM) should be a subset of pci alone.
     pci = json.loads(cis("list", "--framework", "pci", "--format", "json").stdout)["controls"]

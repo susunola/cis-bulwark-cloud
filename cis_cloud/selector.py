@@ -117,6 +117,7 @@ class Selector:
             "detectable": len(self.detectable),
             "manual": sum(1 for c in self.selected if c.manual()),
             "stacks": self.stacks_for_apply,
+            "framework": self.framework,
         }
 
     # Reproduce this selection in a child process.
