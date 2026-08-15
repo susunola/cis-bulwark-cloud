@@ -64,10 +64,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("command", nargs="?", choices=COMMANDS,
                    help="command to run: " + ", ".join(COMMANDS))
-    p.add_argument("stack", nargs="?", help="stack name for `destroy`")
-    # `diff` takes two scan JSON files: cis-cloud diff baseline.json current.json
-    p.add_argument("args", nargs="*", metavar="PATH",
-                   help="scan JSON paths for `diff` (baseline then current)")
+    # `destroy`/`diff`/`check-drift` take extra positional values (stack name,
+    # scan JSON paths). These are extracted from argv manually in main() —
+    # relying on argparse for a trailing nargs="*" positional is fragile and
+    # broke on Python < 3.14 when an optional like --format preceded it.
 
     p.add_argument("--cloud", metavar="NAME",
                    help="cloud to operate on (tencent, aws, azure, gcp, alibaba; default tencent)")
@@ -107,10 +107,46 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
+# Positional options that consume a following value; their values are skipped
+# when scanning argv for the free positional arguments (stack name / paths).
+_VALUE_FLAGS = {
+    "--cloud", "--only", "--exclude", "--section", "--tag", "--profile",
+    "--framework", "--format", "--output", "-o", "--push", "--report",
+    "--dir", "--accounts", "--out", "--tf", "--checks", "--baseline",
+}
+
+
+def _positionals(argv: list[str]) -> list[str]:
+    """Return the free positional tokens from argv (stack name / scan paths).
+
+    argparse's trailing nargs="*" positional is fragile when an optional that
+    consumes a value (e.g. `--format json`) precedes it, and breaks on Python
+    < 3.14. Extracting positionals manually makes `cis-cloud diff --format json
+    base cur` parse identically on every supported Python.
+    """
+    out: list[str] = []
+    i = 0
+    while i < len(argv):
+        tok = argv[i]
+        if tok == "--":
+            out.extend(argv[i + 1:])
+            break
+        if tok.startswith("--") or (tok.startswith("-") and tok != "-"):
+            if tok in _VALUE_FLAGS:
+                i += 1  # skip this flag's value
+        else:
+            out.append(tok)
+        i += 1
+    return out
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     parser = build_parser()
-    args = parser.parse_args(argv)
+    # parse_known_args: `command` is the only positional; trailing stack-name /
+    # scan-path tokens (which argparse's nargs="*" handled inconsistently across
+    # Python versions) fall through to `unknown` and are resolved below.
+    args, unknown = parser.parse_known_args(argv)
 
     if args.command is None:
         parser.print_help(sys.stderr)
@@ -140,15 +176,21 @@ def main(argv: list[str] | None = None) -> int:
         "color": not args.no_color,
     }
 
+    paths = _positionals(unknown)
+
+    # Reject genuinely unknown flags (parse_known_args lets them through).
+    bad_flags = [t for t in unknown if t.startswith("-") and t != "-"]
+    if bad_flags:
+        print(f"error: unrecognized arguments: {' '.join(bad_flags)}", file=sys.stderr)
+        return 2
+
     if args.command == "diff":
-        paths = ([args.stack] if args.stack else []) + args.args
         if len(paths) != 2:
             print("error: `cis-cloud diff` needs two scan JSON paths: baseline then current", file=sys.stderr)
             return 2
         return Runner(None, options=options).diff(paths[0], paths[1])
 
     if args.command == "check-drift":
-        paths = ([args.stack] if args.stack else []) + args.args
         if args.baseline:
             return Runner(None, options=options).check_drift(args.baseline)
         if len(paths) != 2:
@@ -219,7 +261,7 @@ def main(argv: list[str] | None = None) -> int:
         return runner.compliance(compliance)
 
     if args.command == "destroy":
-        stack = args.stack
+        stack = paths[0] if paths else None
         if stack is None:
             print(f"error: `cis-cloud destroy` needs a stack name ({', '.join(hardening_stacks())})",
                   file=sys.stderr)
