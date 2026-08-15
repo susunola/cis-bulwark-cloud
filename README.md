@@ -276,6 +276,14 @@ cis batch --accounts a,b   Scan several accounts and aggregate
   roll them up into one cross-account posture; `scan --push DIR` writes a
   timestamped JSON copy for the same purpose.
 
+### Canonical result schema
+
+Every finding — from a live `scan`, an IaC `check`, or a `compliance`
+aggregate — carries the same stable set of keys (`cis_cloud/schema.py`):
+`id`, `title`, `status`, `severity`, `score`, `evidence`, `evidence_detail`,
+`resource`, `remediation`. Downstream consumers can rely on the shape without
+special-casing each command.
+
 ### Exit Codes
 
 | Code | Meaning |

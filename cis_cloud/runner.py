@@ -427,16 +427,13 @@ class Runner:
         cloud = _cloud()
         out = []
         for f in findings:
-            if "severity" in f:
-                out.append(f)
-                continue
             ctl = by_id.get(str(f.get("id")))
             sev = severity_of(ctl.tags if ctl else [])
             out.append({
                 **f,
                 "severity": sev,
                 "score": _score(sev),
-                "remediation": _remediation.for_control(cloud, ctl) if ctl else "",
+                "remediation": _remediation.for_control(cloud, ctl) if ctl else (f.get("remediation") or ""),
             })
         return out
 
@@ -493,6 +490,7 @@ class Runner:
         return self._normalize(node.get("value"))
 
     def _normalize(self, value) -> list[dict]:
+        from .schema import normalize_finding as _normalize_finding
         if isinstance(value, dict):
             rows = [{**(v if isinstance(v, dict) else {"status": str(v)}), "id": cid}
                     for cid, v in value.items()]
@@ -506,18 +504,14 @@ class Runner:
             detail = row.get("evidence_detail")
             resource = row.get("resource") or (
                 detail[0].get("resource") if isinstance(detail, list) and detail else "") or ""
-            out.append({
+            out.append(_normalize_finding({
                 "id": str(row.get("id", "")),
                 "title": row.get("title") or (control.title if control else "(unknown control)"),
                 "status": str(row.get("status", "")).upper(),
                 "evidence": str(row.get("evidence", "")),
-                # Optional structured detail, passed through when the source
-                # (e.g. the audit stack or tfcheck) emits it. Backward
-                # compatible: renderers fall back to `evidence` when absent.
                 "evidence_detail": detail,
-                # The specific resource that failed, when known.
                 "resource": resource,
-            })
+            }, control=control))
         return out
 
     # ---- output helpers -----------------------------------------------------------
