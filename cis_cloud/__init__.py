@@ -123,6 +123,11 @@ def reset() -> None:
     global _catalog, _selector
     _catalog = None
     _selector = None
+    try:
+        from . import remediation as _remediation
+        _remediation.reset()
+    except ImportError:
+        pass
 
 
 def controls_for_stack(stack: str) -> list[str]:

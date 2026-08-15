@@ -1,0 +1,87 @@
+# Remediation guidance for findings.
+#
+# Derived, coarse-grained rules keyed by cloud + control id (or glob). The
+# registry (controls.yml) is auto-generated and left untouched; this file is
+# the human-maintained "how to fix" layer. Lookup is exact id, then first
+# glob match, then a generic capability fallback (see cis_cloud/remediation.py).
+#
+#   <cloud>:
+#     <control-id-or-glob>:
+#       remediation: "Human-readable fix guidance."
+#       reference:   "Optional URL / console link."
+#
+# Globs cover whole sections (e.g. "4.*") so a rule rarely needs per-control
+# entries. Entries are matched per-cloud only.
+
+tencent:
+  "1.4":
+    remediation: "Enforce MFA for every CAM user that has a console password via the CAM console or the iam stack."
+    reference: "https://console.cloud.tencent.com/cam"
+  "1.*":
+    remediation: "Audit CAM users, roles and policies; remove unused *:* grants and enforce MFA."
+    reference: "https://console.cloud.tencent.com/cam"
+  "2.*":
+    remediation: "Ensure CloudAudit is enabled and exports operational logs to a COS bucket with appropriate retention."
+    reference: "https://console.cloud.tencent.com/cloudaudit"
+  "3.*":
+    remediation: "Tighten VPC security group and network ACL rules; enable VPC flow logs."
+    reference: "https://console.cloud.tencent.com/vpc"
+  "4.*":
+    remediation: "Lock down COS buckets: private ACLs, server-side encryption, no public access."
+    reference: "https://console.cloud.tencent.com/cos/bucket"
+  "5.*":
+    remediation: "Harden TencentDB for MySQL: private access only, SSL, backups and auditing enabled."
+    reference: "https://console.cloud.tencent.com/cdb"
+  "6.*":
+    remediation: "Review TKE cluster security: private endpoint, VPC-CNI mode, RBAC and pod security."
+    reference: "https://console.cloud.tencent.com/tke2"
+  "8.*":
+    remediation: "Enable Cloud Workload Protection agent and protection on the affected instances."
+    reference: "https://console.cloud.tencent.com/cwp"
+
+aws:
+  "1.*":
+    remediation: "Review IAM users, roles and policies; rotate access keys and enforce MFA and password policy."
+    reference: "https://console.aws.amazon.com/iam/"
+  "2.*":
+    remediation: "Enable CloudTrail with log file validation and configure a compliant account password policy."
+    reference: "https://console.aws.amazon.com/cloudtrail/"
+  "3.*":
+    remediation: "Harden S3 buckets and storage: block public access, enable encryption and versioning."
+    reference: "https://console.aws.amazon.com/s3/"
+  "6.*":
+    remediation: "Enable EBS encryption by default and enforce IMDSv2 on EC2 instances."
+    reference: "https://console.aws.amazon.com/ec2/"
+
+azure:
+  "7.*":
+    remediation: "Ensure the network watcher is deployed and flow logs are enabled."
+    reference: "https://portal.azure.com/#blade/Microsoft_Azure_Network/NetworkWatcherMenuBlade/overview"
+  "8.*":
+    remediation: "Review Key Vault, SQL and security configuration; enable RBAC and purge protection."
+    reference: "https://portal.azure.com/#blade/Microsoft_Azure_KeyVault/KeyVaultMenuBlade/overview"
+  "9.*":
+    remediation: "Harden storage accounts: restrict TLS to 1.2 and prevent public access."
+    reference: "https://portal.azure.com/#blade/Microsoft_Azure_Storage/StorageMenuBlade/overview"
+
+gcp:
+  "2.*":
+    remediation: "Ensure project-level logging sinks export audit logs and VPC flow logs are enabled."
+    reference: "https://console.cloud.google.com/logs/"
+  "4.*":
+    remediation: "Enable OS Login for project metadata and restrict compute metadata access."
+    reference: "https://console.cloud.google.com/compute/"
+  "6.*":
+    remediation: "Harden Cloud SQL instances: require SSL and restrict public IP."
+    reference: "https://console.cloud.google.com/sql/"
+
+alibaba:
+  "1.*":
+    remediation: "Enforce a strong RAM password policy and enable MFA."
+    reference: "https://ram.console.aliyun.com/"
+  "2.*":
+    remediation: "Ensure ActionTrail is enabled and delivering logs."
+    reference: "https://actiontrail.console.aliyun.com/"
+  "6.*":
+    remediation: "Harden ApsaraDB for RDS instances: enable SSL and audit."
+    reference: "https://rds.console.aliyun.com/"

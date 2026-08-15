@@ -10,6 +10,7 @@ import pytest
 
 import cis_cloud as C
 from cis_cloud.compliance import Compliance
+from cis_cloud.remediation import for_control as remediation_for, reference_for as remediation_ref
 from cis_cloud.severity import of as severity_of
 from cis_cloud.suppress import Suppressions
 from cis_cloud.tfcheck import scan as tfcheck_scan
@@ -25,6 +26,53 @@ def test_severity_from_tags():
     assert severity_of(["logging", "retention"]) == "medium"
     assert severity_of(["review", "governance"]) == "low"
     assert severity_of([]) == "low"
+
+
+# ---- remediation -----------------------------------------------------------
+
+
+class _FakeControl:
+    def __init__(self, cid, remediate="none", stack=None, detect="none"):
+        self.id = cid
+        self.remediate = remediate
+        self.stack = stack
+        self.detect = detect
+
+
+def test_remediation_exact_id():
+    ctl = _FakeControl("4.1", remediate="terraform", stack="storage")
+    txt = remediation_for("tencent", ctl)
+    assert "COS" in txt and "ACL" in txt
+    assert remediation_ref("tencent", ctl) == "https://console.cloud.tencent.com/cos/bucket"
+
+
+def test_remediation_glob_match():
+    ctl = _FakeControl("5.6", remediate="terraform", stack="database")
+    txt = remediation_for("tencent", ctl)
+    assert "TencentDB" in txt or "MySQL" in txt
+
+
+def test_remediation_generic_fallback_for_unknown_cloud():
+    ctl = _FakeControl("9.9", remediate="none", stack=None)
+    txt = remediation_for("oracle", ctl)
+    assert "console" in txt  # generic manual fallback
+
+
+def test_remediation_generic_fallback_remediable():
+    ctl = _FakeControl("2.1", remediate="terraform", stack="logging")
+    txt = remediation_for("oracle", ctl)
+    assert "cis-cloud apply" in txt and "logging" in txt
+
+
+def test_remediation_attached_to_scan_findings(catalog):
+    from cis_cloud.runner import Runner
+    from conftest import select
+
+    sel = select(only=["4.1"])
+    r = Runner(sel, options={"format": "json"})
+    findings = r._with_severity([{"id": "4.1", "title": "bucket", "status": "FAIL", "evidence": "public"}])
+    assert findings[0]["remediation"], "finding should carry remediation"
+    assert "COS" in findings[0]["remediation"]
 
 
 def test_suppression_matches_cloud_control_and_resource():
