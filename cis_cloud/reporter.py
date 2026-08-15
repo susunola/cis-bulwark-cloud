@@ -475,6 +475,14 @@ function applyFilter(){
 
         results = []
         rule_by_id = {}
+        # Findings reference cloud resources, not repo files, so results carry a
+        # placeholder artifact location (Code Scanning requires >=1 location).
+        loc = [{
+            "physicalLocation": {
+                "artifactLocation": {"uri": "README.md"},
+                "region": {"startLine": 1},
+            }
+        }]
         for f in findings:
             status = str(f.get("status", "")).upper()
             if status not in ("FAIL", "SUPPRESSED"):
@@ -485,6 +493,7 @@ function applyFilter(){
                     "id": cid,
                     "name": str(f.get("title") or cid),
                     "shortDescription": {"text": str(f.get("title") or cid)},
+                    "fullDescription": {"text": str(f.get("remediation") or "")},
                     "defaultConfiguration": {"level": sev_level.get(
                         str(f.get("severity")), "warning")},
                 }
@@ -493,6 +502,7 @@ function applyFilter(){
                 "level": sev_level.get(str(f.get("severity")), "warning"),
                 "message": {"text": str(f.get("evidence") or "")},
                 "kind": "fail" if status == "FAIL" else "pass",
+                "locations": loc,
                 "properties": {"suppressed": status == "SUPPRESSED"},
             })
 

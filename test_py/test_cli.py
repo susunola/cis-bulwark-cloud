@@ -463,10 +463,15 @@ def test_check_can_emit_sarif():
     results = [x for x in run["results"] if x["kind"] == "fail"]
     assert results
     assert any(x["ruleId"] == "4.2" for x in results)
-    # Every result references a declared rule.
+    # Every result references a declared rule, and carries a location (GitHub
+    # Code Scanning rejects SARIF results without at least one location).
     rule_ids = {x["id"] for x in run["tool"]["driver"]["rules"]}
     for x in results:
         assert x["ruleId"] in rule_ids
+        assert x.get("locations"), f"result {x['ruleId']} has no locations"
+        loc = x["locations"][0]["physicalLocation"]
+        assert loc["artifactLocation"]["uri"]
+        assert loc["region"]["startLine"]
 
 
 def test_check_emits_structured_evidence_detail():
