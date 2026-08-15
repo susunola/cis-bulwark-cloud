@@ -93,6 +93,22 @@ class E2E:
             self.fail(f"exit={proc.returncode} (want {check}) for {args}\n  stdout: {proc.stdout[:400]}\n  stderr: {proc.stderr[:400]}")
         return proc
 
+    def _run_stdin(self, args, stdin: str, check: int | None = None,
+                   allow: tuple[int, ...] = ()) -> subprocess.CompletedProcess:
+        """Run the CLI feeding `stdin` (e.g. the MCP JSON-RPC server)."""
+        env = dict(os.environ)
+        env["CIS_CLOUD"] = self.cloud
+        env["PYTHONPATH"] = str(ROOT) + os.pathsep + env.get("PYTHONPATH", "")
+        cmd = [sys.executable, "-m", "cis_cloud"] + list(args)
+        self.checks += 1
+        if self.verbose:
+            print("  $ " + " ".join(cmd) + "  <<< stdin", file=sys.stderr)
+        proc = subprocess.run(cmd, input=stdin, capture_output=True, text=True,
+                              env=env, cwd=str(ROOT))
+        if check is not None and proc.returncode != check and proc.returncode not in allow:
+            self.fail(f"exit={proc.returncode} (want {check}) for {args}\n  stdout: {proc.stdout[:400]}\n  stderr: {proc.stderr[:400]}")
+        return proc
+
     def fail(self, msg: str) -> None:
         self.failures.append(msg)
         print(f"  FAIL: {msg}", file=sys.stderr)
@@ -118,11 +134,31 @@ class E2E:
         print(f"[offline] exercising real CLI against cloud={self.cloud}")
         ctl = self._remediable_control()
 
+        self.ok("module import smoke check (catches SyntaxError/ImportError)")
+        # Import every package module in a child process; the cheapest way to
+        # catch an f-string/parse error on the CI interpreter before the
+        # command paths run (a py3.11-only SyntaxError surfaced in CI).
+        import cis_cloud as C
+        pkg_dir = Path(C.__file__).parent
+        modules = sorted(
+            f.stem for f in pkg_dir.glob("*.py")
+            if f.name != "__main__.py")
+        script = "import " + "; import ".join(f"cis_cloud.{m}" for m in modules)
+        env = dict(os.environ)
+        env["CIS_CLOUD"] = self.cloud
+        env["PYTHONPATH"] = str(ROOT) + os.pathsep + env.get("PYTHONPATH", "")
+        self.checks += 1
+        if self.verbose:
+            print("  $ " + " ".join([sys.executable, "-c", script]), file=sys.stderr)
+        imp = subprocess.run([sys.executable, "-c", script], capture_output=True,
+                             text=True, env=env, cwd=str(ROOT))
+        if imp.returncode != 0:
+            self.fail(f"module import failed: {imp.stderr[:400]}")
+
         self.ok("list -> json is parseable with controls")
         proc = self._run(["list", "--format", "json"], check=0)
         payload = json.loads(proc.stdout)
         assert payload["controls"], "list returned no controls"
-        self.checks += 1
 
         self.ok("list -> table renders the benchmark header")
         proc = self._run(["list", "--format", "table"], check=0)
@@ -136,18 +172,13 @@ class E2E:
         assert "-chdir=stacks/" in proc.stdout, "plan did not preview a hardening stack"
 
         self.ok("check --tf (offline tfcheck) produces findings")
+        # The offline tfcheck fixture is aws-only; run it explicitly on aws.
         proc = self._run(["--cloud", "aws", "check", "--tf", str(ROOT / "test_py" / "fixtures" / "tf"),
                           "--format", "json"], check=0, allow=(1,))
         assert "findings" in proc.stdout, "check did not emit findings"
 
         self.ok("mcp tools/list handshake")
-        # mcp reads JSON-RPC requests from stdin; pipe a tools/list request in.
-        resp = subprocess.run(
-            [sys.executable, "-m", "cis_cloud", "mcp"],
-            input='{"id":1,"method":"tools/list"}\n', capture_output=True, text=True,
-            env={**os.environ, "CIS_CLOUD": self.cloud, "PYTHONPATH": str(ROOT)},
-            cwd=str(ROOT))
-        self.checks += 1
+        resp = self._run_stdin(["mcp"], '{"id":1,"method":"tools/list"}\n')
         if resp.returncode != 0:
             self.fail(f"mcp exited {resp.returncode}: {resp.stderr[:300]}")
         else:
