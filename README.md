@@ -121,7 +121,7 @@ export TENCENTCLOUD_REGION=ap-guangzhou
 
 ```bash
 cis-cloud list                  # prints the control registry
-pytest test_py -q          # 300 tests, offline, no cloud/credentials
+pytest test_py -q          # 302 tests, offline, no cloud/credentials
 ```
 
 **First scan:**
@@ -194,7 +194,7 @@ benchmarks/                 Extracted control catalogs per cloud (PDFs not redis
   azure/catalog.json        Azure v6.0.0 (70 controls) - feeds config/azure/controls.yml
   gcp/catalog.json          GCP v5.0.0 (84 controls) - feeds config/gcp/controls.yml
   alibaba/catalog.json      Alibaba Cloud v2.0.0 (78 controls) - feeds config/alibaba/controls.yml
-test_py/                    300 tests — no cloud, no credentials
+test_py/                    302 tests — no cloud, no credentials
 scripts/
   e2e_test.py               Real-command E2E (offline no-creds + optional live account)
 tools/
@@ -493,7 +493,7 @@ official CIS benchmark PDF.
 ## Tests
 
 ```bash
-pytest test_py -q                 # 300 tests, offline
+pytest test_py -q                 # 302 tests, offline
 pytest test_py/test_selector.py   # single file
 ```
 

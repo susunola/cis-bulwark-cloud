@@ -561,6 +561,33 @@ def test_diff_missing_file_fails_cleanly(tmp_path):
     assert "scan file not found" in (r.stdout + r.stderr)
 
 
+def test_diff_parses_paths_regardless_of_flag_order(tmp_path):
+    # Regression: argparse mis-parsed a trailing positional when an optional
+    # like --format preceded it on Python < 3.14 ("unrecognized arguments").
+    base = tmp_path / "b.json"
+    cur = tmp_path / "c.json"
+    base.write_text(json.dumps({"findings": [{"id": "4.1", "status": "PASS"}]}))
+    cur.write_text(json.dumps({"findings": [{"id": "4.1", "status": "FAIL"}]}))
+    # flags first, then paths (the ordering that used to break on 3.11)
+    r = cis("diff", "--format", "json", str(base), str(cur))
+    assert r.returncode == 1
+    assert json.loads(r.stdout)["summary"]["new"] == 1
+    # paths first, then flags
+    r2 = cis("diff", str(base), str(cur), "--format", "json")
+    assert r2.returncode == 1
+    assert json.loads(r2.stdout)["summary"]["new"] == 1
+
+
+def test_check_drift_parses_paths_regardless_of_flag_order(tmp_path):
+    base = tmp_path / "b.json"
+    cur = tmp_path / "c.json"
+    base.write_text(json.dumps({"findings": [{"id": "4.1", "status": "PASS"}]}))
+    cur.write_text(json.dumps({"findings": [{"id": "4.1", "status": "FAIL"}]}))
+    r = cis("check-drift", "--format", "json", str(base), str(cur))
+    assert r.returncode == 1
+    assert json.loads(r.stdout)["summary"]["regressions"] == 1
+
+
 def test_batch_needs_accounts():
     r = cis("batch")
     assert r.returncode == 2
