@@ -550,6 +550,13 @@ function applyFilter(){
     def _md_escape(value) -> str:
         return str(value or "").replace("|", "\\|")
 
+    @staticmethod
+    def _fix_snippet(remediation) -> str:
+        """Inline HTML 'fix:' hint for a finding's remediation, or ''."""
+        if not remediation:
+            return ""
+        return "<br><span class=\"mono\">fix:</span> " + _html.escape(str(remediation))
+
     def _scan_csv(self, findings: list[dict]) -> str:
         buf = io.StringIO()
         writer = csv.writer(buf)
@@ -606,7 +613,7 @@ function applyFilter(){
                          f"<td>{self._h(str(f.get('title')))}</td>"
                          f"<td><span class=\"mono\">{self._h(str(f.get('resource') or ''))}</span></td>"
                          f"<td>{self._h(str(f.get('evidence')))}"
-                         f"{('<br><span class=\"mono\">fix:</span> ' + self._h(rem)) if rem else ''}</td></tr>\n")
+                         f"{self._fix_snippet(rem)}</td></tr>\n")
             html += "</tbody></table></section>\n"
         html += "</main>\n"
         html += self._filter_script()
