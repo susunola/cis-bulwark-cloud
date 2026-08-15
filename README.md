@@ -36,8 +36,10 @@ Terraform CLI and a thin Ruby wrapper.
 | Alibaba Cloud | CIS v2.0.0 | 78 |
 
 All five benchmarks are fully implemented with `scan` + `apply` against their
-native Terraform providers. Official CIS benchmark PDFs and extracted control
-catalogs are included under [`benchmarks/`](benchmarks/).
+native Terraform providers. Machine-readable control catalogs (derived from the
+CIS Benchmarks, per CIS Terms of Use) are included under
+[`benchmarks/`](benchmarks/); the benchmark PDFs themselves are **not**
+redistributed here — see [`benchmarks/README.md`](benchmarks/README.md).
 
 ## Table of Contents
 
@@ -81,10 +83,12 @@ than no report.
 
 ## Supported Benchmarks
 
-The benchmark PDFs and their machine-readable control catalogs (`catalog.json`)
-live under [`benchmarks/<cloud>/`](benchmarks/). Catalogs are extracted from the
-Summary Table + profile applicability of each PDF by
-`tools/extract_benchmark.py`.
+The machine-readable control catalogs (`catalog.json`) live under
+[`benchmarks/<cloud>/`](benchmarks/). Catalogs are extracted from the
+Summary Table + profile applicability of each CIS benchmark PDF by
+`tools/extract_benchmark.py` (the PDFs are not redistributed in this repo —
+obtain them from [cisecurity.org](https://www.cisecurity.org) under their Terms
+of Use, then run the extractor locally).
 
 | Cloud | Benchmark | Version | Controls | Rem. | Det. | Man. |
 |---|---|---|---|---|---|---|
@@ -168,7 +172,7 @@ Per-stack import / inventory instructions live in each `stacks/<cloud>/` stack.
 bin/cis                     CLI entry point (--cloud tencent|aws|azure|gcp|alibaba)
 config/controls.yml         Tencent registry — 91 entries
 config/<cloud>/controls.yml Per-cloud registries (aws 64, azure 70, gcp 84, alibaba 78)
-benchmarks/                 CIS benchmark PDFs + extracted catalogs, per cloud
+benchmarks/                 Extracted control catalogs per cloud (PDFs not redistributed)
   tencent/catalog.json      Tencent Cloud (91 controls) - feeds controls.yml
   aws/catalog.json          AWS v7.0.0 (64 controls) - feeds config/aws/controls.yml
   azure/catalog.json        Azure v6.0.0 (70 controls) - feeds config/azure/controls.yml
