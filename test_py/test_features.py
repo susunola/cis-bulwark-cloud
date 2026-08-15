@@ -11,7 +11,7 @@ import pytest
 import cis_cloud as C
 from cis_cloud.compliance import Compliance
 from cis_cloud.remediation import for_control as remediation_for, reference_for as remediation_ref
-from cis_cloud.severity import of as severity_of
+from cis_cloud.severity import of as severity_of, score as severity_score, weighted as severity_weighted
 from cis_cloud.suppress import Suppressions
 from cis_cloud.tfcheck import scan as tfcheck_scan
 
@@ -75,6 +75,36 @@ def test_remediation_attached_to_scan_findings(catalog):
     assert "COS" in findings[0]["remediation"]
 
 
+# ---- risk score ------------------------------------------------------------
+
+
+def test_severity_score_mapping():
+    assert severity_score("critical") == 100
+    assert severity_score("high") == 70
+    assert severity_score("medium") == 40
+    assert severity_score("low") == 10
+    assert severity_score("bogus") == 10  # unknown -> low
+
+
+def test_severity_weighted_sums_fail_only():
+    findings = [
+        {"status": "FAIL", "severity": "critical"},
+        {"status": "FAIL", "severity": "medium"},
+        {"status": "PASS", "severity": "critical"},  # not counted
+        {"status": "MANUAL", "severity": "high"},     # not counted
+    ]
+    assert severity_weighted(findings) == 140  # 100 + 40
+
+
+def test_finding_carries_score():
+    from cis_cloud.runner import Runner
+    from conftest import select
+
+    r = Runner(select(only=["4.1"]), options={"format": "json"})
+    f = r._with_severity([{"id": "4.1", "title": "bucket", "status": "FAIL", "evidence": "public"}])[0]
+    assert f["score"] == severity_score(f["severity"])
+
+
 def test_suppression_matches_cloud_control_and_resource():
     s = Suppressions([
         {"cloud": "aws", "control": "6.*", "resource": "sg-123", "reason": "legacy"},
@@ -112,7 +142,7 @@ def test_compliance_global_tally():
     st = g["status"]
     assert st["FAIL"] >= 1
     assert st["PASS"] >= 1
-    assert set(g.keys()) == {"status", "fail_by_severity", "failing"}
+    assert set(g.keys()) == {"status", "fail_by_severity", "risk_score", "failing"}
 
 
 def test_compliance_per_cloud_shape():
@@ -120,7 +150,7 @@ def test_compliance_per_cloud_shape():
     per = c.per_cloud()
     assert set(per.keys()) == {"aws", "azure"}
     for v in per.values():
-        assert set(v.keys()) == {"benchmark", "version", "path", "summary", "status", "fail_by_severity", "assessed"}
+        assert set(v.keys()) == {"benchmark", "version", "path", "summary", "status", "fail_by_severity", "risk_score", "assessed"}
 
 
 def test_compliance_empty_dir():

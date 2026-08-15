@@ -233,6 +233,10 @@ cis batch --accounts a,b   Scan several accounts and aggregate
 - **Severity** (Prowler-style): every finding carries a risk level
   (critical/high/medium/low) inferred from the control's tags, shown in all
   report formats and used to order the compliance failing list.
+- **Risk score** (Prowler ThreatScore-style): each finding also carries a
+  numeric `score` (critical=100…low=10) and every scan/compliance report shows
+  a weighted `risk_score` total for FAIL findings, so posture can be tracked as
+  a single number over time.
 - **Suppression** (`config/suppress.yml`, CloudSploit-style): declare known
   exceptions per cloud+control+resource; suppressed findings render as
   SUPPRESSED and never trip the scan gate.
