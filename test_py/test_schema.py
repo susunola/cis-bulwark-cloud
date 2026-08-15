@@ -47,3 +47,31 @@ def test_normalize_derives_score_when_missing():
 def test_schema_constants():
     assert set(STATUSES) == {"FAIL", "PASS", "MANUAL", "SKIPPED", "SUPPRESSED"}
     assert set(SEVERITIES) == {"critical", "high", "medium", "low"}
+
+
+def test_scan_check_compliance_findings_all_carry_schema_keys():
+    # SC6: scan and check producers emit FINDING_KEYS; a compliance finding
+    # (read from a saved scan JSON) is normalisable to the full schema, so
+    # downstream consumers can rely on the shape everywhere.
+    from cis_cloud.runner import Runner
+    from cis_cloud.tfcheck import scan as tfcheck_scan
+    from cis_cloud.compliance import Compliance
+    from conftest import select
+    from pathlib import Path
+
+    root = Path(__file__).parent
+
+    # scan path -> runner._normalize
+    r = Runner(select(only=["4.1"]), options={"format": "json"})
+    scan_f = r._normalize({"4.1": {"status": "fail", "evidence": "public"}})[0]
+
+    # check path -> tfcheck Finding.to_dict
+    check_f = tfcheck_scan(root / "fixtures" / "tf", "aws")[0].to_dict()
+
+    # compliance path -> a finding from a fixture scan JSON (minimal keys),
+    # normalised through the schema so it exposes the full set.
+    comp_raw = Compliance.load_dir(root / "fixtures" / "scans").entries[0]["findings"][0]
+    comp_f = normalize_finding(comp_raw)
+
+    for name, f in [("scan", scan_f), ("check", check_f), ("compliance", comp_f)]:
+        assert set(FINDING_KEYS) <= set(f.keys()), f"{name} finding missing schema keys: {f.keys()}"
