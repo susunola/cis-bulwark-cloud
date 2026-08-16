@@ -7,7 +7,7 @@ Checks that drift out of date before merge:
      "300 tests, offline"). Compare it against `pytest --collect-only`, and
      fail if the README count no longer matches reality.
 
-  2. Command list. Every command in `cis_cloud.cli.COMMANDS` must be
+  2. Command list. Every command in `ohbs_cloud.cli.COMMANDS` must be
      documented in the README "Commands" code block, and the README must not
      document commands that no longer exist.
 
@@ -56,7 +56,7 @@ def check_test_count() -> None:
 
 def check_commands() -> None:
     """Every CLI command must be documented, and none stale."""
-    import cis_cloud.cli as cli
+    import ohbs_cloud.cli as cli
     text = README.read_text(encoding="utf-8")
     # The documented commands live in the code block under the "## Commands"
     # heading; take that section only.

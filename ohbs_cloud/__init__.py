@@ -1,18 +1,18 @@
-"""cis-cloud — multi-cloud CIS foundation benchmarks, plain Terraform.
+"""ohbs-cloud — multi-cloud CIS foundation benchmarks, plain Terraform.
 
 A Python port of the original Ruby implementation. The data layer (per-cloud
 control registries under config/, self-contained Terraform stacks under
 stacks/, shared modules under modules/) ships inside the package, so a plain
-``pip install cis-cloud`` gives you the whole benchmark offline.
+``pip install ohbs-cloud`` gives you the whole benchmark offline.
 
 The active cloud is selected with CIS_CLOUD (default: tencent); the CLI
-``cis-cloud --cloud aws ...`` sets it for one run.
+``ohbs-cloud --cloud aws ...`` sets it for one run.
 
-    CIS_CLOUD=aws cis-cloud list       show the AWS control registry
-    cis-cloud scan                     read-only assessment (audit stack)
-    cis-cloud plan                     show what `apply` would change
-    cis-cloud apply                    enforce the selected controls
-    cis-cloud destroy STACK            roll back one hardening stack
+    CIS_CLOUD=aws ohbs-cloud list       show the AWS control registry
+    ohbs-cloud scan                     read-only assessment (audit stack)
+    ohbs-cloud plan                     show what `apply` would change
+    ohbs-cloud apply                    enforce the selected controls
+    ohbs-cloud destroy STACK            roll back one hardening stack
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ from pathlib import Path
 
 # Data root: package-bundled data by default, overridable at runtime for
 # development against a checkout. The root is the directory that holds
-# config/ stacks/ modules/ directly - i.e. cis_cloud/data in a checkout, NOT
+# config/ stacks/ modules/ directly - i.e. ohbs_cloud/data in a checkout, NOT
 # the repository root (the repo root has no such directories).
 _ROOT = Path(os.environ.get("CIS_CLOUD_ROOT") or (Path(__file__).parent / "data"))
 
@@ -51,7 +51,7 @@ HARDENING_STACKS = {
 
 
 class Error(Exception):
-    """Base error for cis-cloud."""
+    """Base error for ohbs-cloud."""
 
 
 def get_root() -> Path:

@@ -1,6 +1,6 @@
 """Pre-deployment CIS checks against Terraform definitions, Steampipe-style.
 
-`cis-cloud check --tf DIR --cloud aws` parses the .tf files in DIR (no cloud
+`ohbs-cloud check --tf DIR --cloud aws` parses the .tf files in DIR (no cloud
 credentials, no terraform run), finds each resource block of interest and
 verifies the arguments CIS requires are present. A control is PASS when every
 matching resource satisfies its rule, FAIL when one does not.
@@ -72,7 +72,7 @@ def load_checks(path: str | Path) -> dict[str, dict]:
             resource: aws_db_instance
             title: "Ensure RDS Multi-AZ"
             severity: high
-            remediation: "Run cis-cloud apply to enable multi-az."
+            remediation: "Run ohbs-cloud apply to enable multi-az."
             args:
               multi_az: true
         tencent:
