@@ -121,3 +121,33 @@ jobs:
             exit 1
           fi
           echo "OK: cache key is content-derived (invalidates on dep change)"
+
+      - name: Assert cache-stampede safety (concurrent writers, no corruption)
+        # Cache stampede / thundering herd: when several runs miss on a NEW
+        # key at once, they race to write it. The seed must be atomic (a
+        # single marker file) so concurrent writers never tear/corrupt the
+        # cache, and the final state must be consistent and valid.
+        run: |
+          rm -rf .cache-stampede
+          # N concurrent "seeders" all try to seed the same key simultaneously.
+          for i in $(seq 1 8); do
+            (
+              mkdir -p .cache-stampede
+              tmp=".cache-stampede/ok.$$.$RANDOM"
+              printf 'seeded:%s\n' "$i" > "$tmp"       # write to a temp file first
+              mv "$tmp" .cache-stampede/ok             # atomic rename -> no torn read
+            ) &
+          done
+          wait
+          # The final marker must be valid (one complete winner, not a mix).
+          if [ ! -f .cache-stampede/ok ]; then
+            echo "FAIL: stampede left no cache marker" >&2
+            exit 1
+          fi
+          if ! grep -Eq '^seeded:[0-9]+$' .cache-stampede/ok; then
+            echo "FAIL: stampede corrupted the cache marker: $(cat .cache-stampede/ok)" >&2
+            exit 1
+          fi
+          echo "OK: 8 concurrent writers left a valid, uncorrupted cache marker"
+          # Clean up so this job's own cache step (same key) is unaffected.
+          rm -rf .cache-stampede

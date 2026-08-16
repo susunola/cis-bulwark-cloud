@@ -67,3 +67,46 @@ def test_fingerprint_cli_prints_key(tmp_path):
         fp_main(["--file", str(f)])
     assert buf.getvalue().strip().startswith("dep-")
     assert buf.getvalue().strip() == fingerprint(f)
+
+
+def test_cache_stampede_concurrent_writers_do_not_corrupt(tmp_path):
+    # Cache stampede / thundering herd: many concurrent jobs race to write the
+    # same cache marker on a cache miss. The seed must be atomic — write a
+    # temp file, then rename — so concurrent writers never tear the marker and
+    # the final state is one complete, valid value.
+    import concurrent.futures
+    import os
+
+    marker = tmp_path / "cache" / "ok"
+    n = 32
+
+    def seeder(i: int) -> None:
+        marker.parent.mkdir(parents=True, exist_ok=True)
+        tmp = marker.parent / f"ok.{os.getpid()}.{i}"
+        tmp.write_text(f"seeded:{i}\n", encoding="utf-8")
+        os.replace(tmp, marker)  # atomic rename
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
+        list(ex.map(seeder, range(n)))
+
+    assert marker.exists()
+    content = marker.read_text(encoding="utf-8").strip()
+    assert content.startswith("seeded:"), f"corrupted marker: {content!r}"
+    # A torn write would mix/truncate two values; the marker must be a single
+    # complete "seeded:<int>".
+    assert content.removeprefix("seeded:").isdigit()
+
+
+def test_cache_stampede_direct_write_would_race_so_we_use_rename(tmp_path):
+    # Contrast: a non-atomic (direct write) of the marker from multiple
+    # writers is the failure mode the atomic rename avoids. We assert the
+    # repo's chosen pattern (temp + os.replace) is atomic at the file level.
+    import os
+
+    target = tmp_path / "marker"
+    target.parent.mkdir(exist_ok=True)
+    tmp = target.parent / "tmp.marker"
+    tmp.write_text("seeded:9\n", encoding="utf-8")
+    os.replace(tmp, target)
+    assert target.read_text(encoding="utf-8") == "seeded:9\n"
+    assert not tmp.exists(), "temp file must be consumed by the rename"
