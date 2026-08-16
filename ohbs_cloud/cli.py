@@ -1,10 +1,10 @@
-"""cis-cloud — CIS cloud foundation benchmark (plain Terraform).
+"""ohbs-cloud — CIS cloud foundation benchmark (plain Terraform).
 
-    cis-cloud --cloud aws list                show the control registry for a cloud
-    cis-cloud scan                            read-only assessment of the selected controls
-    cis-cloud plan                            show what `cis-cloud apply` would change
-    cis-cloud apply                           enforce the selected controls
-    cis-cloud destroy STACK                   roll back one hardening stack
+    ohbs-cloud --cloud aws list                show the control registry for a cloud
+    ohbs-cloud scan                            read-only assessment of the selected controls
+    ohbs-cloud plan                            show what `ohbs-cloud apply` would change
+    ohbs-cloud apply                           enforce the selected controls
+    ohbs-cloud destroy STACK                   roll back one hardening stack
 
 Cloud: defaults to tencent; override per run with --cloud, or persistently
 with CIS_CLOUD=aws.
@@ -45,21 +45,21 @@ COMMANDS = ["list", "scan", "plan", "apply", "destroy", "compliance", "check", "
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="cis-cloud",
+        prog="ohbs-cloud",
         description="CIS cloud foundation benchmarks via plain Terraform.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "Examples:\n"
-            "  cis-cloud list --profile level1\n"
-            "  cis-cloud scan --section 3,4 --format json\n"
-            "  cis-cloud scan --section 4 --format html --output report.html\n"
-            "  cis-cloud plan --only 4.*\n"
-            "  cis-cloud apply --tag cos --exclude 4.6 --report\n"
-            "  cis-cloud check --tf DIR --checks checks.yml\n"
-            "  cis-cloud diff scans/baseline.json scans/current.json\n"
-            "  cis-cloud check-drift --baseline scans/base.json          # fresh scan vs baseline\n"
-            "  cis-cloud check-drift scans/base.json scans/current.json  # offline compare\n"
-            "  cis-cloud batch --accounts a1,a2 --cloud aws --out scans\n"
+            "  ohbs-cloud list --profile level1\n"
+            "  ohbs-cloud scan --section 3,4 --format json\n"
+            "  ohbs-cloud scan --section 4 --format html --output report.html\n"
+            "  ohbs-cloud plan --only 4.*\n"
+            "  ohbs-cloud apply --tag cos --exclude 4.6 --report\n"
+            "  ohbs-cloud check --tf DIR --checks checks.yml\n"
+            "  ohbs-cloud diff scans/baseline.json scans/current.json\n"
+            "  ohbs-cloud check-drift --baseline scans/base.json          # fresh scan vs baseline\n"
+            "  ohbs-cloud check-drift scans/base.json scans/current.json  # offline compare\n"
+            "  ohbs-cloud batch --accounts a1,a2 --cloud aws --out scans\n"
         ),
     )
     p.add_argument("command", nargs="?", choices=COMMANDS,
@@ -121,7 +121,7 @@ def _positionals(argv: list[str]) -> list[str]:
 
     argparse's trailing nargs="*" positional is fragile when an optional that
     consumes a value (e.g. `--format json`) precedes it, and breaks on Python
-    < 3.14. Extracting positionals manually makes `cis-cloud diff --format json
+    < 3.14. Extracting positionals manually makes `ohbs-cloud diff --format json
     base cur` parse identically on every supported Python.
     """
     out: list[str] = []
@@ -186,7 +186,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "diff":
         if len(paths) != 2:
-            print("error: `cis-cloud diff` needs two scan JSON paths: baseline then current", file=sys.stderr)
+            print("error: `ohbs-cloud diff` needs two scan JSON paths: baseline then current", file=sys.stderr)
             return 2
         return Runner(None, options=options).diff(paths[0], paths[1])
 
@@ -194,7 +194,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.baseline:
             return Runner(None, options=options).check_drift(args.baseline)
         if len(paths) != 2:
-            print("error: `cis-cloud check-drift` needs --baseline PATH (live scan) "
+            print("error: `ohbs-cloud check-drift` needs --baseline PATH (live scan) "
                   "or two scan JSON paths (offline): baseline then current", file=sys.stderr)
             return 2
         return Runner(None, options=options).check_drift(paths[0], paths[1])
@@ -202,7 +202,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "batch":
         accounts = [a.strip() for a in (args.accounts or "").split(",") if a.strip()]
         if not accounts:
-            print("error: `cis-cloud batch` needs --accounts a,b,c", file=sys.stderr)
+            print("error: `ohbs-cloud batch` needs --accounts a,b,c", file=sys.stderr)
             return 2
         out_dir = args.out or os.environ.get("CIS_SCAN_DIR") or str(Path.cwd() / "scans")
         return Runner(_selector(), options=options).batch(accounts, out_dir)
@@ -235,7 +235,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "check":
         dir_ = args.tf_dir
         if dir_ is None:
-            print("error: `cis-cloud check` needs --tf DIR (a directory of .tf files)", file=sys.stderr)
+            print("error: `ohbs-cloud check` needs --tf DIR (a directory of .tf files)", file=sys.stderr)
             return 2
         if not Path(dir_).is_dir():
             print(f"error: no such directory: {dir_}", file=sys.stderr)
@@ -256,14 +256,14 @@ def main(argv: list[str] | None = None) -> int:
         compliance = Compliance.load_dir(dir_)
         if compliance.is_empty():
             print(f"error: no scan results found in {dir_}; save per-cloud scans with: "
-                  f"cis-cloud --cloud X scan --format json -o scans/X.json", file=sys.stderr)
+                  f"ohbs-cloud --cloud X scan --format json -o scans/X.json", file=sys.stderr)
             return 2
         return runner.compliance(compliance)
 
     if args.command == "destroy":
         stack = paths[0] if paths else None
         if stack is None:
-            print(f"error: `cis-cloud destroy` needs a stack name ({', '.join(hardening_stacks())})",
+            print(f"error: `ohbs-cloud destroy` needs a stack name ({', '.join(hardening_stacks())})",
                   file=sys.stderr)
             return 2
         return runner.destroy(stack)

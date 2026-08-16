@@ -1,6 +1,6 @@
 """Baseline drift detection.
 
-`cis-cloud check-drift` compares a baseline scan against a fresh scan and flags
+`ohbs-cloud check-drift` compares a baseline scan against a fresh scan and flags
 regressions — controls that were not failing (PASS / MANUAL / absent) in the
 baseline but are failing now. This is the lightweight foundation for continuous
 monitoring on top of the point-in-time `scan`.

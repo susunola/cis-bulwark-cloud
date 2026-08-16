@@ -1,6 +1,6 @@
-"""Compare two cis-cloud scan JSON reports and summarise the change.
+"""Compare two ohbs-cloud scan JSON reports and summarise the change.
 
-`cis-cloud diff baseline.json current.json` keys findings by control id and
+`ohbs-cloud diff baseline.json current.json` keys findings by control id and
 classifies each id's movement:
 
     NEW       failing now, not failing (or absent) in the baseline

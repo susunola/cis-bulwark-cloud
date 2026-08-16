@@ -1,4 +1,4 @@
-"""Drives `terraform` on behalf of cis-cloud.
+"""Drives `terraform` on behalf of ohbs-cloud.
 
 Stacks live under stacks/<name>/ as self-contained Terraform root modules.
 Each is invoked individually so output streams in order and failures are
@@ -206,7 +206,7 @@ class Runner:
 
         d = _Path(out_dir)
         d.mkdir(parents=True, exist_ok=True)
-        cmd = [sys.executable, "-m", "cis_cloud"]
+        cmd = [sys.executable, "-m", "ohbs_cloud"]
         # Reproduce the current cloud + filter selection in the child.
         base_env = dict(os.environ)
         cmd += ["--cloud", _cloud()]
@@ -334,7 +334,7 @@ class Runner:
 
     def _warn_no_detectable(self) -> None:
         self._say("No selected control is machine-assessable by the provider.")
-        self._say(f"Selected: {len(self.selector.selected)}. Use `cis-cloud list` to see why.")
+        self._say(f"Selected: {len(self.selector.selected)}. Use `ohbs-cloud list` to see why.")
 
     def _warn_no_remediable(self) -> None:
         self._say("No selected control is enforceable by Terraform - nothing to apply.")
@@ -411,7 +411,7 @@ class Runner:
             if c.remediable():
                 out.append({
                     "id": c.id, "title": c.title, "status": "SKIPPED",
-                    "evidence": "enforced by `cis-cloud apply`, not readable",
+                    "evidence": "enforced by `ohbs-cloud apply`, not readable",
                 })
             else:
                 out.append({

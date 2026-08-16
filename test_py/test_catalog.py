@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-import cis_cloud as C
+import ohbs_cloud as C
 
 # Straight from CIS Tencent Cloud Foundation Benchmark v1.0.0.
 TOTAL = 91
@@ -126,7 +126,7 @@ def test_duplicate_ids_are_rejected_at_load_time():
             {"id": "1.1", "title": "b"},
         ],
     }
-    from cis_cloud.catalog import Catalog
+    from ohbs_cloud.catalog import Catalog
 
     with pytest.raises(C.Error, match="duplicate control ids"):
         Catalog(raw)
@@ -137,7 +137,7 @@ def test_a_remediable_control_without_a_stack_is_rejected():
         "benchmark": "x", "version": "v1", "sections": {"1": "One"},
         "controls": [{"id": "1.1", "title": "a", "remediate": "terraform"}],
     }
-    from cis_cloud.catalog import Catalog
+    from ohbs_cloud.catalog import Catalog
 
     with pytest.raises(C.Error, match="requires a stack"):
         Catalog(raw)
@@ -148,7 +148,7 @@ def test_a_malformed_stack_name_is_rejected():
         "benchmark": "x", "version": "v1", "sections": {"1": "One"},
         "controls": [{"id": "1.1", "title": "a", "remediate": "terraform", "stack": "Bad Name"}],
     }
-    from cis_cloud.catalog import Catalog
+    from ohbs_cloud.catalog import Catalog
 
     with pytest.raises(C.Error, match="malformed stack"):
         Catalog(raw)
@@ -159,14 +159,14 @@ def test_a_malformed_id_is_rejected():
         "benchmark": "x", "version": "v1", "sections": {"1": "One"},
         "controls": [{"id": "1", "title": "a"}],
     }
-    from cis_cloud.catalog import Catalog
+    from ohbs_cloud.catalog import Catalog
 
     with pytest.raises(C.Error, match="control id must look like"):
         Catalog(raw)
 
 
 def test_a_missing_registry_is_reported_clearly():
-    from cis_cloud.catalog import Catalog
+    from ohbs_cloud.catalog import Catalog
 
     with pytest.raises(C.Error, match="control registry not found"):
         Catalog.load("/nonexistent/controls.yml")

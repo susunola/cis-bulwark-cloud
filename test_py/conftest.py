@@ -9,9 +9,9 @@ from pathlib import Path
 
 import pytest
 
-import cis_cloud as C
+import ohbs_cloud as C
 
-ROOT = Path(C.get_root()).parent.parent  # repo root (data root is <repo>/cis_cloud/data)
+ROOT = Path(C.get_root()).parent.parent  # repo root (data root is <repo>/ohbs_cloud/data)
 FILTER_ENV = ["CIS_ONLY", "CIS_EXCLUDE", "CIS_SECTIONS", "CIS_TAGS", "CIS_PROFILE", "CIS_FRAMEWORK"]
 
 
@@ -42,7 +42,7 @@ def catalog():
 
 
 def select(**kwargs):
-    from cis_cloud.selector import Selector
+    from ohbs_cloud.selector import Selector
 
     return Selector(C.get_catalog(), **kwargs)
 
@@ -58,7 +58,7 @@ def run_cli(*args, env: dict | None = None):
                 child_env[k] = str(v)
 
     full_env = {k: v for k, v in os.environ.items() if v is not None}
-    # ensure cis_cloud is importable regardless of cwd
+    # ensure ohbs_cloud is importable regardless of cwd
     full_env["PYTHONPATH"] = str(ROOT) + os.pathsep + full_env.get("PYTHONPATH", "")
     for k, v in child_env.items():
         if v is None:
@@ -67,7 +67,7 @@ def run_cli(*args, env: dict | None = None):
             full_env[k] = v
 
     proc = subprocess.run(
-        [sys.executable, "-m", "cis_cloud", *args],
+        [sys.executable, "-m", "ohbs_cloud", *args],
         capture_output=True, text=True, cwd=str(ROOT), env=full_env,
     )
     return proc

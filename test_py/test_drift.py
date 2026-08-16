@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from cis_cloud.drift import drift, render_drift
+from ohbs_cloud.drift import drift, render_drift
 from conftest import run_cli
 
 FIXTURES = Path(__file__).parent / "fixtures"

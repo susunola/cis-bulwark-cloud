@@ -13,8 +13,8 @@ orthogonal view.
 
 Usage::
 
-    CIS_FRAMEWORK=nist cis-cloud list        # controls mapped to NIST 800-53
-    cis-cloud list --framework pci           # PCI-DSS view
+    CIS_FRAMEWORK=nist ohbs-cloud list        # controls mapped to NIST 800-53
+    ohbs-cloud list --framework pci           # PCI-DSS view
 """
 
 from __future__ import annotations

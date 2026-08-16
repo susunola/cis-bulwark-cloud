@@ -3,7 +3,7 @@
 # Derived, coarse-grained rules keyed by cloud + control id (or glob). The
 # registry (controls.yml) is auto-generated and left untouched; this file is
 # the human-maintained "how to fix" layer. Lookup is exact id, then first
-# glob match, then a generic capability fallback (see cis_cloud/remediation.py).
+# glob match, then a generic capability fallback (see ohbs_cloud/remediation.py).
 #
 #   <cloud>:
 #     <control-id-or-glob>:

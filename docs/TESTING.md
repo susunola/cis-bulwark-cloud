@@ -1,4 +1,4 @@
-# cis-cloud QA / Test Plan
+# ohbs-cloud QA / Test Plan
 
 Covers the suite added by the "industry borrowings" work (P0→P2): remediation
 guidance, drift detection, risk score, structured resource, richer custom
@@ -32,7 +32,7 @@ offline `terraform validate` and SARIF upload.
 
 ## 2. Test matrix (by feature)
 
-### 2.1 Remediation guidance (P0) — `cis_cloud/remediation.py` + `data/config/remediation.yml`
+### 2.1 Remediation guidance (P0) — `ohbs_cloud/remediation.py` + `data/config/remediation.yml`
 
 | # | Case | Assertion | Status |
 |---|---|---|---|
@@ -40,13 +40,13 @@ offline `terraform validate` and SARIF upload.
 | R2 | glob rule match | `for_control("tencent", ctl5.6)` hits the `5.*` rule | ✅ |
 | R3 | reference URL | `reference_for` returns the console URL | ✅ |
 | R4 | unknown cloud → generic fallback | returns manual "verify in console" | ✅ |
-| R5 | remediable control → apply hint | mentions `cis-cloud apply` + stack | ✅ |
+| R5 | remediable control → apply hint | mentions `ohbs-cloud apply` + stack | ✅ |
 | R6 | attached to scan findings | `_with_severity` adds `remediation` | ✅ |
 | R7 | **rule file lint** | `remediation.yml` parses and every remediable/detectable control resolves to *some* remediation | ✅ |
 | R8 | HTML scan report renders fix | `_scan_html` contains the `fix:` text | ✅ |
 | R9 | markdown column | `_scan_markdown` emits a Remediation column | ✅ |
 
-### 2.2 Drift detection (P0) — `cis_cloud/drift.py` + `check-drift` command
+### 2.2 Drift detection (P0) — `ohbs_cloud/drift.py` + `check-drift` command
 
 | # | Case | Assertion | Status |
 |---|---|---|---|
@@ -60,7 +60,7 @@ offline `terraform validate` and SARIF upload.
 | D8 | missing baseline file | clear error, exit 2 | ✅ |
 | D9 | `--baseline` CLI end-to-end | subprocess `check-drift --baseline base.json` | ✅ |
 
-### 2.3 Risk score (P1) — `cis_cloud/severity.py`
+### 2.3 Risk score (P1) — `ohbs_cloud/severity.py`
 
 | # | Case | Assertion | Status |
 |---|---|---|---|
@@ -70,7 +70,7 @@ offline `terraform validate` and SARIF upload.
 | S4 | **compliance risk_score value** | `Compliance.global_()["risk_score"]` equals the weighted FAIL sum | ✅ |
 | S5 | table SCORE column | `_scan_table` renders a SCORE header + values | ✅ |
 
-### 2.4 Structured resource (P1) — `cis_cloud/runner.py` / `suppress.py`
+### 2.4 Structured resource (P1) — `ohbs_cloud/runner.py` / `suppress.py`
 
 | # | Case | Assertion | Status |
 |---|---|---|---|
@@ -81,7 +81,7 @@ offline `terraform validate` and SARIF upload.
 | RC5 | reporter table RESOURCE column | header appears when any finding has a resource | ✅ |
 | RC6 | csv column | `_scan_csv` header includes resource | ✅ |
 
-### 2.5 Richer custom ruleset (P1) — `cis_cloud/tfcheck.py`
+### 2.5 Richer custom ruleset (P1) — `ohbs_cloud/tfcheck.py`
 
 | # | Case | Assertion | Status |
 |---|---|---|---|
@@ -91,7 +91,7 @@ offline `terraform validate` and SARIF upload.
 | C4 | reject non-string metadata | e.g. numeric `title` → `ValueError` | ✅ |
 | C5 | framework passthrough | rule `framework` exposed on `tfcheck.Finding` + `to_dict` | ✅ |
 
-### 2.6 Canonical schema (P2) — `cis_cloud/schema.py`
+### 2.6 Canonical schema (P2) — `ohbs_cloud/schema.py`
 
 | # | Case | Assertion | Status |
 |---|---|---|---|
@@ -102,7 +102,7 @@ offline `terraform validate` and SARIF upload.
 | SC5 | constants | `STATUSES`/`SEVERITIES` shape | ✅ |
 | SC6 | **cross-command key parity** | a scan, check and compliance finding each carry `FINDING_KEYS` | ✅ |
 
-### 2.7 MCP surface (P2) — `cis_cloud/mcp.py`
+### 2.7 MCP surface (P2) — `ohbs_cloud/mcp.py`
 
 | # | Case | Assertion | Status |
 |---|---|---|---|
@@ -158,7 +158,7 @@ pytest test_py/test_runner.py test_py/test_features.py -q
 
 CI (`.github/workflows/ci.yml`) runs the whole suite on Ubuntu + Python 3.11 +
 Terraform 1.5.7, then offline `terraform validate` on every module/stack, then
-uploads the `cis-cloud check` SARIF to GitHub Code Scanning.
+uploads the `ohbs-cloud check` SARIF to GitHub Code Scanning.
 
 Dependency installs are accelerated with `setup-python`'s `cache: pip`, keyed
 on `pyproject.toml` content — unchanged deps hit the cache; a dep bump changes

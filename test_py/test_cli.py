@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-import cis_cloud as C
+import ohbs_cloud as C
 from conftest import ROOT, run_cli
 
 
@@ -389,7 +389,7 @@ def test_cloud_flag_selects_the_aws_registry():
     assert "6.3" in r.stdout
 
 
-def test_cis_cloud_environment_variable_also_selects_the_cloud():
+def test_ohbs_cloud_environment_variable_also_selects_the_cloud():
     r = cis("list", "--only", "6.3", "--no-color", env={"CIS_CLOUD": "aws"})
     assert r.returncode == 0
     assert "CIS Amazon Web Services Foundations Benchmark" in r.stdout

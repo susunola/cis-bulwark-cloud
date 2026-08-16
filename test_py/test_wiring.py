@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-import cis_cloud as C
+import ohbs_cloud as C
 from conftest import module_path, stack_path
 from hcl_utils import locals_map, object_keys, read, string_list, top_blocks
 

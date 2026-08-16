@@ -42,7 +42,7 @@
 - **统一结果 schema**：新增 `schema.py`，所有 finding（scan/check/compliance）
   都携带一致的键集 `id,title,status,severity,score,evidence,evidence_detail,
   resource,remediation`，供下游稳定解析。
-- **MCP 扩展面**（`cis-cloud mcp`）：基于 stdio JSON-RPC 暴露只读工具
+- **MCP 扩展面**（`ohbs-cloud mcp`）：基于 stdio JSON-RPC 暴露只读工具
   `list`/`scan`(dry-run)/`plan`(dry-run)/`diff`/`check_drift`，供 agent /
   LLM 宿主驱动评估。
 - **端到端测试脚本**（`scripts/e2e_test.py`）：`--mode offline` 无凭据跑通真实
@@ -57,7 +57,7 @@
   `terraform fmt` 1.5.x 会把目录参数按固定的 `../..` 偏移解析，传入绝对路径
   会报 `No file or directory`。现改为先 `chdir` 进目标目录再传 `.`。
 - 修正 `CIS_CLOUD_ROOT` 环境变量的文档说明。它应指向**数据根**（即 checkout
-  中的 `cis_cloud/data`，直接包含 `config/`、`stacks/`、`modules/`），而非
+  中的 `ohbs_cloud/data`，直接包含 `config/`、`stacks/`、`modules/`），而非
   仓库根目录（仓库根没有这些目录）。
 
 ## [0.1.0] - 2026-08-15

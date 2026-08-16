@@ -113,7 +113,7 @@ def _generic(control) -> str:
     rem = _attr(control, "remediate")
     stack = _attr(control, "stack")
     if rem == "terraform":
-        base = "Run `cis-cloud plan` then `cis-cloud apply` to enforce"
+        base = "Run `ohbs-cloud plan` then `ohbs-cloud apply` to enforce"
         return f"{base} (stack {stack})." if stack else f"{base}."
     return "Verify in the cloud console and apply the CIS recommendation manually."
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""End-to-end test for cis-cloud.
+"""End-to-end test for ohbs-cloud.
 
 Two modes:
 
@@ -51,16 +51,16 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-# Module root is <repo>/cis_cloud; the data root (config/stacks/modules) is
-# <repo>/cis_cloud/data.
-MODULE = ROOT / "cis_cloud"
-# Make cis_cloud importable in this process (mirrors PYTHONPATH set for the
+# Module root is <repo>/ohbs_cloud; the data root (config/stacks/modules) is
+# <repo>/ohbs_cloud/data.
+MODULE = ROOT / "ohbs_cloud"
+# Make ohbs_cloud importable in this process (mirrors PYTHONPATH set for the
 # child CLI invocations).
 sys.path.insert(0, str(ROOT))
 
 
 class E2E:
-    """Runs cis-cloud end-to-end and asserts on exit codes + output shape."""
+    """Runs ohbs-cloud end-to-end and asserts on exit codes + output shape."""
 
     def __init__(self, mode: str, cloud: str, only: str | None = None,
                  keep_on_failure: bool = False, verbose: bool = False):
@@ -84,7 +84,7 @@ class E2E:
         env["PYTHONPATH"] = str(ROOT) + os.pathsep + env.get("PYTHONPATH", "")
         if env_extra:
             env.update({k: str(v) for k, v in env_extra.items() if v is not None})
-        cmd = [sys.executable, "-m", "cis_cloud"] + list(args)
+        cmd = [sys.executable, "-m", "ohbs_cloud"] + list(args)
         self.checks += 1
         if self.verbose:
             print("  $ " + " ".join(cmd), file=sys.stderr)
@@ -99,7 +99,7 @@ class E2E:
         env = dict(os.environ)
         env["CIS_CLOUD"] = self.cloud
         env["PYTHONPATH"] = str(ROOT) + os.pathsep + env.get("PYTHONPATH", "")
-        cmd = [sys.executable, "-m", "cis_cloud"] + list(args)
+        cmd = [sys.executable, "-m", "ohbs_cloud"] + list(args)
         self.checks += 1
         if self.verbose:
             print("  $ " + " ".join(cmd) + "  <<< stdin", file=sys.stderr)
@@ -120,7 +120,7 @@ class E2E:
 
     def _remediable_control(self) -> str:
         """Return a control id that is remediable on the active cloud."""
-        import cis_cloud as C
+        import ohbs_cloud as C
         os.environ["CIS_CLOUD"] = self.cloud
         C.reset()
         cat = C.get_catalog()
@@ -138,12 +138,12 @@ class E2E:
         # Import every package module in a child process; the cheapest way to
         # catch an f-string/parse error on the CI interpreter before the
         # command paths run (a py3.11-only SyntaxError surfaced in CI).
-        import cis_cloud as C
+        import ohbs_cloud as C
         pkg_dir = Path(C.__file__).parent
         modules = sorted(
             f.stem for f in pkg_dir.glob("*.py")
             if f.name != "__main__.py")
-        script = "import " + "; import ".join(f"cis_cloud.{m}" for m in modules)
+        script = "import " + "; import ".join(f"ohbs_cloud.{m}" for m in modules)
         env = dict(os.environ)
         env["CIS_CLOUD"] = self.cloud
         env["PYTHONPATH"] = str(ROOT) + os.pathsep + env.get("PYTHONPATH", "")
@@ -299,7 +299,7 @@ class E2E:
 
 
 def main(argv=None) -> int:
-    p = argparse.ArgumentParser(prog="e2e_test", description="cis-cloud end-to-end test")
+    p = argparse.ArgumentParser(prog="e2e_test", description="ohbs-cloud end-to-end test")
     p.add_argument("--mode", choices=["offline", "live"], default="offline",
                    help="offline (default, no creds) or live (real cloud account)")
     p.add_argument("--cloud", default=os.environ.get("CIS_CLOUD", "tencent"),
