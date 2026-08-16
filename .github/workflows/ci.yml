@@ -99,6 +99,15 @@ jobs:
             echo "seeded" > .cache-sentinel/ok
           fi
 
+      - name: Assert graceful degradation on cold cache
+        # An expired/evicted cache (7-day access / 30-day retention) must not
+        # break the build: dependency resolution works without any cache and
+        # simply re-seeds it. This asserts the cache is an optimisation, not a
+        # correctness dependency.
+        run: |
+          pip install --no-cache-dir -e . pytest >/dev/null 2>&1 || { echo "FAIL: cold-cache install failed" >&2; exit 1; }
+          python3 -c "import cis_cloud, pytest; print('OK: install succeeds without cache (graceful degradation)')"
+
       - name: Assert invalidation contract (content change -> new key)
         run: |
           KEY1=$(python3 scripts/cache_fingerprint.py)
