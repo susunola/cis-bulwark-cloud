@@ -1,9 +1,9 @@
 """Minimal MCP (Model Context Protocol) extension surface.
 
-Exposes the read-only cis-cloud tools over a stdio JSON-RPC exchange so an
+Exposes the read-only ohbs-cloud tools over a stdio JSON-RPC exchange so an
 agent / LLM host can drive assessments without reimplementing them:
 
-    tools.list           -> the active control registry (like `cis-cloud list`)
+    tools.list           -> the active control registry (like `ohbs-cloud list`)
     tools.scan           -> a dry-run scan plan (no cloud call)
     tools.diff           -> compare two scan JSON files (BASE CUR)
     tools.check_drift    -> regressions vs a baseline (BASE CUR)
@@ -17,7 +17,7 @@ Requests are newline-delimited JSON::
 Responses follow JSON-RPC 2.0: `{"jsonrpc":"2.0","id":1,"result":...}` or an
 `error` object. `run_stdio()` reads one request per line from stdin and writes
 one response per line to stdout; it keeps running until stdin closes. No third
-party dependency — the MCP client integration lives in `cis_cloud/mcp.py`.
+party dependency — the MCP client integration lives in `ohbs_cloud/mcp.py`.
 """
 
 from __future__ import annotations
@@ -151,7 +151,7 @@ def _respond(req: dict) -> dict:
     if method == "initialize":
         return {"jsonrpc": JSON_RPC, "id": rid,
                 "result": {"protocolVersion": "2024-11-05", "capabilities": {"tools": {}},
-                           "serverInfo": {"name": "cis-cloud", "version": "1.0.0"}}}
+                           "serverInfo": {"name": "ohbs-cloud", "version": "1.0.0"}}}
     if method == "notifications/initialized":
         return None
     return _error(rid, -32601, f"method not found: {method}")

@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-import cis_cloud as C
-from cis_cloud.catalog import Catalog
+import ohbs_cloud as C
+from ohbs_cloud.catalog import Catalog
 from hcl_utils import object_keys, read, string_list, top_blocks
 
 CLOUDS = ["aws", "azure", "gcp", "alibaba"]

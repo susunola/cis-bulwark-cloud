@@ -22,8 +22,8 @@ trap cleanup EXIT
 
 # Re-create the project-root-relative layout that module source paths expect.
 mkdir -p "$WORK/project"
-cp -R "$ROOT/cis_cloud/data/stacks" "$WORK/project/stacks"
-cp -R "$ROOT/cis_cloud/data/modules" "$WORK/project/modules"
+cp -R "$ROOT/ohbs_cloud/data/stacks" "$WORK/project/stacks"
+cp -R "$ROOT/ohbs_cloud/data/modules" "$WORK/project/modules"
 
 STACK_ROOT="$WORK/project/stacks"
 MODULE_ROOT="$WORK/project/modules"

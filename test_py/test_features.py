@@ -8,13 +8,13 @@ from pathlib import Path
 
 import pytest
 
-import cis_cloud as C
-from cis_cloud.compliance import Compliance
-from cis_cloud.remediation import for_control as remediation_for, reference_for as remediation_ref
-from cis_cloud.severity import of as severity_of, score as severity_score, weighted as severity_weighted
-from cis_cloud.suppress import Suppressions
-from cis_cloud.tfcheck import Finding as TfFinding
-from cis_cloud.tfcheck import load_checks, scan as tfcheck_scan
+import ohbs_cloud as C
+from ohbs_cloud.compliance import Compliance
+from ohbs_cloud.remediation import for_control as remediation_for, reference_for as remediation_ref
+from ohbs_cloud.severity import of as severity_of, score as severity_score, weighted as severity_weighted
+from ohbs_cloud.suppress import Suppressions
+from ohbs_cloud.tfcheck import Finding as TfFinding
+from ohbs_cloud.tfcheck import load_checks, scan as tfcheck_scan
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -63,10 +63,10 @@ def test_remediation_reference_url():
 def test_remediation_every_control_resolves(catalog):
     # R7: the rule file + fallback must give every control in the registry a
     # non-empty remediation hint across all five clouds.
-    from cis_cloud import IMPLEMENTED_CLOUDS
-    from cis_cloud.remediation import for_control as _for
+    from ohbs_cloud import IMPLEMENTED_CLOUDS
+    from ohbs_cloud.remediation import for_control as _for
     for cloud in IMPLEMENTED_CLOUDS:
-        import cis_cloud as _C
+        import ohbs_cloud as _C
         _C.reset()
         os.environ["CIS_CLOUD"] = cloud
         _C.reset()
@@ -87,11 +87,11 @@ def test_remediation_generic_fallback_for_unknown_cloud():
 def test_remediation_generic_fallback_remediable():
     ctl = _FakeControl("2.1", remediate="terraform", stack="logging")
     txt = remediation_for("oracle", ctl)
-    assert "cis-cloud apply" in txt and "logging" in txt
+    assert "ohbs-cloud apply" in txt and "logging" in txt
 
 
 def test_remediation_attached_to_scan_findings(catalog):
-    from cis_cloud.runner import Runner
+    from ohbs_cloud.runner import Runner
     from conftest import select
 
     sel = select(only=["4.1"])
@@ -102,7 +102,7 @@ def test_remediation_attached_to_scan_findings(catalog):
 
 
 def test_scan_markdown_renders_remediation_column(catalog):
-    from cis_cloud.reporter import Reporter
+    from ohbs_cloud.reporter import Reporter
     from conftest import select
     r = Reporter(color=False)
     f = {"id": "4.1", "title": "bucket", "status": "FAIL", "severity": "critical",
@@ -113,7 +113,7 @@ def test_scan_markdown_renders_remediation_column(catalog):
 
 
 def test_scan_html_renders_remediation_fix(catalog):
-    from cis_cloud.reporter import Reporter
+    from ohbs_cloud.reporter import Reporter
     from conftest import select
     r = Reporter(color=False)
     f = {"id": "4.1", "title": "bucket", "status": "FAIL", "severity": "critical",
@@ -145,7 +145,7 @@ def test_severity_weighted_sums_fail_only():
 
 
 def test_finding_carries_score():
-    from cis_cloud.runner import Runner
+    from ohbs_cloud.runner import Runner
     from conftest import select
 
     r = Runner(select(only=["4.1"]), options={"format": "json"})
@@ -166,7 +166,7 @@ def test_compliance_risk_score_value():
 
 
 def test_scan_table_shows_score_column(catalog):
-    from cis_cloud.reporter import Reporter
+    from ohbs_cloud.reporter import Reporter
     from conftest import select
     r = Reporter(color=False)
     f = {"id": "4.1", "title": "bucket", "status": "FAIL", "severity": "critical",
@@ -177,7 +177,7 @@ def test_scan_table_shows_score_column(catalog):
 
 
 def test_scan_table_shows_resource_column_only_when_present(catalog):
-    from cis_cloud.reporter import Reporter
+    from ohbs_cloud.reporter import Reporter
     from conftest import select
     r = Reporter(color=False)
     with_res = {"id": "4.1", "title": "bucket", "status": "FAIL", "severity": "high",
@@ -193,7 +193,7 @@ def test_scan_table_shows_resource_column_only_when_present(catalog):
 
 
 def test_scan_csv_has_resource_column(catalog):
-    from cis_cloud.reporter import Reporter
+    from ohbs_cloud.reporter import Reporter
     from conftest import select
     r = Reporter(color=False)
     f = {"id": "4.1", "title": "bucket", "status": "FAIL", "severity": "high",

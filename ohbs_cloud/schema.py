@@ -1,6 +1,6 @@
 """Canonical result schema for findings.
 
-Every finding dict flowing through cis-cloud — whether from a live `scan`
+Every finding dict flowing through ohbs-cloud — whether from a live `scan`
 (runner), an IaC `check` (tfcheck) or a `compliance` aggregate — carries the
 same set of keys. Centralising them here keeps renderers, suppression and the
 schema test in one place, so a new field is added once and flows everywhere.

@@ -1,7 +1,7 @@
 """Cross-cloud compliance posture, Prowler-style.
 
-`cis-cloud --cloud X scan --format json -o scans/X.json` saves per-cloud
-findings; `cis-cloud compliance --dir scans` reads every such file and rolls
+`ohbs-cloud --cloud X scan --format json -o scans/X.json` saves per-cloud
+findings; `ohbs-cloud compliance --dir scans` reads every such file and rolls
 them into one view: per-cloud status cards, a global tally and the full
 failing-control list ordered by severity.
 """

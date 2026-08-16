@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from cis_cloud.schema import FINDING_KEYS, STATUSES, SEVERITIES, normalize_finding
+from ohbs_cloud.schema import FINDING_KEYS, STATUSES, SEVERITIES, normalize_finding
 
 
 class _Ctl:
@@ -53,9 +53,9 @@ def test_scan_check_compliance_findings_all_carry_schema_keys():
     # SC6: scan and check producers emit FINDING_KEYS; a compliance finding
     # (read from a saved scan JSON) is normalisable to the full schema, so
     # downstream consumers can rely on the shape everywhere.
-    from cis_cloud.runner import Runner
-    from cis_cloud.tfcheck import scan as tfcheck_scan
-    from cis_cloud.compliance import Compliance
+    from ohbs_cloud.runner import Runner
+    from ohbs_cloud.tfcheck import scan as tfcheck_scan
+    from ohbs_cloud.compliance import Compliance
     from conftest import select
     from pathlib import Path
 

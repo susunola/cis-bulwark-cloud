@@ -5,7 +5,7 @@ from __future__ import annotations
 import io
 import json
 
-from cis_cloud.mcp import _respond, run_stdio, TOOLS
+from ohbs_cloud.mcp import _respond, run_stdio, TOOLS
 
 
 def test_tools_list_lists_registry():
@@ -62,7 +62,7 @@ def test_initialize_handshake():
     assert resp["id"] == 0
     assert resp["result"]["protocolVersion"]
     assert isinstance(resp["result"]["capabilities"]["tools"], dict)
-    assert resp["result"]["serverInfo"]["name"] == "cis-cloud"
+    assert resp["result"]["serverInfo"]["name"] == "ohbs-cloud"
 
 
 def test_tools_call_diff_missing_file_surfaces_error():

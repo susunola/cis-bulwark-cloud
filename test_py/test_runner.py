@@ -7,8 +7,8 @@ import json
 
 import pytest
 
-import cis_cloud as C
-from cis_cloud.runner import EXIT_ERROR, EXIT_FINDING, EXIT_OK, Runner
+import ohbs_cloud as C
+from ohbs_cloud.runner import EXIT_ERROR, EXIT_FINDING, EXIT_OK, Runner
 from conftest import select
 
 
@@ -127,7 +127,7 @@ def test_the_environment_reproduces_the_selection(catalog):
     r.apply()
     assert sel.to_env["CIS_SECTIONS"] == "4"
     assert sel.to_env["CIS_EXCLUDE"] == "4.6"
-    from cis_cloud.selector import Selector
+    from ohbs_cloud.selector import Selector
 
     rebuilt = Selector.from_env(catalog, sel.to_env)
     assert [c.id for c in rebuilt.remediable] == ["4.1", "4.3", "4.4", "4.5", "4.7"]
@@ -147,7 +147,7 @@ def test_controls_terraform_enforces_but_cannot_read_back_are_skipped_not_passed
     r, out, _ = build(sel)
     r.scan()
     assert "SKIPPED" in out.getvalue()
-    assert "enforced by `cis-cloud apply`, not re" in out.getvalue()
+    assert "enforced by `ohbs-cloud apply`, not re" in out.getvalue()
     assert "PASS   " not in out.getvalue()
 
 
@@ -156,7 +156,7 @@ def test_the_untruncated_evidence_survives_in_machine_output(catalog):
     r.scan()
     row = json.loads(out.getvalue())["findings"][0]
     assert row["status"] == "SKIPPED"
-    assert row["evidence"] == "enforced by `cis-cloud apply`, not readable"
+    assert row["evidence"] == "enforced by `ohbs-cloud apply`, not readable"
 
 
 def test_apply_lists_the_controls_it_could_not_enforce(catalog):

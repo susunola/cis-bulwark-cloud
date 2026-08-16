@@ -467,7 +467,7 @@ function applyFilter(){
         catalog = _catalog_mod()
         benchmark = str(catalog.benchmark) if catalog else "CIS benchmark"
         version = str(catalog.version) if catalog else ""
-        tool_name = "cis-cloud"
+        tool_name = "ohbs-cloud"
         sarif_version = "2.1.0"
 
         # Severity mapping per the SARIF spec (level): error/warning/note/none.
@@ -513,7 +513,7 @@ function applyFilter(){
                 "tool": {
                     "driver": {
                         "name": tool_name,
-                        "informationUri": "https://github.com/susunola/cis-cloud",
+                        "informationUri": "https://github.com/susunola/ohbs-cloud",
                         "version": version,
                         "rules": list(rule_by_id.values()),
                     }

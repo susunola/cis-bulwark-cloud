@@ -6,9 +6,9 @@ import os
 
 import pytest
 
-import cis_cloud as C
-from cis_cloud.catalog import Catalog
-from cis_cloud.selector import Selector
+import ohbs_cloud as C
+from ohbs_cloud.catalog import Catalog
+from ohbs_cloud.selector import Selector
 from conftest import select
 
 

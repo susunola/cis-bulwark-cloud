@@ -1,7 +1,7 @@
 name: CI
 
 # Offline suite — no cloud, no credentials, every CLI path runs with --dry-run.
-# The Python layer (cis_cloud) drives the plain Terraform stacks; the wiring
+# The Python layer (ohbs_cloud) drives the plain Terraform stacks; the wiring
 # tests pin the registry <-> HCL contract.
 
 on:
@@ -42,7 +42,7 @@ jobs:
 
       - name: Generate SARIF (offline tfcheck, no credentials)
         run: |
-          cis-cloud --cloud aws check --tf test_py/fixtures/tf --format sarif \
+          ohbs-cloud --cloud aws check --tf test_py/fixtures/tf --format sarif \
             --output cis-scan.sarif || true
           test -s cis-scan.sarif
 
@@ -54,11 +54,11 @@ jobs:
       - name: Terraform validate
         run: |
           set -e
-          for dir in cis_cloud/data/modules/*; do
+          for dir in ohbs_cloud/data/modules/*; do
             echo "==> $dir"
             (cd "$dir" && terraform init -backend=false && terraform validate)
           done
-          find cis_cloud/data/stacks -type f -name '*.tf' -not -path '*/.terraform/*' -exec dirname {} \; \
+          find ohbs_cloud/data/stacks -type f -name '*.tf' -not -path '*/.terraform/*' -exec dirname {} \; \
             | sort -u | while read -r dir; do
               echo "==> $dir"
               (cd "$dir" && terraform init -backend=false && terraform validate)
@@ -106,7 +106,7 @@ jobs:
         # correctness dependency.
         run: |
           pip install --no-cache-dir -e . pytest >/dev/null 2>&1 || { echo "FAIL: cold-cache install failed" >&2; exit 1; }
-          python3 -c "import cis_cloud, pytest; print('OK: install succeeds without cache (graceful degradation)')"
+          python3 -c "import ohbs_cloud, pytest; print('OK: install succeeds without cache (graceful degradation)')"
 
       - name: Assert invalidation contract (content change -> new key)
         run: |
