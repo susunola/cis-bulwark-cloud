@@ -160,6 +160,10 @@ CI (`.github/workflows/ci.yml`) runs the whole suite on Ubuntu + Python 3.11 +
 Terraform 1.5.7, then offline `terraform validate` on every module/stack, then
 uploads the `cis-cloud check` SARIF to GitHub Code Scanning.
 
+Dependency installs are accelerated with `setup-python`'s `cache: pip`, keyed
+on `pyproject.toml` content — unchanged deps hit the cache; a dep bump changes
+the key and rebuilds it (verified empirically, see README §CI / Validation).
+
 ### E2E layer — `scripts/e2e_test.py`
 
 Above the fast unit suite sits a real-command end-to-end script:

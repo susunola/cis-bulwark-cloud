@@ -542,6 +542,23 @@ module and stack. Python + pytest + Terraform CLI only — no cloud account. It
 also runs the offline `check` on the test fixture and uploads the SARIF to
 **GitHub Code Scanning**, so IaC findings appear as PR/commit alerts.
 
+### Dependency caching
+
+`setup-python@v5` uses the built-in `cache: pip`, keyed on the content of
+`pyproject.toml` (`cache-dependency-path`). Consequences:
+
+- **Hit** — when `pyproject.toml` is unchanged, the pip download cache is
+  restored and `pip install -e . pytest` skips re-downloading wheels.
+- **Invalidation** — bumping a dependency in `pyproject.toml` changes the
+  cache key, so the stale cache is not reused; pip re-resolves and a fresh
+  cache is saved under the new key. setup-python falls back to the previous
+  key when the new one is empty, which is safe (pip's cache is keyed by wheel
+  version and additive).
+
+Verified end-to-end on CI: a run with an unchanged `pyproject.toml` logs
+`Cache restored successfully`, and editing `pyproject.toml` produces a
+different cache key.
+
 ### Offline Terraform Validation
 
 ```bash
