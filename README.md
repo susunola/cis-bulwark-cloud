@@ -1,87 +1,623 @@
 > ⚠️ **Not affiliated with, endorsed by, or sponsored by the Center for Internet
-> Security (CIS).** See [DISCLAIMER.md](./DISCLAIMER.md). `ohbs-cloud`
-> implements hardening *aligned with* the CIS Benchmarks™; it references CIS as
-> a standard only.
+> Security (CIS).** See [DISCLAIMER.md](./DISCLAIMER.md). This project implements
+> hardening *aligned with* the CIS Benchmarks™; it references CIS as a standard only.
+
+<p align="center">
+  <img src="docs/logo-full.png" alt="ohbs-cloud" width="440">
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License: MIT"></a>
+  <img src="https://img.shields.io/badge/benchmark-v1.0.0-006EFF" alt="Benchmark v1.0.0">
+  <img src="https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white" alt="Python 3.10+">
+  <img src="https://img.shields.io/badge/terraform-1.5%2B-7B42BC?logo=terraform&logoColor=white" alt="Terraform 1.5+">
+  <img src="https://img.shields.io/badge/provider-tencentcloud-0052D9" alt="Tencent Cloud Provider">
+  <a href="https://github.com/susunola/ohbs-cloud/actions/workflows/ci.yml"><img src="https://github.com/susunola/ohbs-cloud/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+</p>
+
+<p align="center">
+  part of the <b>ohbs-*</b> family:
+  <a href="https://github.com/susunola/ohbs-image">ohbs-image</a> ·
+  <a href="https://github.com/susunola/ohbs-host">ohbs-host</a> ·
+  <a href="https://github.com/susunola/ohbs-cloud">ohbs-cloud</a>
+</p>
 
 # oh baseline cloud
 
-> **Repository / CLI / PyPI package:** `ohbs-cloud`
-> Full name: **oh baseline cloud** — part of the **oh baseline** (ohbs) family,
-> **Open Source Hardened Baseline**.
+> **Repository / CLI / package:** `ohbs-cloud` · Full name: **oh baseline cloud** — part of the **oh baseline** (ohbs) family.
+A plain **Terraform** implementation of five **CIS Foundations Benchmarks**
+across Tencent Cloud, AWS, Azure, GCP and Alibaba Cloud — 387 security
+recommendations covering Identity, Logging, Networking, Storage, Database and
+Kubernetes. Two modes, one codebase: `scan` for read-only compliance assessment,
+`apply` for enforcement. No Terraspace, no extra orchestrator — just the
+Terraform CLI wrapped in a thin Python layer (`ohbs-cloud`).
 
-A Terraform + thin Python implementation of five cloud **foundation baselines**
-across Tencent Cloud, AWS, Azure, GCP, and Alibaba Cloud — **387 security
-recommendations** (Identity, Logging, Networking, Storage, Database, Kubernetes).
+| Cloud | Benchmark | Controls |
+|---|---|---|
+| Tencent Cloud | CIS v1.0.0 | 91 |
+| AWS | CIS v7.0.0 | 64 |
+| Azure | CIS v6.0.0 | 70 |
+| GCP | CIS v5.0.0 | 84 |
+| Alibaba Cloud | CIS v2.0.0 | 78 |
 
-Two modes, one codebase: `scan` (read-only compliance assessment) and `apply`
-(enforcement), wrapped in a thin Python layer (`ohbs-cloud`).
+All five benchmarks are fully implemented with `scan` + `apply` against their
+native Terraform providers. Machine-readable control catalogs (derived from the
+CIS Benchmarks, per CIS Terms of Use) are included under
+[`benchmarks/`](benchmarks/); the benchmark PDFs themselves are **not**
+redistributed here — see [`benchmarks/README.md`](benchmarks/README.md).
 
-> Benchmark documents (PDFs) are **not redistributed** — only derived control
-> items are implemented, per CIS Terms of Use.
+## Table of Contents
 
-## Install
+- [Capabilities](#capabilities)
+- [Quick Start](#quick-start)
+- [Project Layout](#project-layout)
+- [Commands](#commands)
+- [Filtering](#filtering)
+- [Sections and Stacks](#sections-and-stacks)
+- [Scan](#scan)
+- [Apply](#apply)
+- [HTML Reports](#html-reports)
+- [Control Registry](#control-registry)
+- [Tests](#tests)
+- [CI / Validation](#ci--validation)
+- [Limitations](#limitations)
+- [Requirements](#requirements)
+
+---
+
+## Capabilities
+
+| Capability | Count | Detail |
+|---|---|---|
+| Controls in benchmark | **91** | CIS Foundation v1.0.0 (2025-11-12) |
+| Remediably by Terraform | **39** | `cis apply` can enforce these |
+| Detectable by Terraform | **20** | `cis scan` can assess these |
+| Manual / outside Terraform scope | **43** | Reported as `MANUAL`, never silently dropped |
+
+A control can be **both** enforceable and detectable (e.g. 4.1 — COS bucket public
+access), **remediable but not detectable** (e.g. 4.3 — COS logging: Terraform sets
+it, the provider has no read-back data source), or **detectable but not
+remediable** (e.g. 1.15 — CAM `*:*` policies: found by audit, but Terraform has
+no business deleting a policy it didn't create).
+
+Every selected control appears in the scan report — including the 43 unassessable
+ones as `MANUAL`. A green table that silently drops half the benchmark is worse
+than no report.
+
+---
+
+## Supported Benchmarks
+
+The machine-readable control catalogs (`catalog.json`) live under
+[`benchmarks/<cloud>/`](benchmarks/). Catalogs are extracted from the
+Summary Table + profile applicability of each CIS benchmark PDF by
+`tools/extract_benchmark.py` (the PDFs are not redistributed in this repo —
+obtain them from [cisecurity.org](https://www.cisecurity.org) under their Terms
+of Use, then run the extractor locally).
+
+| Cloud | Benchmark | Version | Controls | Rem. | Det. | Man. |
+|---|---|---|---|---|---|---|
+| Tencent Cloud | CIS Tencent Cloud Enterprise Foundation Benchmark | v1.0.0 | 91 | 39 | 20 | 43 |
+| Amazon Web Services | CIS Amazon Web Services Foundations Benchmark | v7.0.0 | 64 | 8 | 9 | 50 |
+| Microsoft Azure | CIS Microsoft Azure Foundations Benchmark | v6.0.0 | 70 | 11 | 16 | 48 |
+| Google Cloud Platform | CIS Google Cloud Platform Foundation Benchmark | v5.0.0 | 84 | 4 | 31 | 49 |
+| Alibaba Cloud | CIS Alibaba Cloud Foundation Benchmark | v2.0.0 | 78 | 9 | 13 | 57 |
+
+Rem. = remediable (`cis apply`), Det. = detectable (`cis scan`), Man. = reported
+as MANUAL because the provider has no enumerable data source or no non-destructive
+resource. Every registry is generated by `tools/generate_controls.py --cloud NAME`
+from the catalogs under `benchmarks/`; the `aws`, `alibaba`, `gcp` and `azure`
+catalogs carry an extra `group` field on three-level controls. Benchmark PDFs are
+© The Center for Internet Security, Inc.
+
+---
+
+## Quick Start
 
 ```bash
 pip install ohbs-cloud                # CLI + all five control registries + Terraform stacks
+
+export TENCENTCLOUD_SECRET_ID=<your-secret-id>
+export TENCENTCLOUD_SECRET_KEY=<your-secret-key>
+export TENCENTCLOUD_REGION=ap-guangzhou
 ```
 
-Requirements: Python >= 3.10, Terraform >= 1.5.0, and the relevant cloud
-provider. Cloud credentials are read from environment variables
-(e.g. `TENCENTCLOUD_SECRET_ID`, `TENCENTCLOUD_SECRET_KEY`, `TENCENTCLOUD_REGION`).
+**Sanity check** (no cloud, no credentials):
+
+```bash
+ohbs-cloud list                  # prints the control registry
+pytest test_py -q          # 310 tests, offline, no cloud/credentials
+```
+
+**First scan:**
+
+```bash
+ohbs-cloud scan --profile level1                   # table to stdout
+ohbs-cloud scan --section 4 --format html -o rpt.html  # self-contained HTML
+```
+
+**First enforcement (dry-run first):**
+
+```bash
+ohbs-cloud apply --tag cos --dry-run               # preview
+ohbs-cloud apply --tag cos --report                # enforce + HTML record
+```
+
+**Other clouds (pick with `--cloud` or `CIS_CLOUD`):**
+
+```bash
+export AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=... AWS_DEFAULT_REGION=us-east-1
+ohbs-cloud --cloud aws list                        # 64 AWS controls
+ohbs-cloud --cloud aws scan --section 6 --format html -o aws-scan.html
+ohbs-cloud --cloud aws apply --only 2.8,2.9,6.1.1 --dry-run   # preview
+
+export ARM_SUBSCRIPTION_ID=... ARM_TENANT_ID=...      # azure: + az login
+ohbs-cloud --cloud azure scan --only 9.3.6 --format html -o azure-scan.html
+
+export GOOGLE_APPLICATION_CREDENTIALS=sa.json         # gcp
+ohbs-cloud --cloud gcp scan --section 6 --format html -o gcp-scan.html
+
+export ALICLOUD_ACCESS_KEY=... ALICLOUD_SECRET_KEY=... ALICLOUD_REGION=cn-hangzhou
+ohbs-cloud --cloud alibaba scan --only 5.1 --format html -o alibaba-scan.html
+```
+
+What a cloud can assess is limited by its provider's data sources: azure is
+name-based (you list the resources), aws/alibaba/gcp expose list sources in
+different areas. Controls the provider cannot observe are reported as `MANUAL`.
+Per-stack import / inventory instructions live in each `stacks/<cloud>/` stack.
+
+---
+
+## Project Layout
+
+```
+ohbs_cloud/                  Python package (pip install ohbs-cloud)
+  cli.py                    CLI entry point (--cloud tencent|aws|azure|gcp|alibaba)
+  runner.py                 Runner: shells out to `terraform`
+  catalog.py, selector.py, reporter.py, control.py, severity.py,
+  suppress.py, compliance.py, tfcheck.py,
+  remediation.py, drift.py, schema.py, mcp.py
+  data/
+    config/controls.yml         Tencent registry — 91 entries
+    config/<cloud>/controls.yml Per-cloud registries (aws 64, azure 70, gcp 84, alibaba 78)
+    config/remediation.yml      Derived remediation guidance (cloud + control id/glob)
+    modules/                    Reusable Terraform modules
+      security_group_baseline/
+      cos_secure_bucket/
+      cls_audit_alarm/
+    stacks/
+      audit/                    Read-only: data sources + check blocks, zero resources
+      iam/                      \
+      logging/                   |
+      network/                   | Six hardening stacks (self-contained root modules)
+      storage/                   |
+      database/                  |
+      kubernetes/               /
+benchmarks/                 Extracted control catalogs per cloud (PDFs not redistributed)
+  tencent/catalog.json      Tencent Cloud (91 controls) - feeds controls.yml
+  aws/catalog.json          AWS v7.0.0 (64 controls) - feeds config/aws/controls.yml
+  azure/catalog.json        Azure v6.0.0 (70 controls) - feeds config/azure/controls.yml
+  gcp/catalog.json          GCP v5.0.0 (84 controls) - feeds config/gcp/controls.yml
+  alibaba/catalog.json      Alibaba Cloud v2.0.0 (78 controls) - feeds config/alibaba/controls.yml
+test_py/                    310 tests — no cloud, no credentials
+scripts/
+  e2e_test.py               Real-command E2E (offline no-creds + optional live account)
+tools/
+  extract_benchmark.py      Extract <cloud>/catalog.json from a CIS benchmark PDF text
+  generate_controls.py      Generate config/controls.yml from the Tencent catalog
+  validate.sh               terraform init+validate every stack/module offline
+docs/
+  sample-scan.html          Example scan report (static)
+  sample-hardening.html     Example hardening report (static)
+```
+
+Each stack under `stacks/` is a **self-contained root module**: it carries its
+own `provider.tf` and `backend.tf`, so `terraform -chdir=stacks/<name> ...`
+works standalone. State defaults to a per-stack `terraform.tfstate`; see
+`stacks/<name>/backend.tf` for the COS (tencent) / S3 (aws) remote-backend
+guidance. Later clouds nest under `stacks/<cloud>/<name>`.
+
+---
 
 ## Commands
 
-| Command | Purpose |
-|---------|---------|
-| `ohbs-cloud list` | print the control registry |
-| `ohbs-cloud scan` | read-only assessment |
-| `ohbs-cloud plan` | show what `apply` would change |
-| `ohbs-cloud apply` | enforce selected controls |
-| `ohbs-cloud destroy STACK` | roll back one hardening stack |
-| `ohbs-cloud compliance --dir scans` | aggregate per-cloud scan JSONs |
-| `ohbs-cloud check --tf DIR` | pre-deploy baseline checks on Terraform |
-| `ohbs-cloud diff BASE CUR` | compare two scan JSONs |
-| `ohbs-cloud check-drift [BASE CUR \| --baseline FILE]` | flag regressions |
-| `ohbs-cloud batch --accounts a,b` | scan several accounts |
-| `ohbs-cloud mcp` | MCP JSON-RPC server over stdio |
-
-Global flags: `--format`, `-o`, `--push`, `--report`, `--dry-run`, `--verbose`,
-`--no-color`, `--cloud`, `--profile`, `--section`, `--tag`, `--only`,
-`--exclude`, `--framework`.
-
-## Usage
-
-```bash
-# sanity check (no credentials)
-ohbs-cloud list
-pytest test_py -q                 # 310 offline tests
-
-# first scan
-ohbs-cloud scan --profile level1
-ohbs-cloud scan --section 4 --format html -o rpt.html
-
-# first enforcement
-ohbs-cloud apply --tag cos --dry-run
-ohbs-cloud apply --tag cos --report
-
-# other clouds
-export AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=... AWS_DEFAULT_REGION=us-east-1
-ohbs-cloud --cloud aws list
-ohbs-cloud --cloud aws scan --section 6 --format html -o aws-scan.html
-ohbs-cloud --cloud aws apply --only 2.8,2.9,6.1.1 --dry-run
+```
+cis --cloud aws list       Show the registry for a cloud (default: tencent)
+cis scan                   Read-only assessment of selected controls
+cis plan                   Show what cis apply would change
+cis apply                  Enforce selected controls
+cis destroy STACK          Roll back one hardening stack
+cis compliance --dir scans Aggregate per-cloud scan JSONs into one posture
+cis check --tf DIR         Pre-deploy CIS checks on Terraform definitions
+cis diff BASE CUR          Compare two scan JSONs (new/still/fixed/dropped)
+cis check-drift [BASE CUR | --baseline FILE]  Flag regressions vs a baseline
+cis batch --accounts a,b   Scan several accounts and aggregate
+cis mcp                    MCP JSON-RPC server over stdio (agent/LLM hosts)
 ```
 
-## Supported baselines (as standard references)
+### Beyond scan / apply (industry borrowings)
 
-- CIS Tencent Cloud Enterprise Foundation Benchmark v1.0.0
-- CIS Amazon Web Services Foundations Benchmark v7.0.0
-- CIS Microsoft Azure Foundations Benchmark v6.0.0
-- CIS Google Cloud Platform Foundation Benchmark v5.0.0
-- CIS Alibaba Cloud Foundation Benchmark v2.0.0
+- **Cross-cloud compliance** (`cis compliance --dir scans`, Prowler-style): save
+  each cloud's scan with `cis --cloud X scan --format json -o scans/X.json`, then
+  aggregate all of them into one posture - per-cloud cards, global tally and the
+  failing-control list ordered by severity.
+- **Severity** (Prowler-style): every finding carries a risk level
+  (critical/high/medium/low) inferred from the control's tags, shown in all
+  report formats and used to order the compliance failing list.
+- **Risk score** (Prowler ThreatScore-style): each finding also carries a
+  numeric `score` (critical=100…low=10) and every scan/compliance report shows
+  a weighted `risk_score` total for FAIL findings, so posture can be tracked as
+  a single number over time.
+- **Structured resource** (Cartography/Steampipe-style): each finding carries a
+  `resource` field (the specific bucket/instance/policy that failed) when the
+  source emits one, shown in scan reports and used as a cleaner suppression
+  target.
+- **Suppression** (`config/suppress.yml`, CloudSploit-style): declare known
+  exceptions per cloud+control+resource; suppressed findings render as
+  SUPPRESSED and never trip the scan gate.
+- **CI formats**: `--format csv` / `--format junit` for pipelines; `--format
+  sarif` uploads to GitHub Code Scanning (see the CI workflow). `scan` exits
+  1 when any assessed control FAILs (suppressed findings excluded).
+- **IaC pre-deploy checks** (`cis check --tf DIR`, Steampipe-style): parse .tf
+  files (no credentials, no terraform run) and verify the arguments CIS
+  requires are present, per cloud. Catches the missing `enable_log_file_validation`
+  before you apply - `cis scan` still covers what runs on the live cloud.
+  Extra rules can be merged in with `--checks FILE` (custom checks), and
+  `plan --plan-check` runs the static gate before any apply. A custom rule may
+  also carry `title` / `severity` / `remediation` / `framework` metadata so
+  your own policies read as first-class controls (policy-as-code), not just
+  resource/arg checks.
+- **Baseline drift** (`cis diff BASE CUR`): compare two scan JSONs and see what
+  regressed, what stayed failing, and what you fixed - a lightweight foundation
+  for continuous monitoring.
+- **Drift detection** (`cis check-drift`): continuous-monitoring check. Run
+  `ohbs-cloud scan --format json -o scans/base.json` once to record a baseline,
+  then `ohbs-cloud check-drift --baseline scans/base.json` on a schedule (cron /
+  CI) to flag only *regressions* — controls now FAILing that were not before.
+  Also works offline: `ohbs-cloud check-drift BASE CUR`. Exits 1 on any
+  regression so CI can gate.
+- **Remediation guidance**: every scan finding carries a `remediation` hint
+  (derived from `config/remediation.yml`, keyed by cloud + control id or glob,
+  with a generic capability fallback). Shown in `--format json` / `markdown`
+  and in the HTML scan report; see `ohbs_cloud/remediation.py`.
+- **Multi-framework view** (`--framework nist|pci|djcp`): view the control set
+  through another compliance lens (NIST SP 800-53, PCI DSS v4.0, 等保 2.0).
+- **Multi-account batch** (`cis batch --accounts a,b,c`): scan each account and
+  roll them up into one cross-account posture; `scan --push DIR` writes a
+  timestamped JSON copy for the same purpose.
 
-These names identify the public standards `ohbs-cloud` aligns with; the project
-is not certified by or affiliated with CIS.
+### Canonical result schema
+
+Every finding — from a live `scan`, an IaC `check`, or a `compliance`
+aggregate — carries the same stable set of keys (`ohbs_cloud/schema.py`):
+`id`, `title`, `status`, `severity`, `score`, `evidence`, `evidence_detail`,
+`resource`, `remediation`. Downstream consumers can rely on the shape without
+special-casing each command.
+
+### MCP / agent extension surface
+
+`ohbs-cloud mcp` exposes the read-only tools over a stdio JSON-RPC exchange so
+an agent / LLM host can drive assessments (Prowler-style MCP surface). It
+understands `tools/list` (the registry) and `tools/call` for `list`, `scan`
+(dry-run), `plan` (dry-run), `diff` and `check_drift`. Requests are
+newline-delimited JSON, responses are JSON-RPC 2.0:
+
+### Exit Codes
+
+| Code | Meaning |
+|---|---|
+| `0` | Clean, or nothing to do |
+| `1` | Scan/diff/batch found at least one failing or new control |
+| `2` | Run broke — bad flags, empty selection, terraform failed |
+
+`1` is reserved for findings so CI can gate on it. `MANUAL` rows never produce a
+`1`: "could not check" is not "broken."
+
+### Output Flags
+
+| Flag | Meaning |
+|---|---|
+| `--format table\|json\|markdown\|html` | Default `table`; also `csv`, `junit`, `sarif` |
+| `-o, --output PATH` | Write `list`/`scan` report to file |
+| `--push DIR` | Also write a timestamped JSON scan result into DIR |
+| `--report [PATH]` | After `apply`, write HTML hardening report |
+| `--dry-run` | Print terraform commands, execute nothing |
+| `--verbose` | Echo each terraform invocation |
+| `--no-color` | Disable ANSI colour |
+
+With `--format json`, all narration goes to **stderr** — `cis scan --format json | jq` is always safe.
+
+---
+
+## Filtering
+
+Every filter is available both as a flag and as an environment variable. They compose.
+
+| Flag | Variable | Meaning |
+|---|---|---|
+| `--only 3.5,4.*` | `CIS_ONLY` | Exactly these ids/globs. Replaces the `enabled:` baseline |
+| `--exclude 4.6` | `CIS_EXCLUDE` | Drop these ids/globs. Applied last, always wins |
+| `--section 3,4` | `CIS_SECTIONS` | Restrict to these benchmark sections |
+| `--tag cos,mfa` | `CIS_TAGS` | Keep controls carrying any of these tags |
+| `--profile level1` | `CIS_PROFILE` | `level1` (67 controls) or `level2` (all 91) |
+| `--framework pci` | `CIS_FRAMEWORK` | Keep controls mapped to nist, pci or djcp |
+
+**Precedence:** `--only` replaces the baseline; `--section`, `--tag` and
+`--profile` narrow whatever baseline is in play; `--exclude` is applied last and
+beats everything.
+
+A filter that matches nothing is a hard error:
+
+```bash
+$ ohbs-cloud scan --only 12.7
+error: filter "12.7" matches no control in the benchmark
+$ echo $?
+2
+```
+
+CLI flags overwrite pre-existing `CIS_*` variables. The resolved selection is
+exported to the terraform invocations — `ohbs-cloud`, the stack filtering and the
+`enabled_controls` variable all resolve to the same answer.
+
+---
+
+## Sections and Stacks
+
+| § | Area | Controls | Remediable | Stack |
+|---|---|---|---|---|
+| 1 | Identity and Access Management | 16 | 1 | `iam` |
+| 2 | Logging and Monitoring | 20 | 17 | `logging` (16), `network` (2.4) |
+| 3 | Networking | 7 | 6 | `network` |
+| 4 | Storage | 9 | 6 | `storage` |
+| 5 | TencentDB for MySQL | 6 | 6 | `database` |
+| 6 | Kubernetes Engine | 9 | 3 | `kubernetes` |
+| 7 | Cloud Security Center | 6 | 0 | — (manual) |
+| 8 | Cloud Workload Protection | 6 | 0 | — (manual) |
+| 9 | Container Security Service | 12 | 0 | — (manual) |
+
+2.4 (VPC flow logs) lives in the `network` stack — stacks are grouped by the
+resource they touch, not by section number.
+
+Stacks always run in fixed order for reproducibility: `iam`, `logging`, `network`,
+`storage`, `database`, `kubernetes`.
+
+---
+
+## Scan
+
+Deploys the `audit` stack (zero managed resources — data sources, `check` blocks
+and outputs only), reads back `cis_findings`, renders the result.
+
+Covers the 20 detectable controls:
+
+```
+1.15 1.16  2.1 2.2 2.3 2.20  3.1 3.3 3.4 3.5 3.6
+4.1 4.2 4.8 4.9  5.2  6.8 6.9  8.1 8.2
+```
+
+```bash
+$ ohbs-cloud scan --profile level1 --dry-run
+Scanning 15 control(s) via the audit stack (read-only).
+Will scan:
+  terraform -chdir=stacks/audit apply -auto-approve # 1.15, 1.16, 2.1, 2.2, 2.3, 3.3, 3.4, 4.1, 4.2, 4.8, 4.9, 5.2, 6.8, 6.9, 8.1
+```
+
+| Status | Meaning |
+|---|---|
+| `PASS` | Assessed, compliant |
+| `FAIL` | Assessed, non-compliant — exit 1 |
+| `SKIPPED` | Enforced by `apply` but not readable back |
+| `MANUAL` | Outside Terraform scope; verify in console |
+
+Selecting only manual controls is valid:
+
+```bash
+$ ohbs-cloud scan --section 9 --no-color
+No selected control is machine-assessable by the provider.
+Selected: 12. Use cis list to see why.
+
+  STATUS   ID     TITLE                                                EVIDENCE
+  ------------------------------------------------------------------------------------
+  MANUAL   9.1    Ensure Container Security protection is enabled ...  verify in console
+  ...
+  FAIL 0   PASS 0   MANUAL 12   SKIPPED 0
+```
+
+---
+
+## Apply
+
+Runs one hardening stack at a time — each is a separate `terraform apply` — so
+output is readable and every failure is attributable to a stack. A failing stack
+**stops the run**.
+
+```bash
+$ ohbs-cloud apply --tag cos --exclude 4.6 --dry-run
+Selection: 9/91 controls  (remediable 8, detectable 3, manual 0)
+Will apply:
+  terraform -chdir=stacks/logging   apply # 2.2, 2.13, 2.18
+  terraform -chdir=stacks/storage   apply # 4.1, 4.3, 4.4, 4.5, 4.7
+```
+
+### Hardening Report (`cis apply --report`)
+
+Records what was enforced per stack, plus the controls Terraform could not touch.
+Same account header as the scan report.
+
+```bash
+cis apply --tag cos --exclude 4.6 --report             # -> cis-hardening-<ts>.html
+cis apply --only 4.*            --report harden.html   # -> harden.html
+```
+
+`--report` works under `--dry-run`: stacks are marked `planned` instead of
+`ok`/`fail`, giving a preview artifact before touching the account.
+
+---
+
+## HTML Reports
+
+`cis scan` and `cis apply` produce self-contained HTML reports with an account
+header, summary statistics, per-section tables, and a client-side filter bar. No
+external assets are loaded. See [sample-scan.html](docs/sample-scan.html) and
+[sample-hardening.html](docs/sample-hardening.html) for what they look like.
+
+---
+
+## Control Registry
+
+`config/controls.yml` is the source of truth. Each entry:
+
+```yaml
+- id: "4.6"
+  title: "Ensure server-side encryption is set to SSE-COS"
+  assessment: Manual
+  profile: "Level 2"
+  enabled: true
+  remediate: terraform
+  detect: none
+  stack: storage
+  tags: [cos, encryption, sse-cos]
+```
+
+| Field | Meaning |
+|---|---|
+| `assessment` | `Automated` / `Manual`, as classified by CIS |
+| `profile` | `Level 1` / `Level 2`, as classified by CIS |
+| `enabled` | Participates in `scan`/`apply` by default — **edit this for permanent scope** |
+| `remediate` | `terraform` / `none` — can `apply` enforce it |
+| `detect` | `terraform` / `none` — can `scan` evaluate it |
+| `stack` | Owning Terraform stack (`null` when unsupported) |
+| `tags` | Free-form selectors for `--tag` |
+
+Use `--only` for one-off runs; edit `enabled:` for permanent exclusions.
+The rest of the file is generated by `tools/generate_controls.py` from the
+official CIS benchmark PDF.
+
+---
+
+## Tests
+
+```bash
+pytest test_py -q                 # 310 tests, offline
+pytest test_py/test_selector.py   # single file
+```
+
+No cloud API calls, no credentials, no `terraform` execution — every CLI test
+runs with `--dry-run`.
+
+| File | Covers |
+|---|---|
+| `test_catalog.py` | Registry well-formedness: 91 ids, section sizes, profile split, capability counts |
+| `test_selector.py` | Filter semantics and precedence, `to_env`/`from_env` round-trip |
+| `test_wiring.py` | **Registry ↔ HCL alignment (tencent)** |
+| `test_cloud_wiring.py` | **Registry ↔ HCL alignment (aws/azure/gcp/alibaba, parameterised)** |
+| `test_cli.py` | Flags, exit codes, output formats, env-vs-flag precedence, `--cloud` |
+| `test_runner.py` | Exit-code contract, terraform command issuance |
+| `test_features.py` | Severity, risk score, remediation, suppression, resource, compliance, custom checks (tfcheck) |
+| `test_drift.py` | Baseline drift (`check-drift`): regressions, offline/live, render |
+| `test_schema.py` | Canonical finding schema: key set, defaults, cross-command parity |
+| `test_mcp.py` | MCP JSON-RPC surface: tools/list, tools/call, initialize, error paths |
+| `test_cache_fingerprint.py` | CI cache fingerprint: determinism, invalidation on dep change, graceful failure, concurrent stampede race-safety |
+
+### Wiring Test
+
+The most important test in the suite. It reads the Terraform as text and
+validates against `config/controls.yml`:
+
+- Every stack's `local.implemented` **exactly equals** the set of remediable
+  controls the registry routes to that stack — no drift, no duplication
+- The audit stack contains **no `resource` or `module` blocks**
+- The audit stack's probe keys **exactly equal** the 20 detectable controls
+- Every resource is gated on the selection — filtered runs are really filtered
+- Every `.tfvars` wires `enabled_controls` from a method that actually exists
+- HCL is canonically formatted (`terraform fmt`, self-skips when the binary is absent)
+
+This catches the failure mode that matters most: *"the registry says storage owns
+4.7, but `storage/main.tf` never implements it"* — which otherwise surfaces as a
+clean-looking report.
+
+---
+
+## CI / Validation
+
+### GitHub Actions
+
+`.github/workflows/ci.yml` runs `pytest test_py -q` on every push and pull
+request, then `terraform init -backend=false && terraform validate` on every
+module and stack. Python + pytest + Terraform CLI only — no cloud account. It
+also runs the offline `check` on the test fixture and uploads the SARIF to
+**GitHub Code Scanning**, so IaC findings appear as PR/commit alerts.
+
+### Dependency caching
+
+`setup-python@v5` uses the built-in `cache: pip`, keyed on the content of
+`pyproject.toml` (`cache-dependency-path`). Consequences:
+
+- **Hit** — when `pyproject.toml` is unchanged, the pip download cache is
+  restored and `pip install -e . pytest` skips re-downloading wheels.
+- **Invalidation** — bumping a dependency in `pyproject.toml` changes the
+  cache key, so the stale cache is not reused; pip re-resolves and a fresh
+  cache is saved under the new key. setup-python falls back to the previous
+  key when the new one is empty, which is safe (pip's cache is keyed by wheel
+  version and additive).
+
+Verified end-to-end on CI: a run with an unchanged `pyproject.toml` logs
+`Cache restored successfully`, and editing `pyproject.toml` produces a
+different cache key.
+
+**Time limits.** GitHub Actions caches are ephemeral: a cache entry is evicted
+if it has not been accessed for **7 days**, and all entries are removed after
+**30 days** regardless of activity. This is fine here — the pip download cache
+is an optimisation, not a correctness dependency. On a cold cache (after a 7/30
+day gap, or a repo with no recent CI) `pip install` simply re-downloads and
+re-seeds the cache, so the build still succeeds, just slower. No action needed.
+
+### Offline Terraform Validation
+
+```bash
+tools/validate.sh                    # every stack and module
+tools/validate.sh storage audit      # named targets
+```
+
+Copies `stacks/` and `modules/` into a scratch tree that mirrors the project
+root (so `../../modules/` source paths keep resolving), then runs
+`terraform init -backend=false && terraform validate`. No account required.
+
+---
+
+## Limitations
+
+- **Coverage ceiling.** 39/91 remediable, 20/91 detectable. Several `MANUAL`
+  controls are manual only because the provider data source hasn't been wired —
+  the `audit/data.tf` gating pattern is the template. Moving controls from manual
+  to detectable is the highest-value contribution.
+- **No drift tracking.** `cis scan` is point-in-time. Baseline save/compare is
+  the natural next feature for compliance cadence.
+- **No post-apply verification.** `apply` does not re-run `scan` to assert the
+  control flipped to PASS.
+- **Failing stack stops the run.** No `--continue-on-error`. Current behaviour is
+  intentional (attribution over throughput).
+- **Local state by default.** Switch `stacks/<name>/backend.tf` to a COS remote
+  backend for multi-operator use.
+- **`region` defaults to `ap-guangzhou`.** Consider failing loudly when
+  `TENCENTCLOUD_REGION` is unset for a compliance tool.
+
+---
+
+## Requirements
+
+- Python >= 3.10 (pip install ohbs-cloud)
+- Terraform >= 1.5.0
+- [`tencentcloudstack/tencentcloud`](https://registry.terraform.io/providers/tencentcloudstack/tencentcloud) provider `~> 1.81`
+- Tencent Cloud API credentials (`TENCENTCLOUD_SECRET_ID`, `TENCENTCLOUD_SECRET_KEY`, `TENCENTCLOUD_REGION`)
+
+Credentials are read from the environment only — nothing about an account
+belongs in this repository.
+
+## CIS Benchmarks Disclaimer
+
+**Independent project** — ohbs-cloud is not affiliated with, sponsored by, or endorsed by the Center for Internet Security (CIS). CIS Benchmark content is copyright &copy; Center for Internet Security, Inc. and used under their terms of use.
 
 ## License
 
-MIT — see [LICENSE](./LICENSE).
+MIT — see [LICENSE](LICENSE).
