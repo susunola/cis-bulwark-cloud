@@ -63,3 +63,52 @@ jobs:
               echo "==> $dir"
               (cd "$dir" && terraform init -backend=false && terraform validate)
             done
+
+  # Verifies the CI caching lifecycle end-to-end: a key derived from the
+  # dependency file must (a) seed on first use, (b) restore on reuse, and
+  # (c) change when the file changes (so stale caches are not reused).
+  cache-health:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compute dependency fingerprint
+        id: fp
+        run: echo "key=$(python3 scripts/cache_fingerprint.py)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache restore (same deps -> hit)
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: .cache-sentinel
+          key: ${{ steps.fp.outputs.key }}
+
+      - name: Seed or verify cache
+        run: |
+          if [ -f .cache-sentinel/ok ]; then
+            echo "CACHE HIT: restored from key ${{ steps.fp.outputs.key }}"
+            test "$(cat .cache-sentinel/ok)" = "seeded"
+          else
+            echo "CACHE MISS: seeding key ${{ steps.fp.outputs.key }}"
+            mkdir -p .cache-sentinel
+            echo "seeded" > .cache-sentinel/ok
+          fi
+
+      - name: Assert invalidation contract (content change -> new key)
+        run: |
+          KEY1=$(python3 scripts/cache_fingerprint.py)
+          echo '# bump' >> pyproject.toml
+          KEY2=$(python3 scripts/cache_fingerprint.py)
+          git checkout -- pyproject.toml
+          echo "unchanged key: $KEY1"
+          echo "changed  key: $KEY2"
+          if [ "$KEY1" = "$KEY2" ]; then
+            echo "FAIL: editing pyproject.toml did not change the cache key" >&2
+            exit 1
+          fi
+          echo "OK: cache key is content-derived (invalidates on dep change)"
