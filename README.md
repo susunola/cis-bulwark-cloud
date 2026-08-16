@@ -559,6 +559,13 @@ Verified end-to-end on CI: a run with an unchanged `pyproject.toml` logs
 `Cache restored successfully`, and editing `pyproject.toml` produces a
 different cache key.
 
+**Time limits.** GitHub Actions caches are ephemeral: a cache entry is evicted
+if it has not been accessed for **7 days**, and all entries are removed after
+**30 days** regardless of activity. This is fine here — the pip download cache
+is an optimisation, not a correctness dependency. On a cold cache (after a 7/30
+day gap, or a repo with no recent CI) `pip install` simply re-downloads and
+re-seeds the cache, so the build still succeeds, just slower. No action needed.
+
 ### Offline Terraform Validation
 
 ```bash
