@@ -350,7 +350,7 @@ def test_apply_report_default_path_when_no_value(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     r = cis("apply", "--only", "4.*", "--dry-run", "--report")
     assert r.returncode == 0, r.stderr
-    m = re.search(r"written to (cis-hardening-\d{8}-\d{6}\.html)", r.stdout + r.stderr)
+    m = re.search(r"written to (ohbs-\d{8}-\d{6}\.html)", r.stdout + r.stderr)
     assert m, "no report path announced"
     path = ROOT / m.group(1)  # run_cli always runs with cwd=ROOT
     try:

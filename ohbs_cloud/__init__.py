@@ -1,4 +1,4 @@
-"""ohbs-cloud — multi-cloud CIS foundation benchmarks, plain Terraform.
+"""ohbs-cloud — multi-cloud ohbs hardening benchmarks, plain Terraform.
 
 A Python port of the original Ruby implementation. The data layer (per-cloud
 control registries under config/, self-contained Terraform stacks under

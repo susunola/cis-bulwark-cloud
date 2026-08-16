@@ -377,7 +377,7 @@ class Runner:
 
     @staticmethod
     def _default_report_path() -> str:
-        return f"cis-hardening-{time.strftime('%Y%m%d-%H%M%S', time.gmtime())}.html"
+        return f"ohbs-{time.strftime('%Y%m%d-%H%M%S', time.gmtime())}.html"
 
     def _build_account(self, terraform: bool = False) -> dict:
         acct = {k: v for k, v in {

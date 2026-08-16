@@ -1,6 +1,3 @@
-> ⚠️ **Not affiliated with, endorsed by, or sponsored by the Center for Internet
-> Security (CIS).** See [DISCLAIMER.md](./DISCLAIMER.md). This project implements
-> hardening *aligned with* the CIS Benchmarks™; it references CIS as a standard only.
 
 <p align="center">
   <img src="docs/logo-full.png" alt="ohbs-cloud" width="440">
@@ -445,7 +442,7 @@ Records what was enforced per stack, plus the controls Terraform could not touch
 Same account header as the scan report.
 
 ```bash
-cis apply --tag cos --exclude 4.6 --report             # -> cis-hardening-<ts>.html
+ohbs-cloud apply --tag cos --exclude 4.6 --report             # -> ohbs-<ts>.html
 cis apply --only 4.*            --report harden.html   # -> harden.html
 ```
 

@@ -1,4 +1,4 @@
-"""ohbs-cloud — CIS cloud foundation benchmark (plain Terraform).
+"""ohbs-cloud — ohbs cloud foundation benchmark (plain Terraform).
 
     ohbs-cloud --cloud aws list                show the control registry for a cloud
     ohbs-cloud scan                            read-only assessment of the selected controls
@@ -22,7 +22,7 @@ Output / behaviour:
     --format table|json|markdown|html   default: table
     -o, --output PATH                   write the list/scan report to a file
     --report [PATH]                     after `apply`, write an HTML hardening
-                                         report (default: cis-hardening-<ts>.html)
+                                         report (default: ohbs-<ts>.html)
     --dry-run                           print the terraform commands, run nothing
     --verbose                           echo each terraform invocation
     --no-color                          disable ANSI colour
@@ -46,7 +46,7 @@ COMMANDS = ["list", "scan", "plan", "apply", "destroy", "compliance", "check", "
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="ohbs-cloud",
-        description="CIS cloud foundation benchmarks via plain Terraform.",
+        description="ohbs cloud foundation benchmarks via plain Terraform.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "Examples:\n"
@@ -88,7 +88,7 @@ def build_parser() -> argparse.ArgumentParser:
     o.add_argument("--push", metavar="DIR",
                    help="also write a timestamped JSON scan result into DIR")
     o.add_argument("--report", nargs="?", const=True, metavar="PATH",
-                   help="after `apply`, write an HTML hardening report (default: cis-hardening-<ts>.html)")
+                   help="after `apply`, write an HTML hardening report (default: ohbs-<ts>.html)")
     o.add_argument("--dir", metavar="PATH", help="scan results directory for `compliance` (default: $CIS_SCAN_DIR or ./scans)")
     o.add_argument("--accounts", metavar="A,B,C",
                    help="for `batch`: comma separated account names to scan and aggregate")
